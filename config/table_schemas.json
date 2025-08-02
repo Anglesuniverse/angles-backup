@@ -1,0 +1,71 @@
+{
+  "conversations": {
+    "description": "Stores conversation history and context",
+    "classification_keywords": [
+      "conversation", "chat", "dialogue", "interaction", "message", 
+      "response", "user", "assistant", "question", "answer"
+    ],
+    "fields": [
+      "id", "user_id", "content", "timestamp", "context", "metadata"
+    ],
+    "required_fields": ["user_id", "content"],
+    "validation_rules": {
+      "user_id": {"type": "string", "max_length": 255},
+      "content": {"type": "string", "max_length": 10000},
+      "context": {"type": "json", "optional": true},
+      "metadata": {"type": "json", "optional": true}
+    }
+  },
+  "memories": {
+    "description": "Stores long-term memory and learned information",
+    "classification_keywords": [
+      "memory", "remember", "learned", "fact", "knowledge", "store", 
+      "recall", "information", "data", "insight", "understanding"
+    ],
+    "fields": [
+      "id", "content", "category", "importance", "timestamp", "tags"
+    ],
+    "required_fields": ["content", "category"],
+    "validation_rules": {
+      "content": {"type": "string", "max_length": 10000},
+      "category": {"type": "string", "max_length": 100},
+      "importance": {"type": "integer", "min": 1, "max": 10, "default": 5},
+      "tags": {"type": "json", "optional": true}
+    }
+  },
+  "tasks": {
+    "description": "Stores tasks and action items",
+    "classification_keywords": [
+      "task", "todo", "action", "reminder", "schedule", "deadline", 
+      "complete", "do", "finish", "accomplish", "work", "assignment"
+    ],
+    "fields": [
+      "id", "title", "description", "status", "priority", "due_date", "created_at"
+    ],
+    "required_fields": ["title", "description"],
+    "validation_rules": {
+      "title": {"type": "string", "max_length": 200},
+      "description": {"type": "string", "max_length": 2000},
+      "status": {"type": "enum", "values": ["pending", "in_progress", "completed", "canceled"], "default": "pending"},
+      "priority": {"type": "enum", "values": ["low", "medium", "high", "urgent"], "default": "medium"},
+      "due_date": {"type": "datetime", "optional": true}
+    }
+  },
+  "analysis": {
+    "description": "Stores analysis results and insights",
+    "classification_keywords": [
+      "analysis", "insight", "pattern", "trend", "summary", "report", 
+      "statistics", "data", "results", "findings", "conclusion"
+    ],
+    "fields": [
+      "id", "type", "data", "results", "confidence", "timestamp"
+    ],
+    "required_fields": ["type", "data", "results"],
+    "validation_rules": {
+      "type": {"type": "string", "max_length": 100},
+      "data": {"type": "json"},
+      "results": {"type": "json"},
+      "confidence": {"type": "float", "min": 0.0, "max": 1.0, "default": 0.5}
+    }
+  }
+}
