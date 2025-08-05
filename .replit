@@ -5,33 +5,3 @@ channel = "stable-25_05"
 packages = ["libxcrypt"]
 
 [workflows]
-runButton = "Project"
-
-[[workflows.workflow]]
-name = "Project"
-mode = "parallel"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "GPT Processor"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "main"
-
-[[workflows.workflow]]
-name = "GPT Processor"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "pip install supabase python-dotenv pydantic && python main.py"
-
-[[workflows.workflow]]
-name = "main"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "pip install supabase python-dotenv pydantic asyncio pathlib && python main.py"
