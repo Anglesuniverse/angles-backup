@@ -2,7 +2,17 @@
 
 ## Overview
 
-This is a sophisticated data processing system designed to automatically handle GPT assistant outputs and manage them in a Supabase database. The application intelligently processes various types of GPT-generated content, classifies them based on context and content analysis, validates the data, and stores it in appropriate database tables. The system supports conversations, memories/knowledge, and tasks, with automatic classification and routing capabilities.
+This is a sophisticated data processing system designed to automatically handle GPT assistant outputs and manage them in both Supabase and Notion databases. The application intelligently processes various types of GPT-generated content, with a specialized focus on architect decisions management. The system features unified sync operations that store decisions in both Supabase (PostgreSQL) and Notion simultaneously, providing redundancy and cross-platform accessibility.
+
+## Recent Changes
+
+**August 2025 - Architect Decisions System:**
+- Added complete Supabase integration with secure credential management
+- Implemented Notion API integration for collaborative decision storage  
+- Created unified sync system supporting dual-platform storage
+- Built comprehensive testing suite for all integrations
+- Established `architect_decisions` table schema in Supabase
+- Successfully connected to user's "ShoppingFriend database" in Notion
 
 ## User Preferences
 
@@ -47,8 +57,10 @@ Centralized configuration system supporting:
 ## External Dependencies
 
 ### Database Services
-- **Supabase**: Primary database service using PostgreSQL backend
+- **Supabase**: Primary database service using PostgreSQL backend with `architect_decisions` table
 - **Supabase Python Client**: Official client library for database operations
+- **Notion API**: Secondary storage and collaboration platform for architect decisions
+- **Notion Client**: Official Python client for Notion API integration
 
 ### Data Processing Libraries
 - **Pydantic**: Data validation and settings management using Python type annotations
