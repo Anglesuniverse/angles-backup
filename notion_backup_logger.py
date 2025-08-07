@@ -232,6 +232,23 @@ class NotionBackupLogger:
         )
         
         return self.log_operation(entry)
+    
+    def log_memory_change(self, file_changed: str, action: str, timestamp: str, 
+                          git_commit_id: str, file_type: str, encrypted: bool = False,
+                          details: Optional[str] = None) -> bool:
+        """Log a memory state change operation"""
+        entry = BackupRestoreLogEntry(
+            timestamp=datetime.now(timezone.utc).isoformat(),
+            action_type=f"Memory {action}",
+            items_processed=1,
+            status="Success",
+            github_commit_link=f"Commit: {git_commit_id}",
+            duration_seconds=None,
+            error_message=None,
+            details=details or f"{action} {file_type} file: {file_changed} {'(encrypted)' if encrypted else ''}"
+        )
+        
+        return self.log_operation(entry)
 
 # Convenience function for easy import
 def create_notion_logger() -> NotionBackupLogger:
