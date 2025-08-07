@@ -1,0 +1,7 @@
+DECISION_LOG:DEC-2025-001
+TIMESTAMP:2025-08-07T19:40:31.939107
+DECISION:Recommend switching from SQLite to PostgreSQL
+CONFIDENCE:0.92
+IMPACT:Medium
+REASONING:Better performance for concurrent users; Advanced querying capabilities; Better integration with cloud services; Supabase integration already available
+STATUS:PENDING_APPROVAL
