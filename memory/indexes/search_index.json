@@ -1,0 +1,24 @@
+{
+  "index_type": "search",
+  "version": "1.0.0",
+  "created_at": "2025-08-07T22:00:00Z",
+  "entries": [
+    {
+      "id": "idx_001",
+      "term": "decision",
+      "frequency": 15,
+      "documents": ["doc_001", "doc_003", "doc_005"]
+    },
+    {
+      "id": "idx_002",
+      "term": "sync",
+      "frequency": 8,
+      "documents": ["doc_002", "doc_004"]
+    }
+  ],
+  "statistics": {
+    "total_terms": 2,
+    "total_documents": 5,
+    "last_updated": "2025-08-07T22:00:00Z"
+  }
+}

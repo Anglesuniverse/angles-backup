@@ -1,0 +1,24 @@
+{
+  "index_type": "category",
+  "version": "1.0.0",
+  "created_at": "2025-08-07T22:00:00Z",
+  "categories": {
+    "architecture": {
+      "count": 3,
+      "items": ["arch_001", "arch_002", "arch_003"]
+    },
+    "configuration": {
+      "count": 2,
+      "items": ["config_001", "config_002"]
+    },
+    "deployment": {
+      "count": 1,
+      "items": ["deploy_001"]
+    }
+  },
+  "metadata": {
+    "total_categories": 3,
+    "total_items": 6,
+    "last_updated": "2025-08-07T22:00:00Z"
+  }
+}
