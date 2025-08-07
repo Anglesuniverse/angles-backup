@@ -1,261 +1,224 @@
-# Angles AI Universe™ Memory System
+# Angles AI Universe™ Memory System - Backup & Restore
 
-A comprehensive memory management system that syncs AI decisions between Supabase and Notion, with automated GitHub backups and scheduled execution.
+## Overview
 
-## 🚀 Overview
+The Angles AI Universe™ Memory System provides comprehensive backup and restore capabilities for the memory data and decision vault. The system supports both manual and automated backups with multiple restore sources.
 
-This system provides persistent memory for AI operations by:
+## Backup System
 
-1. **Memory Sync Agent** - Syncs unsynced decisions from Supabase to Notion
-2. **Git Backup Agent** - Creates safe GitHub backups of sanitized exports and logs  
-3. **Orchestrated Execution** - Coordinates both agents with concise status reporting
-4. **Scheduled Automation** - Runs automatically every 6 hours via Replit schedules
+### Manual Backups
 
-## 📋 Required Secrets
+Create on-demand backups with optional tagging:
 
-Add these environment variables to your Replit secrets:
-
-### Supabase Configuration
-```
-SUPABASE_URL=https://your-project-id.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
-```
-*Note: SUPABASE_KEY is accepted as fallback for SUPABASE_SERVICE_ROLE_KEY*
-
-### Notion Configuration  
-```
-NOTION_API_KEY=your_notion_integration_secret
-NOTION_DATABASE_ID=your_notion_database_id
-```
-
-### GitHub Configuration
-```
-GITHUB_TOKEN=your_github_personal_access_token
-GIT_USERNAME=your_github_username
-GIT_EMAIL=your_email@example.com
-REPO_URL=https://github.com/username/repository-name.git
-```
-
-## 🛠️ How to Run Locally
-
-### Manual Execution
 ```bash
-# Run the complete system
-python run_all.py
+# Standard manual backup
+python run_backup_manual.py
 
-# Run components individually
-python memory_sync_agent.py
-python backup/git_backup.py
+# Tagged backup
+python run_backup_manual.py --tag "hotfix-v2.1.0"
+
+# Memory-only backup (skip GitHub)
+python run_backup_manual.py --no-github
+
+# Unencrypted backup
+python run_backup_manual.py --no-encryption
+
+# Skip sanity checks
+python run_backup_manual.py --no-sanity-check
 ```
 
-### Test Connections
+### Automated Backups
+
+- **Daily Backups**: Automatically run at 02:00 UTC
+- **Memory Backups**: Automatically run at 03:00 UTC
+- **Configuration Backups**: Monitor and backup configuration changes every 60 seconds
+
+### Backup Storage
+
+Backups are stored in multiple locations:
+
+- **Supabase Storage**: Private bucket with organized prefixes (`manual/`, `daily/`)
+- **GitHub Repository**: Committed to the repository with tagged commits
+- **Local Storage**: Temporary files during processing
+
+## Restore System
+
+### Usage
+
+The restore system supports multiple sources and safety features:
+
 ```bash
-# Test Supabase and Notion connections
-python -c "from memory_sync_agent import MemorySyncAgent; agent = MemorySyncAgent(); agent.test_connections()"
+# Restore from Supabase storage
+python restore_memory.py --source supabase --file memory_backup_2025-08-07.zip
 
-# Test GitHub backup setup
-python backup/git_backup.py
+# Restore from GitHub repository
+python restore_memory.py --source github --tag v2.1.0
+
+# Restore from local file
+python restore_memory.py --source local --file /backups/backup.zip --force
+
+# Dry-run mode (simulate without changes)
+python restore_memory.py --source supabase --file backup.zip --dry-run
 ```
 
-## ⚙️ How to Enable Replit Schedule
+### Restore Sources
 
-### Method 1: Replit UI (Recommended)
-1. Go to your Replit project
-2. Click on **"Tools"** → **"Deployments"**
-3. Navigate to **"Schedules"** tab
-4. Click **"Create Schedule"**
-5. Configure:
-   - **Name**: `Memory System Sync`
-   - **Command**: `python run_all.py`
-   - **Schedule**: `0 */6 * * *` (every 6 hours)
-   - **Environment**: Select your environment with secrets
+1. **Supabase Storage**: Restore from the private memory_backups bucket
+2. **GitHub Repository**: Clone and restore from repository backups
+3. **Local Files**: Restore from local backup files
 
-### Method 2: Manual Schedule Configuration
-If Replit schedules are not available, the system will fall back to cron-like scheduling.
+### Safety Features
 
-## 📊 Data Flow Diagram
+- **Dry-run Mode**: Test restore operations without making changes
+- **Pre-restore Snapshots**: Automatic backup before restore operations
+- **Confirmation Prompts**: Double confirmation unless `--force` is used
+- **Structure Validation**: Verify backup integrity before restoration
 
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   SUPABASE      │    │   NOTION API    │    │   GITHUB REPO   │
-│ decision_vault  │    │   Database      │    │   Backup        │
-└─────────┬───────┘    └─────────┬───────┘    └─────────┬───────┘
-          │                      │                      │
-          │ 1. Fetch unsynced    │ 2. Create pages      │ 4. Push exports
-          │    decisions         │    (title, date,     │    & logs
-          ▼                      │     tags)            ▼
-┌─────────────────────────────────┴──────────────────────────────┐
-│                MEMORY SYNC AGENT                               │
-│  • Rotating logs (5x1MB) → logs/memory_sync.log              │
-│  • Sanitized exports → export/decisions_YYYYMMDD.json        │
-│  • Mark notion_synced=true after success                     │
-└─────────────────┬───────────────────────────────────────────────┘
-                  │ 3. Generate exports
-                  ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                   GIT BACKUP AGENT                              │
-│  • git init (if needed) + configure user                      │  
-│  • git add export/*.json logs/*.log                           │
-│  • git commit "[auto] memory sync <timestamp>"                │
-│  • git push origin main (with embedded GitHub token)          │
-└─────────────────────────────────────────────────────────────────┘
-                  │
-                  ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                     RUN_ALL.PY                                 │
-│  1. python memory_sync_agent.py                               │
-│  2. python backup/git_backup.py                               │
-│  3. Print: "OK: synced <n> items, exported <file>, backup     │
-│            pushed to GitHub"                                   │
-└─────────────────────────────────────────────────────────────────┘
-```
+### Restore Process
 
-## 📁 File Structure
+1. **Source Validation**: Verify backup source availability
+2. **File Download**: Retrieve backup from specified source
+3. **Decryption**: Automatic AES-256 decryption if needed
+4. **Validation**: Verify backup structure and metadata
+5. **Extraction**: Unpack backup to temporary directory
+6. **Memory Restore**: Restore memory files to `memory/` directory
+7. **Database Restore**: Restore decision_vault records to Supabase
+8. **Logging**: Log restore actions to Notion and local logs
+
+## Security Features
+
+### Encryption
+
+- **AES-256 Encryption**: All backups encrypted using Fernet
+- **Key Management**: Uses `BACKUP_ENCRYPTION_KEY` environment variable
+- **Automatic Decryption**: Restore system handles decryption transparently
+
+### Access Control
+
+- **Environment Variables**: All credentials stored as environment secrets
+- **Private Storage**: Supabase buckets configured as private
+- **Git Authentication**: Uses token-based authentication for GitHub
+
+## File Structure
+
+### Backup Contents
+
+Each backup contains:
 
 ```
-├── memory_sync_agent.py     # Main sync agent (Supabase ↔ Notion)
-├── backup/
-│   ├── __init__.py         # Backup module
-│   └── git_backup.py       # GitHub backup agent
-├── run_all.py              # Orchestrator script
-├── logs/                   # Rotating logs (git-ignored)
-│   └── memory_sync.log     # Main log file
-├── export/                 # Sanitized JSON exports
-│   └── decisions_*.json    # Daily exports
-├── .gitignore              # Excludes logs/, secrets, temp files
-└── README.md               # This file
+backup.zip
+├── backup_metadata.json     # Backup information and metadata
+├── state.json              # Current memory state
+├── session_cache.json      # Session cache data
+├── long_term.db           # Long-term memory database
+└── indexes/               # Search and category indexes
+    ├── search_index.json
+    └── category_index.json
 ```
 
-## 🔧 Database Schema Requirements
+### Directory Structure
 
-### Supabase `decision_vault` Table
-
-Required columns:
-```sql
-- id (UUID, primary key)
-- decision (TEXT, not null)
-- type (TEXT, not null) 
-- date (DATE, not null)
-- active (BOOLEAN, default true)
-- comment (TEXT, optional)
-- created_at (TIMESTAMPTZ)
-- updated_at (TIMESTAMPTZ)
-
--- Sync tracking (one of these):
-- notion_synced (BOOLEAN, default false)     -- Preferred
-- synced (BOOLEAN, default false)            -- Fallback
+```
+project/
+├── backup_utils.py         # Unified backup utilities
+├── run_backup_manual.py    # Manual backup CLI
+├── restore_memory.py       # Memory restore system
+├── backups/                # Local backup directory
+├── logs/                   # System logs
+│   ├── backup_manual.log
+│   ├── restore.log
+│   └── memory_backup.log
+└── memory/                 # Memory system files
+    ├── state.json
+    ├── session_cache.json
+    ├── long_term.db
+    └── indexes/
 ```
 
-### Notion Database Properties
+## Environment Variables
 
-Required properties:
-```
-- Name (Title) - Decision title/summary
-- Message (Rich text) - Full decision content  
-- Date (Date) - Decision date
-- Tag (Multi-select) - Decision type + status tags
-```
+Required environment variables:
 
-## 🚨 Troubleshooting
+```bash
+# Supabase Configuration
+SUPABASE_URL=your_supabase_url
+SUPABASE_KEY=your_supabase_key
 
-### Authentication Errors
+# Backup Encryption
+BACKUP_ENCRYPTION_KEY=your_fernet_key
 
-**Supabase RLS (Row Level Security):**
-```
-Error: "permission denied" or "insufficient permissions"
-Solution: Use SUPABASE_SERVICE_ROLE_KEY instead of SUPABASE_KEY, or disable RLS for decision_vault table
-```
+# GitHub Integration
+GITHUB_TOKEN=your_github_token
+REPO_URL=your_repository_url
 
-**Notion 400 Errors:**
-```
-Error: "Invalid property" or "body failed validation"
-Solution: Verify Notion database has Name, Message, Date, Tag properties with correct types
+# Notion Integration (optional)
+NOTION_TOKEN=your_notion_token
+NOTION_DATABASE_ID=your_database_id
 ```
 
-**GitHub Authentication:**
-```
-Error: "authentication failed" or "remote: Repository not found"
-Solutions:
-1. Verify GITHUB_TOKEN has repo permissions
-2. Check REPO_URL format: https://github.com/username/repo.git
-3. Ensure repository exists and is accessible
-```
+## Retention Policies
+
+- **Manual Backups**: 15 days retention
+- **Daily Backups**: 30 days retention
+- **Configuration Backups**: 10 most recent versions per file type
+
+## Troubleshooting
 
 ### Common Issues
 
-**No unsynced decisions found:**
-```
-1. Check if notion_synced or synced column exists in decision_vault
-2. Verify there are rows with notion_synced=false or synced=false
-3. Check Supabase RLS policies
-```
+1. **Encryption Errors**: Verify `BACKUP_ENCRYPTION_KEY` is properly set
+2. **Supabase Access**: Check RLS policies for bucket creation permissions
+3. **GitHub Access**: Ensure `GITHUB_TOKEN` has repository write permissions
+4. **File Not Found**: Use dry-run mode to verify backup file locations
 
-**Export files not created:**
-```
-1. Verify export/ directory exists and is writable
-2. Check if any decisions were successfully synced
-3. Review logs/memory_sync.log for export errors
-```
+### Logs
 
-**GitHub backup fails:**
-```
-1. Verify git is installed and accessible
-2. Check network connectivity to GitHub
-3. Ensure repository permissions allow pushes
-4. Review git backup logs for detailed errors
-```
+Check system logs for detailed error information:
 
-### Log Analysis
+- `logs/backup_manual.log` - Manual backup operations
+- `logs/restore.log` - Restore operations
+- `logs/memory_backup.log` - Daily backup operations
 
-Check `logs/memory_sync.log` for detailed operation logs:
-```bash
-# View recent logs
-tail -f logs/memory_sync.log
+### Support
 
-# Search for errors
-grep -i error logs/memory_sync.log
+All operations are logged to Notion for tracking and support purposes. Check the backup/restore notifications in your Notion database for operation status and details.
 
-# View sync statistics
-grep -i "sync completed" logs/memory_sync.log
-```
+## Advanced Usage
 
-## 🔒 Security Features
+### Backup with Custom Configuration
 
-- **No Secret Exposure**: All credentials read from environment variables only
-- **Sanitized Exports**: Removes sensitive keywords (key, token, secret, password)
-- **Git-ignored Logs**: Prevents accidental commit of logs with potential secrets
-- **Embedded Token Authentication**: GitHub token embedded in URL at runtime, never stored
-- **Rotating Logs**: Automatic log rotation prevents disk space issues
+```python
+from backup_utils import UnifiedBackupManager, BackupConfig
 
-## 🎯 Success Indicators
+config = BackupConfig(
+    backup_type='manual',
+    tag='custom-backup',
+    include_memory=True,
+    include_github=True,
+    encryption_enabled=True,
+    retention_days=15
+)
 
-When everything works correctly, you should see:
-```
-OK: synced 5 items, exported file export/decisions_20250807.json, backup pushed to GitHub
+backup_manager = UnifiedBackupManager(config)
+result = backup_manager.run_unified_backup()
 ```
 
-The system maintains:
-- Rotating logs in `logs/` (max 5 files, 1MB each)
-- Daily JSON exports in `export/` (sanitized, no secrets)
-- Git history of all exports and logs in your GitHub repository
-- Supabase records marked as `notion_synced=true`
-- Corresponding Notion pages with decision content
+### Restore with Custom Options
 
-## 📈 Monitoring
+The restore system provides programmatic access for advanced use cases:
 
-The system provides comprehensive monitoring through:
-- Structured logging with timestamps and levels
-- Export file generation for audit trails  
-- Git commit history for backup verification
-- Replit schedule execution logs
-- Status summaries with success/failure counts
+```python
+from restore_memory import MemoryRestoreManager
 
-For production monitoring, review:
-1. `logs/memory_sync.log` - Detailed operation logs
-2. `export/decisions_*.json` - Daily export files  
-3. GitHub repository - Backup commit history
-4. Replit schedule logs - Execution history
+restore_manager = MemoryRestoreManager(dry_run=True)
+success = restore_manager.run_restore(
+    source='local',
+    filename='backup.zip',
+    force=True
+)
+```
 
 ---
 
-**Angles AI Universe™** - Enabling persistent AI memory with automated backups and monitoring.
+**Angles AI Universe™ Backend Team**  
+Version 2.0.0 - August 2025
