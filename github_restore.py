@@ -29,6 +29,7 @@ sys.path.append(str(Path(__file__).parent))
 
 from utils.git_helpers import GitHelpers
 from utils.json_sanitizer import JSONSanitizer
+from notion_backup_logger import create_notion_logger
 
 try:
     from supabase import create_client, Client as SupabaseClient
@@ -99,6 +100,7 @@ class GitHubRestoreSystem:
         self.notion = None
         self.git_helpers = GitHelpers()
         self.json_sanitizer = JSONSanitizer()
+        self.notion_logger = create_notion_logger()
         
         # Initialize clients
         self._initialize_clients()
@@ -627,12 +629,56 @@ class GitHubRestoreSystem:
                 }
             }
             
+            # Generate source commit link if possible
+            source_commit_link = None
+            try:
+                import subprocess
+                hash_result = subprocess.run(['git', 'rev-parse', 'HEAD'], capture_output=True, text=True)
+                if hash_result.returncode == 0:
+                    commit_hash = hash_result.stdout.strip()
+                    repo_url = self.git_helpers.repo_url
+                    if repo_url and 'github.com' in repo_url:
+                        repo_url = repo_url.replace('.git', '')
+                        if '@' in repo_url:
+                            repo_url = 'https://github.com/' + repo_url.split('@github.com/')[-1]
+                        source_commit_link = f"{repo_url}/commit/{commit_hash}"
+            except Exception:
+                pass
+            
+            # Log to Notion (only for non-dry-run operations)
+            if not dry_run:
+                restore_details = f"Files: {len(files_result['files'])}, Records: {data_result['unique_records']}"
+                if supabase_result.get('inserted'):
+                    restore_details += f", Inserted: {supabase_result['inserted']}"
+                if supabase_result.get('updated'):
+                    restore_details += f", Updated: {supabase_result['updated']}"
+                
+                self.notion_logger.log_restore(
+                    success=overall_success,
+                    items_processed=data_result['unique_records'],
+                    source_commit_link=source_commit_link,
+                    duration=duration,
+                    error=None if overall_success else "Restore operation had failures",
+                    details=restore_details
+                )
+            
             logger.info(f"Restore operation completed in {duration:.2f} seconds")
             return result
             
         except Exception as e:
             duration = (datetime.now() - start_time).total_seconds()
             logger.error(f"Restore operation failed: {e}")
+            
+            # Log failure to Notion (only for non-dry-run operations)
+            if not dry_run:
+                self.notion_logger.log_restore(
+                    success=False,
+                    items_processed=0,
+                    duration=duration,
+                    error=str(e),
+                    details="Restore operation failed with exception"
+                )
+            
             return {
                 "success": False,
                 "error": str(e),

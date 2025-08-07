@@ -1,0 +1,41 @@
+Set up and verify a complete GitHub backup & restore pipeline for the Angles AI Universe™ memory system.
+
+Tasks:
+1. **Manual Restore Test**
+   - Run github_restore.py using the latest backup from the angles-backup repository.
+   - Verify:
+     a. All files restore to the correct local directories.
+     b. Restored memory files match the current format required by memory_bridge.py.
+     c. No data corruption or missing files are detected.
+     d. memory_bridge.py runs successfully after restore.
+   - Log all output to logs/restore_test.log.
+   - Mark the test as PASSED or FAILED.
+
+2. **Post-Restore GitHub Push**
+   - After the restore test, run a check for file changes.
+   - If any files have been modified or corrected during the restore process:
+       a. Commit changes with message: "Post-restore sync update".
+       b. Push to the angles-backup repository.
+   - Log all actions to logs/post_restore_push.log.
+
+3. **Integrate Notion Logging**
+   - Add Notion API logging to both backup and restore scripts.
+   - Each run should send:
+       - Timestamp (UTC)
+       - Action type ("Backup", "Restore", or "Post-Restore Push")
+       - Number of items processed
+       - Status ("Success" or "Failure")
+       - GitHub commit link (for backups or pushes) or source commit link (for restores)
+   - Use the existing Notion database for decision logs and append entries to a "Backup & Restore Log" view.
+   - Test by running both backup and restore once after integration.
+
+4. **Automation**
+   - Schedule automatic daily backups at 02:00 UTC.
+   - Optional: Schedule nightly restore verification to run in a separate test environment.
+   - Log all results to logs/backup.log, logs/restore_test.log, and logs/post_restore_push.log.
+
+Deliverables:
+- Updated scripts: github_restore.py, github_backup.py (if needed), and memory_bridge.py.
+- Three new log files in /logs.
+- Notion entries created for backup, restore test, and post-restore push.
+- Confirmation message in console with final status.

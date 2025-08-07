@@ -1,0 +1,54 @@
+Enhance the Angles AI Universe™ GitHub backup system with a pre-backup sanity check.
+
+Tasks:
+1. **Create sanity_check.py**
+   - Script must run before every backup operation.
+   - Validations to include:
+       a. **File Integrity**:
+          - Ensure all JSON files in /export are valid JSON.
+          - Ensure no empty files exist in /export or /logs.
+       b. **Schema Verification**:
+          - Check that decision files contain required keys:
+              ["decision_id", "timestamp", "decision_text", "status"]
+          - Log any missing keys.
+       c. **Timestamp Validation**:
+          - Ensure all timestamps are in valid ISO 8601 format (UTC).
+       d. **Size Check**:
+          - Flag any file larger than 10 MB.
+       e. **No Sensitive Data**:
+          - Run sanitizer to ensure no raw PII or secret values exist.
+       f. **Version Tag**:
+          - Check that each file has the current `system_version` set in config.
+
+2. **Integrate with Backup Workflow**
+   - Modify github_backup.py to:
+       - Run sanity_check.py before starting backup.
+       - If any check fails:
+           a. Abort backup.
+           b. Log all errors to logs/sanity_check.log.
+           c. Push Notion log entry with status = "Failed Sanity Check".
+       - If all checks pass:
+           a. Continue backup.
+           b. Log result to logs/sanity_check.log.
+           c. Push Notion log entry with status = "Sanity Check Passed".
+
+3. **Notion Integration**
+   - Create/Use existing "Backup & Restore Log" database.
+   - Add columns:
+       - Timestamp (UTC)
+       - Action ("Sanity Check")
+       - Files Checked
+       - Errors Found (count)
+       - Status
+   - Log each run of sanity_check.py automatically.
+
+4. **Automation**
+   - Ensure the sanity check runs automatically before all scheduled and manual backups.
+   - If sanity check fails, backup should not run and failure reason should be displayed in console.
+
+Deliverables:
+- New file: sanity_check.py
+- Updated github_backup.py with sanity check integration.
+- New log: logs/sanity_check.log
+- Notion logging for sanity check results.
+- Console output with PASS/FAIL message before backup starts.

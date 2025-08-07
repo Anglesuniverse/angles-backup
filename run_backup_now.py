@@ -17,6 +17,8 @@ from logging.handlers import RotatingFileHandler
 # Add project root to path for imports
 sys.path.append(str(Path(__file__).parent))
 
+from notion_backup_logger import create_notion_logger
+
 def setup_logging() -> logging.Logger:
     """Setup backup-specific logging"""
     # Ensure logs directory exists
@@ -55,6 +57,7 @@ def setup_logging() -> logging.Logger:
 def run_backup():
     """Run GitHub backup operation"""
     logger = setup_logging()
+    notion_logger = create_notion_logger()
     start_time = datetime.now()
     
     print()
@@ -76,11 +79,21 @@ def run_backup():
         export_files = list(Path('export').glob('*.json'))
         
         if not export_files:
+            duration = (datetime.now() - start_time).total_seconds()
             logger.info("No export files found to backup")
             print("✅ BACKUP COMPLETED (No files to backup)")
             print(f"   • No export files found in export/ directory")
             print(f"   • This is normal if no recent exports were created")
             print("=" * 50)
+            
+            # Log to Notion
+            notion_logger.log_backup(
+                success=True,
+                items_processed=0,
+                duration=duration,
+                details="No export files found to backup"
+            )
+            
             return True
         
         logger.info(f"Found {len(export_files)} export files to backup")
@@ -92,6 +105,16 @@ def run_backup():
             logger.info(f"Backup successful: {result['message']}")
         else:
             logger.error(f"Backup failed: {result.get('error', 'Unknown error')}")
+            
+            # Log failure to Notion
+            duration = (datetime.now() - start_time).total_seconds()
+            notion_logger.log_backup(
+                success=False,
+                items_processed=len(export_files),
+                duration=duration,
+                error=result.get('error', 'Unknown error')
+            )
+            
             return False
         
         duration = (datetime.now() - start_time).total_seconds()
@@ -103,6 +126,31 @@ def run_backup():
         print(f"   • Destination: GitHub repository")
         print(f"   • Local logs: logs/backup.log")
         print("=" * 50)
+        
+        # Generate GitHub commit link if possible
+        commit_link = None
+        try:
+            import subprocess
+            hash_result = subprocess.run(['git', 'rev-parse', 'HEAD'], capture_output=True, text=True)
+            if hash_result.returncode == 0:
+                commit_hash = hash_result.stdout.strip()
+                repo_url = os.getenv('REPO_URL', '')
+                if 'github.com' in repo_url:
+                    repo_url = repo_url.replace('.git', '').replace('https://x-access-token:', 'https://').split('@github.com/')[-1]
+                    if not repo_url.startswith('https://'):
+                        repo_url = 'https://github.com/' + repo_url
+                    commit_link = f"{repo_url}/commit/{commit_hash}"
+        except Exception:
+            pass
+        
+        # Log success to Notion
+        notion_logger.log_backup(
+            success=True,
+            items_processed=result.get('files_backed_up', len(export_files)),
+            commit_link=commit_link,
+            duration=duration,
+            details=result.get('message', 'Backup completed successfully')
+        )
         
         return True
             
