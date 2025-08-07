@@ -1,5 +1,5 @@
 {
-  "export_timestamp": "2025-08-07T23:08:20.616050",
+  "export_timestamp": "2025-08-07T23:09:52.870272",
   "total_decisions": 6,
   "decisions": [
     {
@@ -8,8 +8,8 @@
       "type": "process",
       "date": "2025-08-06",
       "active": true,
-      "synced_at": "2025-08-07T23:08:12.198600",
-      "export_timestamp": "2025-08-07T23:08:12.198605",
+      "synced_at": "2025-08-07T23:09:39.798713",
+      "export_timestamp": "2025-08-07T23:09:39.798719",
       "comment": "Improves code quality and knowledge sharing"
     },
     {
@@ -18,8 +18,8 @@
       "type": "technical",
       "date": "2025-08-07",
       "active": true,
-      "synced_at": "2025-08-07T23:08:13.179019",
-      "export_timestamp": "2025-08-07T23:08:13.179025",
+      "synced_at": "2025-08-07T23:09:40.980931",
+      "export_timestamp": "2025-08-07T23:09:40.980939",
       "comment": "Decision made after performance analysis"
     },
     {
@@ -28,8 +28,8 @@
       "type": "security",
       "date": "2025-08-05",
       "active": true,
-      "synced_at": "2025-08-07T23:08:14.466055",
-      "export_timestamp": "2025-08-07T23:08:14.466061",
+      "synced_at": "2025-08-07T23:09:44.967508",
+      "export_timestamp": "2025-08-07T23:09:44.967529",
       "comment": "Security department requirement"
     },
     {
@@ -38,8 +38,8 @@
       "type": "strategy",
       "date": "2025-08-07",
       "active": true,
-      "synced_at": "2025-08-07T23:08:16.190336",
-      "export_timestamp": "2025-08-07T23:08:16.190342",
+      "synced_at": "2025-08-07T23:09:50.186390",
+      "export_timestamp": "2025-08-07T23:09:50.186397",
       "comment": "Tags: decision, core"
     },
     {
@@ -48,8 +48,8 @@
       "type": "technical",
       "date": "2025-08-07",
       "active": true,
-      "synced_at": "2025-08-07T23:08:19.679652",
-      "export_timestamp": "2025-08-07T23:08:19.679658",
+      "synced_at": "2025-08-07T23:09:51.563864",
+      "export_timestamp": "2025-08-07T23:09:51.563869",
       "comment": "Decision made after team discussion"
     },
     {
@@ -58,8 +58,8 @@
       "type": "technical",
       "date": "2025-08-07",
       "active": true,
-      "synced_at": "2025-08-07T23:08:20.616011",
-      "export_timestamp": "2025-08-07T23:08:20.616017",
+      "synced_at": "2025-08-07T23:09:52.870235",
+      "export_timestamp": "2025-08-07T23:09:52.870241",
       "comment": "Decision made after team discussion"
     }
   ],
