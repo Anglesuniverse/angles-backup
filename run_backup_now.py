@@ -18,6 +18,7 @@ from logging.handlers import RotatingFileHandler
 sys.path.append(str(Path(__file__).parent))
 
 from notion_backup_logger import create_notion_logger
+from sanity_check import SanityChecker
 
 def setup_logging() -> logging.Logger:
     """Setup backup-specific logging"""
@@ -69,7 +70,40 @@ def run_backup():
     logger.info("Starting manual backup operation")
     
     try:
-        # Import backup agent class directly for better control
+        # Step 1: Run pre-backup sanity check
+        print("🔍 Running pre-backup sanity check...")
+        logger.info("Starting pre-backup sanity check")
+        
+        sanity_checker = SanityChecker()
+        sanity_results = sanity_checker.run_all_checks()
+        
+        if not sanity_results['overall_passed']:
+            duration = (datetime.now() - start_time).total_seconds()
+            error_msg = f"Sanity check failed: {sanity_results['total_errors_found']} errors found"
+            logger.error(error_msg)
+            
+            print("❌ BACKUP ABORTED")
+            print(f"   • Reason: Sanity check failed")
+            print(f"   • Errors: {sanity_results['total_errors_found']} found")
+            print(f"   • Warnings: {sanity_results['total_warnings_found']} found")
+            print(f"   • Check logs/sanity_check.log for details")
+            print("=" * 50)
+            
+            # Log failure to Notion
+            notion_logger.log_backup(
+                success=False,
+                items_processed=0,
+                duration=duration,
+                error=error_msg,
+                details="Backup aborted due to failed sanity check"
+            )
+            
+            return False
+        
+        print("✅ Sanity check passed - proceeding with backup")
+        logger.info(f"Sanity check passed: {sanity_results['passed_checks']}/{sanity_results['total_checks']} checks")
+        
+        # Step 2: Import backup agent class directly for better control
         from backup.git_backup import GitBackupAgent
         
         logger.info("Initializing GitHub backup agent")
