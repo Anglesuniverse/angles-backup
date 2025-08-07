@@ -42,7 +42,8 @@ class MemorySyncAgent:
         self._validate_environment()
         
         # Initialize clients
-        self.supabase: Client = create_client(self.supabase_url, self.supabase_key)
+        # Type assertion since we validated env vars above
+        self.supabase: Client = create_client(str(self.supabase_url), str(self.supabase_key))
         
         # Notion API headers
         self.notion_headers = {
@@ -153,45 +154,45 @@ class MemorySyncAgent:
             # Prepare tags for Notion multi-select
             tag_objects = [{"name": tag} for tag in unique_tags]
             
-            # Prepare Notion page data
+            # Prepare Notion page data using correct property names
             page_data = {
                 "parent": {"database_id": self.notion_database_id},
                 "properties": {
-                    "message": {
+                    "Name": {
                         "title": [
                             {
                                 "text": {
-                                    "content": decision_text[:2000]  # Notion title limit
+                                    "content": decision_text[:100]  # Notion title limit (shorter for titles)
                                 }
                             }
                         ]
                     },
-                    "date": {
+                    "Message": {
+                        "rich_text": [
+                            {
+                                "text": {
+                                    "content": decision_text[:2000]  # Full message in rich text
+                                }
+                            }
+                        ]
+                    },
+                    "Date": {
                         "date": {
                             "start": decision_date
                         }
                     },
-                    "tag": {
+                    "Tag": {
                         "multi_select": tag_objects
                     }
                 }
             }
             
-            # Add additional properties if they exist in Notion database
+            # Add comment to Message field if it exists
             if comment:
-                # Try to add comment as rich text if the property exists
-                try:
-                    page_data["properties"]["comment"] = {
-                        "rich_text": [
-                            {
-                                "text": {
-                                    "content": comment[:2000]  # Notion text limit
-                                }
-                            }
-                        ]
-                    }
-                except:
-                    pass  # Comment property might not exist
+                # Append comment to the Message field
+                existing_message = decision_text
+                full_message = f"{existing_message}\n\nComment: {comment}"
+                page_data["properties"]["Message"]["rich_text"][0]["text"]["content"] = full_message[:2000]
             
             # Send to Notion API
             response = requests.post(
