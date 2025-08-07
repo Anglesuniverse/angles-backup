@@ -1,0 +1,103 @@
+Create a GitHub restore system with the following files and behavior:
+
+
+
+1) github_restore.py
+
+
+
+Purpose: restore the AI memory system from backups stored in the GitHub repo exports/.
+Read env secrets: SUPABASE_URL, SUPABASE_KEY, NOTION_TOKEN (optional), NOTION_DATABASE_ID (optional), GITHUB_TOKEN, REPO_URL.
+Ensure a local git repo is present:
+If missing, git init, set user, add origin = REPO_URL (https with x-access-token:${GITHUB_TOKEN}), git fetch --all, git checkout -B main, git pull.
+If present, git pull before restoring.
+
+Snapshot selection:
+Default: auto‑select the latest snapshot files from exports/ (glob both decision_vault_*.json and notion_decisions_*.json).
+Support --at YYYY-MM-DD to choose a specific date, and --file PATH to restore from explicit file(s).
+
+Safety features:
+--dry-run prints exactly what would be restored (counts, sample rows) without writing.
+Validate JSON schema (required keys for decision_vault: id?, decision, date, type, active, comment?, created_at?, updated_at?).
+For Supabase, perform upserts into decision_vault using id if present, else deterministic hash of decision+date+type as id.
+Never change columns outside the table schema; skip unknown keys.
+Don’t overwrite newer records: if target row exists and updated_at in DB is newer than the snapshot, skip unless --force.
+Full progress + error logging to logs/restore.log.
+
+Notion (optional):
+If both NOTION_TOKEN and NOTION_DATABASE_ID exist and --with-notion is passed, create/update pages matching snapshot:
+De‑dupe by (message, date) pair to avoid duplicate pages.
+Add tag(s) to multi‑select tag property.
+
+
+Output:
+Clear console summary: snapshot date, file names, rows read, rows inserted, rows updated, rows skipped, failures.
+Return non‑zero exit code on failure.
+
+
+
+
+
+2) run_restore_now.py
+
+
+
+CLI wrapper around github_restore.py with helpful examples printed when run without args.
+Examples shown:
+python run_restore_now.py --dry-run
+python run_restore_now.py --at 2025-08-07
+python run_restore_now.py --with-notion
+python run_restore_now.py --file exports/decision_vault_2025-08-07.json --force
+
+
+
+
+
+3) tests/test_restore.py
+
+
+
+Unit/integration smoke tests:
+Loads a tiny fixture JSON into a temp table or mocks Supabase client.
+Verifies idempotency (second restore changes 0 rows).
+Verifies --dry-run does not write.
+Verifies “skip newer row” logic and --force behavior.
+
+
+
+
+
+4) Utilities
+
+
+
+Add a small utils/git_helpers.py for safe git operations (set remote with token, pull with retries).
+Add utils/json_sanitizer.py that strips secret‑looking keys (token, api_key, secret) and validates schema.
+
+
+
+
+5) DX
+
+
+
+Update replit.md with a “Disaster Recovery” section containing exact commands.
+Add make targets (optional): make restore, make restore-dry, make restore-date DATE=YYYY-MM-DD.
+
+
+
+
+6) Scheduler (optional)
+
+
+
+Add a Replit scheduled job named “nightly-verify-restore” that runs:
+python run_restore_now.py --dry-run
+Log results to logs/restore_verify.log and print ✅/❌ summary.
+
+
+
+
+
+Use clean English, type hints, and clear console messages. Handle missing secrets gracefully with actionable errors.
+

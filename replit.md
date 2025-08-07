@@ -22,6 +22,15 @@ This is a sophisticated data processing system designed to automatically handle 
 - Successfully tested all system components - full integration working
 - All 4 existing decisions synced to Notion database without errors
 
+**August 7, 2025 - GitHub Backup & Disaster Recovery:**
+- Created complete GitHub backup system with conflict resolution
+- Built automated restore system with safety features and validation
+- Added comprehensive disaster recovery capabilities with dry-run mode
+- Implemented CLI wrapper with examples and safety warnings
+- Created full test suite for backup and restore operations
+- Added scheduled nightly verification system
+- Fixed Git conflicts and ensured reliable automated backups
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
@@ -85,3 +94,141 @@ Centralized configuration system supporting:
 - **typing**: Type hints for better code maintainability and IDE support
 
 The system is designed to be easily extensible, with clear separation of concerns and modular architecture that allows for easy addition of new data types, classification algorithms, or storage backends.
+
+## Disaster Recovery
+
+### Overview
+The system includes comprehensive disaster recovery capabilities through automated GitHub backups and intelligent restore operations. All memory data is safely backed up to GitHub with full validation and conflict resolution.
+
+### Backup System
+- **Automated Backups**: Daily automated backups to GitHub repository
+- **Sanitized Exports**: All secrets and sensitive data automatically removed
+- **Conflict Resolution**: Smart Git conflict handling with safe force-push capabilities
+- **Multi-source**: Backs up from both Supabase and Notion databases
+- **Rotating History**: Maintains 30 days of backup history with automatic cleanup
+
+### Restore Operations
+
+#### Quick Restore Commands
+
+**1. Dry Run (Always run first):**
+```bash
+python run_restore_now.py --dry-run
+```
+Shows exactly what would be restored without making any changes.
+
+**2. Restore Latest Backup:**
+```bash
+python run_restore_now.py
+```
+Restores from the most recent backup files automatically.
+
+**3. Restore Specific Date:**
+```bash
+python run_restore_now.py --at 2025-08-07
+```
+Restores backups from a specific date (YYYY-MM-DD format).
+
+**4. Restore with Notion Sync:**
+```bash
+python run_restore_now.py --with-notion
+```
+Restores to both Supabase and recreates Notion pages.
+
+**5. Force Restore (Dangerous):**
+```bash
+python run_restore_now.py --file exports/backup.json --force
+```
+Overwrites newer records (use only when certain).
+
+#### Advanced Restore Examples
+
+**Restore specific backup file:**
+```bash
+python run_restore_now.py --file exports/decision_vault_2025-08-07.json
+```
+
+**Complete disaster recovery:**
+```bash
+# Step 1: Always dry-run first
+python run_restore_now.py --at 2025-08-07 --dry-run
+
+# Step 2: If dry-run looks good, run live restore
+python run_restore_now.py --at 2025-08-07 --with-notion
+```
+
+### Safety Features
+- **Dry Run Mode**: Always test restores before executing
+- **Timestamp Comparison**: Automatically skips restoring older data over newer data
+- **Schema Validation**: Validates all data before restoration
+- **Duplicate Detection**: Prevents duplicate entries during restore
+- **Progress Logging**: Detailed logs in `logs/restore.log`
+- **Rollback Support**: Can restore to any previous backup point
+
+### Verification System
+Nightly automated verification runs dry-run restores to ensure:
+- Backup files are valid and accessible
+- Git repository is properly synchronized
+- Restore system is functioning correctly
+- All environment variables are properly configured
+
+### Emergency Recovery Procedure
+
+**If system is completely lost:**
+
+1. **Set up environment variables:**
+   - `SUPABASE_URL`, `SUPABASE_KEY`
+   - `GITHUB_TOKEN`, `REPO_URL`
+   - `NOTION_TOKEN`, `NOTION_DATABASE_ID` (optional)
+
+2. **Clone/pull latest backups:**
+   ```bash
+   git clone $REPO_URL .
+   # or
+   git pull origin main
+   ```
+
+3. **Run dry-run verification:**
+   ```bash
+   python run_restore_now.py --dry-run
+   ```
+
+4. **Execute restore:**
+   ```bash
+   python run_restore_now.py --with-notion
+   ```
+
+5. **Verify restoration:**
+   - Check Supabase `decision_vault` table
+   - Check Notion database pages
+   - Run memory sync to verify connectivity
+
+### Backup File Structure
+- `export/decision_vault_YYYY-MM-DD.json` - Supabase exports
+- `export/notion_decisions_YYYY-MM-DD.json` - Notion exports  
+- `export/decisions_YYYYMMDD.json` - Combined exports
+- `logs/` - System operation logs (excluded from public repos)
+
+### Troubleshooting
+
+**Restore fails with "No snapshot files found":**
+- Ensure Git repository is up to date: `git pull origin main`
+- Check export/ directory exists and contains backup files
+- Use `--file` option to specify explicit backup file
+
+**Git conflicts during backup:**
+- System automatically resolves most conflicts
+- Check logs for conflict resolution details
+- Manual resolution rarely needed due to smart conflict handling
+
+**Notion restore fails:**
+- Verify `NOTION_TOKEN` and `NOTION_DATABASE_ID` are set
+- Check Notion integration has proper database permissions
+- Use `--dry-run` to test Notion connectivity without writes
+
+**Supabase restore fails:**
+- Verify `SUPABASE_URL` and `SUPABASE_KEY` are correct
+- Ensure `decision_vault` table exists with proper schema
+- Check network connectivity to Supabase
+
+All restore operations are logged to `logs/restore.log` for detailed troubleshooting.
