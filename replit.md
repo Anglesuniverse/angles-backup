@@ -31,6 +31,15 @@ This is a sophisticated data processing system designed to automatically handle 
 - Added scheduled nightly verification system
 - Fixed Git conflicts and ensured reliable automated backups
 
+**August 7, 2025 - Enhanced Sanity Check System:**
+- Created comprehensive pre-backup sanity check (sanity_check.py)
+- Integrated sanity checks into backup workflow with automatic abort on failure
+- Built specialized pre-restore sanity checker (restore_sanity_check.py)
+- Added restore-specific validation: consistency checks and dependency verification
+- Integrated restore sanity checks into GitHub restore system
+- Extended Notion logging for all sanity check operations
+- Full automation: backup and restore operations include automatic sanity checks
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.

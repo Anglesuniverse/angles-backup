@@ -215,6 +215,23 @@ class NotionBackupLogger:
         )
         
         return self.log_operation(entry)
+    
+    def log_restore_sanity_check(self, success: bool, files_checked: int, restore_files_count: int = 0,
+                                 errors_found: int = 0, warnings_found: int = 0, duration: Optional[float] = None,
+                                 error: Optional[str] = None, details: Optional[str] = None) -> bool:
+        """Log a restore sanity check operation"""
+        entry = BackupRestoreLogEntry(
+            timestamp=datetime.now(timezone.utc).isoformat(),
+            action_type="Restore Sanity Check",
+            items_processed=files_checked,
+            status="Success" if success else "Failure",
+            github_commit_link=None,
+            duration_seconds=duration,
+            error_message=error,
+            details=details
+        )
+        
+        return self.log_operation(entry)
 
 # Convenience function for easy import
 def create_notion_logger() -> NotionBackupLogger:

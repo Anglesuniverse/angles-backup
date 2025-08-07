@@ -30,6 +30,7 @@ sys.path.append(str(Path(__file__).parent))
 from utils.git_helpers import GitHelpers
 from utils.json_sanitizer import JSONSanitizer
 from notion_backup_logger import create_notion_logger
+from restore_sanity_check import RestoreSanityChecker
 
 try:
     from supabase import create_client, Client as SupabaseClient
@@ -591,6 +592,52 @@ class GitHubRestoreSystem:
                     "error": f"No snapshot files found: {files_result.get('error', 'No files match criteria')}",
                     "duration": (datetime.now() - start_time).total_seconds()
                 }
+            
+            # Step 2.5: Run pre-restore sanity check
+            if not dry_run:  # Skip sanity check for dry runs to allow inspection
+                logger.info("🔍 Running pre-restore sanity check...")
+                
+                restore_file_paths = [file_info['path'] for file_info in files_result['files']]
+                sanity_checker = RestoreSanityChecker()
+                sanity_results = sanity_checker.run_restore_sanity_checks(restore_file_paths)
+                
+                if not sanity_results['overall_passed']:
+                    duration = (datetime.now() - start_time).total_seconds()
+                    error_msg = f"Restore sanity check failed: {sanity_results['total_errors_found']} errors found"
+                    
+                    # Log failure to Notion
+                    self.notion_logger.log_restore_sanity_check(
+                        success=False,
+                        files_checked=sanity_results['total_files_checked'],
+                        restore_files_count=len(restore_file_paths),
+                        errors_found=sanity_results['total_errors_found'],
+                        warnings_found=sanity_results['total_warnings_found'],
+                        duration=duration,
+                        error=error_msg,
+                        details="Restore aborted due to failed sanity check"
+                    )
+                    
+                    return {
+                        "success": False,
+                        "error": error_msg,
+                        "sanity_check_failed": True,
+                        "sanity_results": sanity_results,
+                        "duration": duration
+                    }
+                
+                logger.info(f"✅ Restore sanity check passed: {sanity_results['passed_checks']}/{sanity_results['total_checks']} checks")
+                
+                # Log success to Notion
+                self.notion_logger.log_restore_sanity_check(
+                    success=True,
+                    files_checked=sanity_results['total_files_checked'],
+                    restore_files_count=len(restore_file_paths),
+                    errors_found=sanity_results['total_errors_found'],
+                    warnings_found=sanity_results['total_warnings_found'],
+                    details=f"Restore sanity check passed: {sanity_results['passed_checks']}/{sanity_results['total_checks']} checks"
+                )
+            else:
+                logger.info("ℹ️ Skipping sanity check for dry run")
             
             # Step 3: Load and validate data
             data_result = self.load_and_validate_files(files_result['files'])
