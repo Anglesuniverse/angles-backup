@@ -1,0 +1,199 @@
+Create a fully working, bidirectional sync service between Supabase and Notion for Angles AI Universe™.
+
+
+
+Objective
+
+
+
+Keep Supabase table decision_vault and a Notion database in perfect sync (two‑way).
+Idempotent, resilient, safe. Works on schedule and on demand.
+
+
+
+
+Environment (use Replit Secrets)
+
+
+
+SUPABASE_URL
+SUPABASE_SERVICE_ROLE_KEY  ← use service role (needed for updates)
+NOTION_API_KEY
+NOTION_DATABASE_ID
+
+
+
+
+Supabase table (assume exists; if missing, generate SQL in README)
+
+
+
+id uuid pk default gen_random_uuid()
+decision text
+type text
+date date
+created_at timestamptz default now()
+updated_at timestamptz default now()
+notion_page_id text null
+notion_synced boolean default false
+checksum text null  (sha256 of [decision|type|date])
+
+
+
+
+Notion schema mapping
+
+
+
+Title: Decision  → Supabase decision
+Multi‑select: Type → Supabase type (one value)
+Date: Date → Supabase date
+Rich text (optional): Checksum → checksum
+Created/Last edited (Notion’s internal) for timestamps
+
+
+
+
+Requirements
+
+
+
+Files
+sync/config.py → load env + constants
+sync/supabase_client.py → thin wrapper (supabase-py)
+sync/notion_client.py → wrapper for Notion REST
+sync/diff.py → compute checksums, compare records
+sync/run_sync.py → main bidirectional sync
+sync/schedule_sync.py → run every 15 min (use schedule), also CLI flag --once
+sync/logging_util.py → rotating logs to logs/sync.log
+README_SYNC.md → setup & troubleshooting
+tests/test_sync.py → minimal integration test with dry‑run mode
+
+Logic
+Fetch: page through Supabase (100 at a time) & Notion (pagination).
+Normalize whitespace/casing; compute checksum = sha256(decision|type|date ISO).
+Match strategy:
+primary: notion_page_id
+fallback: checksum
+
+Conflict resolution:
+if one side updated later → upsert the other.
+Update updated_at in Supabase on write.
+
+Create:
+If in Supabase only → create Notion page, store notion_page_id, set notion_synced=true.
+If in Notion only → insert into Supabase with mapped fields.
+
+Update:
+Detect changes via checksum; apply delta one way, then mark synced.
+
+Delete policy: soft‑delete only (skip hard deletes for safety). Document in README.
+Retry & rate limits:
+Respect Notion 429 (backoff with jitter).
+Network retries 3x.
+
+Dry‑run: python -m sync.run_sync --dry-run prints plan, no writes.
+Health:
+Write logs/last_success.json with timestamp, counts.
+Provide python -m sync.run_sync --report to print last run stats.
+
+
+Outputs
+Working code, importable modules.
+Clear instructions in README_SYNC.md including the SQL to add missing Supabase columns if required.
+Example Notion property JSON in the README.
+
+
+
+
+
+Make the code clean, typed where useful, with small, testable functions. All ready‑to‑run in Replit.
+
+
+
+
+
+
+
+
+
+2) Replit AI – 
+
+Add Sync Health Dashboard & Manual Controls
+
+
+
+
+
+Add a tiny developer dashboard and CLIs to manage the sync.
+
+
+
+Deliverables
+
+
+
+tools/controls.py
+python tools/controls.py sync-now → runs run_sync once (no schedule)
+python tools/controls.py dry-run → prints plan
+python tools/controls.py report → shows last_success.json summary
+
+tools/health_server.py (Flask or FastAPI)
+GET /health → {status, last_run, totals, errors} reads from logs/last_success.json & latest logs/sync.log
+Start via python tools/health_server.py (bind 0.0.0.0:8080)
+
+Update README_SYNC.md with how to use these, and how to expose the port in Replit.
+
+
+
+
+Keep logging lightweight, no secrets in logs.
+
+
+
+
+
+
+
+
+
+3) Notion AI – 
+
+Ensure Database Properties
+
+
+
+
+
+Paste this into Notion AI while viewing your Notion database to standardize properties:
+
+
+
+Create or align the following properties for this database:
+
+
+
+Title property named Decision (type: Title)
+Type (type: Multi‑select). Create options “Policy”, “Architecture”, “Ops”, “UX”, “Other”.
+Date (type: Date)
+Checksum (type: Rich text)
+(Optional) Synced (type: Checkbox)
+
+
+
+
+Confirm the property API names are exactly:
+
+
+
+Decision (title)
+Type (multi_select)
+Date (date)
+Checksum (rich_text)
+Synced (checkbox)
+
+
+
+
+Return a short summary confirming properties are ready for API use.
+
