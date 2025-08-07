@@ -1,142 +1,142 @@
 #!/usr/bin/env python3
-"""Test script för decision_vault operations"""
+"""Test script for decision_vault operations"""
 
 import sys
 from datetime import date, timedelta
 from decision_vault_operations import (
-    lagra_beslut, 
-    hämta_beslut, 
-    uppdatera_beslut_status,
-    få_beslut_statistik
+    store_decision, 
+    get_decisions, 
+    update_decision_status,
+    get_decision_statistics
 )
 
-def test_lagra_beslut():
-    """Test 1: Lagra beslut"""
-    print("Test 1: Lagrar testbeslut...")
+def test_store_decision():
+    """Test 1: Store decision"""
+    print("Test 1: Storing test decision...")
     try:
-        result = lagra_beslut(
-            beslut="Vi använder Python som huvudspråk för backend",
-            typ="teknik",
-            datum=date.today(),
-            kommentar="Beslut efter teamdiskussion"
+        result = store_decision(
+            decision="Use Python as main backend language",
+            decision_type="technical",
+            decision_date=date.today(),
+            comment="Decision made after team discussion"
         )
         
         if result["success"]:
-            print("✅ Beslut lagrat framgångsrikt")
+            print("✅ Decision stored successfully")
             print(f"   ID: {result['data'].get('id')}")
-            print(f"   Beslut: {result['data'].get('beslut')}")
+            print(f"   Decision: {result['data'].get('decision')}")
             return result["data"]
         else:
-            print(f"❌ Misslyckades lagra beslut: {result.get('error', 'Okänt fel')}")
+            print(f"❌ Failed to store decision: {result.get('error', 'Unknown error')}")
             return None
             
     except Exception as e:
-        print(f"❌ Fel vid lagring: {e}")
+        print(f"❌ Store error: {e}")
         return None
 
-def test_hämta_beslut():
-    """Test 2: Hämta beslut"""
-    print("\nTest 2: Hämtar beslut...")
+def test_get_decisions():
+    """Test 2: Get decisions"""
+    print("\nTest 2: Retrieving decisions...")
     try:
-        result = hämta_beslut(limit=10)
+        result = get_decisions(limit=10)
         
         if result["success"]:
             count = result.get('count', 0)
-            print(f"✅ Hämtade {count} beslut")
+            print(f"✅ Retrieved {count} decisions")
             
             if count > 0:
-                print("   Senaste beslut:")
-                for i, beslut in enumerate(result["data"][:3], 1):
-                    beslut_text = beslut.get("beslut", "")[:50]
-                    typ = beslut.get("typ", "")
-                    datum = beslut.get("datum", "")
-                    print(f"   {i}. {beslut_text}... ({typ}, {datum})")
+                print("   Recent decisions:")
+                for i, decision in enumerate(result["data"][:3], 1):
+                    decision_text = decision.get("decision", "")[:50]
+                    decision_type = decision.get("type", "")
+                    decision_date = decision.get("date", "")
+                    print(f"   {i}. {decision_text}... ({decision_type}, {decision_date})")
             
             return True
         else:
-            print(f"❌ Misslyckades hämta beslut: {result.get('error', 'Okänt fel')}")
+            print(f"❌ Failed to retrieve decisions: {result.get('error', 'Unknown error')}")
             return False
             
     except Exception as e:
-        print(f"❌ Fel vid hämtning: {e}")
+        print(f"❌ Retrieve error: {e}")
         return False
 
-def test_filtrera_beslut():
-    """Test 3: Filtrera beslut per typ"""
-    print("\nTest 3: Filtrerar beslut per typ...")
+def test_filter_decisions():
+    """Test 3: Filter decisions by type"""
+    print("\nTest 3: Filtering decisions by type...")
     try:
-        result = hämta_beslut(limit=5, typ="teknik")
+        result = get_decisions(limit=5, decision_type="technical")
         
         if result["success"]:
             count = result.get('count', 0)
-            print(f"✅ Hämtade {count} teknikbeslut")
+            print(f"✅ Retrieved {count} technical decisions")
             return True
         else:
-            print(f"❌ Misslyckades filtrera: {result.get('error', 'Okänt fel')}")
+            print(f"❌ Failed to filter: {result.get('error', 'Unknown error')}")
             return False
             
     except Exception as e:
-        print(f"❌ Fel vid filtrering: {e}")
+        print(f"❌ Filter error: {e}")
         return False
 
-def test_statistik():
-    """Test 4: Få statistik"""
-    print("\nTest 4: Hämtar statistik...")
+def test_statistics():
+    """Test 4: Get statistics"""
+    print("\nTest 4: Getting statistics...")
     try:
-        result = få_beslut_statistik()
+        result = get_decision_statistics()
         
         if result["success"]:
-            print("✅ Statistik hämtad")
-            print(f"   Totalt: {result.get('totalt', 0)} beslut")
-            print(f"   Aktiva: {result.get('aktiva', 0)}")
-            print(f"   Inaktiva: {result.get('inaktiva', 0)}")
+            print("✅ Statistics retrieved")
+            print(f"   Total: {result.get('total', 0)} decisions")
+            print(f"   Active: {result.get('active', 0)}")
+            print(f"   Inactive: {result.get('inactive', 0)}")
             
-            per_typ = result.get('per_typ', {})
-            if per_typ:
-                print("   Per typ:")
-                for typ, stats in per_typ.items():
-                    print(f"     {typ}: {stats['aktiva']}/{stats['totalt']}")
+            by_type = result.get('by_type', {})
+            if by_type:
+                print("   By type:")
+                for decision_type, stats in by_type.items():
+                    print(f"     {decision_type}: {stats['active']}/{stats['total']}")
             
             return True
         else:
-            print(f"❌ Misslyckades hämta statistik: {result.get('error', 'Okänt fel')}")
+            print(f"❌ Failed to get statistics: {result.get('error', 'Unknown error')}")
             return False
             
     except Exception as e:
-        print(f"❌ Fel vid statistik: {e}")
+        print(f"❌ Statistics error: {e}")
         return False
 
 def main():
-    """Kör alla decision_vault tester"""
+    """Run all decision_vault tests"""
     print("Decision Vault System Tests")
     print("=" * 40)
     
     tests_passed = 0
     
-    if test_lagra_beslut():
+    if test_store_decision():
         tests_passed += 1
     
-    if test_hämta_beslut():
+    if test_get_decisions():
         tests_passed += 1
     
-    if test_filtrera_beslut():
+    if test_filter_decisions():
         tests_passed += 1
     
-    if test_statistik():
+    if test_statistics():
         tests_passed += 1
     
-    # Sammanfattning
+    # Summary
     print("\n" + "=" * 40)
-    print(f"Tester godkända: {tests_passed}/4")
+    print(f"Tests passed: {tests_passed}/4")
     
     if tests_passed >= 3:
-        print("✅ Decision Vault systemet fungerar!")
-        print("\n💡 Användning:")
-        print("   from decision_vault_operations import lagra_beslut")
-        print('   lagra_beslut("Ditt beslut", "teknik")')
+        print("✅ Decision Vault system is working!")
+        print("\n💡 Usage:")
+        print("   from decision_vault_operations import store_decision")
+        print('   store_decision("Your decision", "technical")')
         return True
     else:
-        print("❌ Några tester misslyckades.")
+        print("❌ Some tests failed.")
         return False
 
 if __name__ == "__main__":

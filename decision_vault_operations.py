@@ -1,6 +1,6 @@
 """
-Operations för decision_vault tabellen
-Hanterar svenska beslutsdokumentation i Supabase
+Operations for decision_vault table
+Handles decision documentation in Supabase
 """
 
 import os
@@ -8,95 +8,95 @@ from datetime import date, datetime
 from config import supabase
 from typing import Optional, List, Dict, Any
 
-def lagra_beslut(beslut: str, typ: str, datum: Optional[date] = None, 
-                aktivt: bool = True, kommentar: Optional[str] = None) -> Dict[str, Any]:
+def store_decision(decision: str, decision_type: str, decision_date: Optional[date] = None, 
+                  active: bool = True, comment: Optional[str] = None) -> Dict[str, Any]:
     """
-    Lagra ett beslut i decision_vault tabellen
+    Store a decision in the decision_vault table
     
     Args:
-        beslut: Beslutets innehåll
-        typ: Typ av beslut (strategi, teknik, etik, etc.)
-        datum: Datum för beslutet (default: idag)
-        aktivt: Om beslutet är aktivt (default: True)
-        kommentar: Valfri kommentar
+        decision: The decision content
+        decision_type: Type of decision (strategy, technical, ethical, etc.)
+        decision_date: Date of the decision (default: today)
+        active: Whether the decision is active (default: True)
+        comment: Optional comment
     
     Returns:
-        dict: Resultat med success/error information
+        dict: Result with success/error information
     """
     
-    if not beslut or not beslut.strip():
-        raise ValueError("Beslut kan inte vara tomt")
+    if not decision or not decision.strip():
+        raise ValueError("Decision cannot be empty")
     
-    if not typ or not typ.strip():
-        raise ValueError("Typ kan inte vara tom")
+    if not decision_type or not decision_type.strip():
+        raise ValueError("Decision type cannot be empty")
     
-    # Validera typ
-    giltiga_typer = ['strategi', 'teknik', 'etik', 'arkitektur', 'process', 'säkerhet', 'annat']
-    if typ.lower() not in giltiga_typer:
-        raise ValueError(f"Typ måste vara en av: {', '.join(giltiga_typer)}")
+    # Validate type
+    valid_types = ['strategy', 'technical', 'ethical', 'architecture', 'process', 'security', 'other']
+    if decision_type.lower() not in valid_types:
+        raise ValueError(f"Type must be one of: {', '.join(valid_types)}")
     
     try:
-        # Förbered data
-        beslut_data = {
-            "beslut": beslut.strip(),
-            "typ": typ.lower(),
-            "datum": (datum or date.today()).isoformat(),
-            "aktivt": aktivt
+        # Prepare data
+        decision_data = {
+            "decision": decision.strip(),
+            "type": decision_type.lower(),
+            "date": (decision_date or date.today()).isoformat(),
+            "active": active
         }
         
-        if kommentar:
-            beslut_data["kommentar"] = kommentar.strip()
+        if comment:
+            decision_data["comment"] = comment.strip()
         
-        # Lagra i Supabase
-        result = supabase.table("decision_vault").insert(beslut_data).execute()
+        # Store in Supabase
+        result = supabase.table("decision_vault").insert(decision_data).execute()
         
         if result.data:
             return {
                 "success": True,
                 "data": result.data[0],
-                "message": "Beslut lagrat framgångsrikt"
+                "message": "Decision stored successfully"
             }
         else:
             return {
                 "success": False,
-                "error": "Ingen data returnerades från insert-operation",
-                "message": "Misslyckades att lagra beslut"
+                "error": "No data returned from insert operation",
+                "message": "Failed to store decision"
             }
             
     except Exception as e:
         return {
             "success": False,
             "error": str(e),
-            "message": f"Databasoperation misslyckades: {str(e)}"
+            "message": f"Database operation failed: {str(e)}"
         }
 
-def hämta_beslut(limit: int = 20, typ: Optional[str] = None, 
-                endast_aktiva: bool = True) -> Dict[str, Any]:
+def get_decisions(limit: int = 20, decision_type: Optional[str] = None, 
+                 active_only: bool = True) -> Dict[str, Any]:
     """
-    Hämta beslut från decision_vault tabellen
+    Retrieve decisions from decision_vault table
     
     Args:
-        limit: Max antal beslut att hämta
-        typ: Filtrera på typ (valfritt)
-        endast_aktiva: Visa endast aktiva beslut
+        limit: Max number of decisions to retrieve
+        decision_type: Filter by type (optional)
+        active_only: Show only active decisions
     
     Returns:
-        dict: Lista med beslut eller error information
+        dict: List of decisions or error information
     """
     
     try:
         query = supabase.table("decision_vault").select("*")
         
-        # Filtrera på aktiva beslut
-        if endast_aktiva:
-            query = query.eq("aktivt", True)
+        # Filter active decisions
+        if active_only:
+            query = query.eq("active", True)
         
-        # Filtrera på typ
-        if typ:
-            query = query.eq("typ", typ.lower())
+        # Filter by type
+        if decision_type:
+            query = query.eq("type", decision_type.lower())
         
-        # Sortera och begränsa
-        result = query.order("datum", desc=True).limit(limit).execute()
+        # Order and limit
+        result = query.order("date", desc=True).limit(limit).execute()
         
         return {
             "success": True,
@@ -108,92 +108,92 @@ def hämta_beslut(limit: int = 20, typ: Optional[str] = None,
         return {
             "success": False,
             "error": str(e),
-            "message": f"Misslyckades att hämta beslut: {str(e)}"
+            "message": f"Failed to retrieve decisions: {str(e)}"
         }
 
-def uppdatera_beslut_status(beslut_id: str, aktivt: bool) -> Dict[str, Any]:
+def update_decision_status(decision_id: str, active: bool) -> Dict[str, Any]:
     """
-    Uppdatera status för ett beslut (aktivt/inaktivt)
+    Update decision status (active/inactive)
     
     Args:
-        beslut_id: UUID för beslutet
-        aktivt: Ny status
+        decision_id: UUID of the decision
+        active: New status
     
     Returns:
-        dict: Resultat av uppdateringen
+        dict: Result of the update
     """
     
     try:
         result = supabase.table("decision_vault").update(
-            {"aktivt": aktivt}
-        ).eq("id", beslut_id).execute()
+            {"active": active}
+        ).eq("id", decision_id).execute()
         
         if result.data:
             return {
                 "success": True,
                 "data": result.data[0],
-                "message": f"Beslut status uppdaterad till {'aktiv' if aktivt else 'inaktiv'}"
+                "message": f"Decision status updated to {'active' if active else 'inactive'}"
             }
         else:
             return {
                 "success": False,
-                "message": "Inget beslut hittades med det ID:t"
+                "message": "No decision found with that ID"
             }
             
     except Exception as e:
         return {
             "success": False,
             "error": str(e),
-            "message": f"Misslyckades att uppdatera status: {str(e)}"
+            "message": f"Failed to update status: {str(e)}"
         }
 
-def få_beslut_statistik() -> Dict[str, Any]:
+def get_decision_statistics() -> Dict[str, Any]:
     """
-    Få statistik över beslut i databasen
+    Get statistics about decisions in the database
     
     Returns:
-        dict: Statistik över beslut per typ och status
+        dict: Statistics about decisions by type and status
     """
     
     try:
-        # Hämta alla beslut för statistik
-        result = supabase.table("decision_vault").select("typ, aktivt").execute()
+        # Get all decisions for statistics
+        result = supabase.table("decision_vault").select("type, active").execute()
         
         if not result.data:
             return {
                 "success": True,
-                "totalt": 0,
-                "aktiva": 0,
-                "inaktiva": 0,
-                "per_typ": {}
+                "total": 0,
+                "active": 0,
+                "inactive": 0,
+                "by_type": {}
             }
         
-        beslut = result.data
-        totalt = len(beslut)
-        aktiva = len([b for b in beslut if b["aktivt"]])
-        inaktiva = totalt - aktiva
+        decisions = result.data
+        total = len(decisions)
+        active = len([d for d in decisions if d["active"]])
+        inactive = total - active
         
-        # Statistik per typ
-        per_typ = {}
-        for beslut_item in beslut:
-            typ = beslut_item["typ"]
-            if typ not in per_typ:
-                per_typ[typ] = {"totalt": 0, "aktiva": 0}
-            per_typ[typ]["totalt"] += 1
-            if beslut_item["aktivt"]:
-                per_typ[typ]["aktiva"] += 1
+        # Statistics by type
+        by_type = {}
+        for decision in decisions:
+            decision_type = decision["type"]
+            if decision_type not in by_type:
+                by_type[decision_type] = {"total": 0, "active": 0}
+            by_type[decision_type]["total"] += 1
+            if decision["active"]:
+                by_type[decision_type]["active"] += 1
         
         return {
             "success": True,
-            "totalt": totalt,
-            "aktiva": aktiva,
-            "inaktiva": inaktiva,
-            "per_typ": per_typ
+            "total": total,
+            "active": active,
+            "inactive": inactive,
+            "by_type": by_type
         }
         
     except Exception as e:
         return {
             "success": False,
             "error": str(e),
-            "message": f"Misslyckades att hämta statistik: {str(e)}"
+            "message": f"Failed to get statistics: {str(e)}"
         }

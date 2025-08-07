@@ -1,27 +1,27 @@
--- Skapa decision_vault tabell i Supabase
--- Kör detta SQL-script i din Supabase SQL Editor
+-- Create decision_vault table in Supabase
+-- Run this SQL script in your Supabase SQL Editor
 
 CREATE TABLE IF NOT EXISTS decision_vault (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    beslut TEXT NOT NULL,
-    datum DATE NOT NULL DEFAULT CURRENT_DATE,
-    typ TEXT NOT NULL,
-    aktivt BOOLEAN NOT NULL DEFAULT true,
-    kommentar TEXT,
+    decision TEXT NOT NULL,
+    date DATE NOT NULL DEFAULT CURRENT_DATE,
+    type TEXT NOT NULL,
+    active BOOLEAN NOT NULL DEFAULT true,
+    comment TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
-    CONSTRAINT decision_vault_beslut_not_empty CHECK (LENGTH(TRIM(beslut)) > 0),
-    CONSTRAINT decision_vault_typ_not_empty CHECK (LENGTH(TRIM(typ)) > 0),
-    CONSTRAINT decision_vault_typ_valid CHECK (typ IN ('strategi', 'teknik', 'etik', 'arkitektur', 'process', 'säkerhet', 'annat'))
+    CONSTRAINT decision_vault_decision_not_empty CHECK (LENGTH(TRIM(decision)) > 0),
+    CONSTRAINT decision_vault_type_not_empty CHECK (LENGTH(TRIM(type)) > 0),
+    CONSTRAINT decision_vault_type_valid CHECK (type IN ('strategy', 'technical', 'ethical', 'architecture', 'process', 'security', 'other'))
 );
 
--- Skapa index för bättre prestanda
-CREATE INDEX IF NOT EXISTS idx_decision_vault_datum ON decision_vault(datum DESC);
-CREATE INDEX IF NOT EXISTS idx_decision_vault_typ ON decision_vault(typ);
-CREATE INDEX IF NOT EXISTS idx_decision_vault_aktivt ON decision_vault(aktivt);
+-- Create indexes for better performance
+CREATE INDEX IF NOT EXISTS idx_decision_vault_date ON decision_vault(date DESC);
+CREATE INDEX IF NOT EXISTS idx_decision_vault_type ON decision_vault(type);
+CREATE INDEX IF NOT EXISTS idx_decision_vault_active ON decision_vault(active);
 CREATE INDEX IF NOT EXISTS idx_decision_vault_created_at ON decision_vault(created_at DESC);
 
--- Skapa trigger för att uppdatera updated_at automatiskt
+-- Create trigger to automatically update updated_at
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -35,13 +35,13 @@ CREATE TRIGGER update_decision_vault_updated_at
     FOR EACH ROW 
     EXECUTE FUNCTION update_updated_at_column();
 
--- Lägg till test-data för att verifiera att tabellen fungerar
-INSERT INTO decision_vault (beslut, datum, typ, aktivt, kommentar) VALUES 
-('Vi använder PostgreSQL som primär databas för bättre prestanda', CURRENT_DATE, 'teknik', true, 'Beslut taget efter prestanda-analys'),
-('Implementera Code Review för alla pull requests', CURRENT_DATE - INTERVAL '1 day', 'process', true, 'Förbättrar kodkvalitet och kunskapsdelning'),
-('Använd HTTPS för all kommunikation', CURRENT_DATE - INTERVAL '2 days', 'säkerhet', true, 'Krav från säkerhetsavdelningen');
+-- Insert test data to verify table works
+INSERT INTO decision_vault (decision, date, type, active, comment) VALUES 
+('Use PostgreSQL as primary database for better performance', CURRENT_DATE, 'technical', true, 'Decision made after performance analysis'),
+('Implement Code Review for all pull requests', CURRENT_DATE - INTERVAL '1 day', 'process', true, 'Improves code quality and knowledge sharing'),
+('Use HTTPS for all communication', CURRENT_DATE - INTERVAL '2 days', 'security', true, 'Security department requirement');
 
--- Visa tabellstruktur
+-- Show table structure
 SELECT 
     column_name,
     data_type,
