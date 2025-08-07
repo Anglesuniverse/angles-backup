@@ -1,0 +1,26 @@
+{
+  "agent_name": "Angles AI Universe™ Agent",
+  "version": "2.0.0",
+  "capabilities": [
+    "code_generation",
+    "file_management",
+    "database_operations",
+    "git_integration"
+  ],
+  "settings": {
+    "max_file_size": "10MB",
+    "timeout_seconds": 300,
+    "retry_attempts": 3,
+    "logging_level": "INFO"
+  },
+  "integrations": {
+    "notion_enabled": true,
+    "supabase_enabled": true,
+    "git_auto_commit": true
+  },
+  "security": {
+    "validate_inputs": true,
+    "sanitize_outputs": true,
+    "encrypt_sensitive_data": true
+  }
+}

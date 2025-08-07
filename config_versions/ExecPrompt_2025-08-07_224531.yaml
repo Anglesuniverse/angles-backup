@@ -1,0 +1,45 @@
+# Angles AI Universe™ Execution Prompt Configuration
+# Version: 2.0.0
+# Last Updated: 2025-08-07
+
+execution_prompt:
+  pre_execution:
+    - "Validate input parameters"
+    - "Check system requirements"
+    - "Verify security constraints"
+    - "Initialize logging"
+  
+  execution_flow:
+    timeout_seconds: 300
+    retry_attempts: 3
+    parallel_execution: true
+    error_recovery: "automatic"
+  
+  post_execution:
+    - "Log operation results"
+    - "Update system state"
+    - "Commit changes to Git"
+    - "Notify completion"
+
+validation_rules:
+  input_sanitization: true
+  output_validation: true
+  security_checks: true
+  performance_monitoring: true
+
+logging:
+  level: "INFO"
+  destinations:
+    - "file"
+    - "console"
+    - "notion"
+  
+  format: "structured"
+  include_stack_trace: true
+  retention_days: 30
+
+error_handling:
+  graceful_degradation: true
+  user_notification: true
+  automatic_retry: true
+  escalation_threshold: 3
