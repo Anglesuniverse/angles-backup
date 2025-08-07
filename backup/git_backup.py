@@ -155,6 +155,63 @@ class GitBackupAgent:
         
         return authenticated_url
     
+    def _push_with_conflict_resolution(self) -> Dict[str, Any]:
+        """
+        Push changes with proper conflict resolution
+        Handles cases where remote has changes we don't have locally
+        """
+        logger.info("Attempting to push changes")
+        
+        # First, try a regular push
+        push_result = self._run_command(['git', 'push', 'origin', 'main'])
+        
+        if push_result['success']:
+            logger.info("Push successful")
+            return {"success": True, "message": "Successfully pushed to GitHub"}
+        
+        # Check if it's a "no upstream branch" error
+        if "no upstream branch" in push_result['stderr']:
+            logger.info("Setting upstream branch and pushing")
+            upstream_result = self._run_command(['git', 'push', '--set-upstream', 'origin', 'main'])
+            if upstream_result['success']:
+                return {"success": True, "message": "Successfully pushed with upstream"}
+            else:
+                # If upstream push also fails, continue to conflict resolution
+                push_result = upstream_result
+        
+        # Check if it's a conflict that needs pull
+        if "fetch first" in push_result['stderr'] or "Updates were rejected" in push_result['stderr']:
+            logger.info("Remote has changes - attempting to pull and merge")
+            
+            # Try to pull remote changes
+            pull_result = self._run_command(['git', 'pull', 'origin', 'main', '--no-edit'])
+            
+            if pull_result['success']:
+                logger.info("Successfully pulled remote changes")
+                # Now try pushing again
+                retry_push = self._run_command(['git', 'push', 'origin', 'main'])
+                if retry_push['success']:
+                    logger.info("Successfully pushed after pull")
+                    return {"success": True, "message": "Successfully pushed after resolving conflicts"}
+                else:
+                    logger.warning(f"Push failed even after pull: {retry_push.get('stderr', '')}")
+            else:
+                logger.warning(f"Pull failed: {pull_result.get('stderr', '')}")
+                # If pull fails, try force-with-lease as safe fallback
+                logger.info("Attempting force push with lease (safe)")
+                force_result = self._run_command(['git', 'push', '--force-with-lease', 'origin', 'main'])
+                if force_result['success']:
+                    logger.info("Successfully force-pushed with lease")
+                    return {"success": True, "message": "Successfully force-pushed (safe)"}
+                else:
+                    logger.error(f"Force push with lease also failed: {force_result.get('stderr', '')}")
+        
+        # If all else fails, return the original error
+        return {
+            "success": False,
+            "error": f"Failed to push changes: {push_result.get('stderr', push_result.get('error', 'Unknown error'))}"
+        }
+    
     def initialize_repository(self) -> Dict[str, Any]:
         """
         Initialize git repository if needed and set up user configuration
@@ -254,28 +311,10 @@ class GitBackupAgent:
                     "error": f"Failed to commit changes: {commit_result.get('error', 'Unknown error')}"
                 }
             
-            # Push changes
-            repo_url_with_token = self._prepare_repo_url_with_token()
-            
-            # First, try a regular push
-            push_result = self._run_command(['git', 'push', 'origin', 'main'])
-            
-            # If push fails, might need to set upstream
-            if not push_result['success']:
-                if "no upstream branch" in push_result['stderr'] or "failed to push" in push_result['stderr']:
-                    logger.info("Setting upstream branch and pushing")
-                    upstream_result = self._run_command(['git', 'push', '--set-upstream', 'origin', 'main'])
-                    if not upstream_result['success']:
-                        return {
-                            "success": False,
-                            "error": f"Failed to push with upstream: {upstream_result.get('error', 'Unknown error')}"
-                        }
-                    push_result = upstream_result
-                else:
-                    return {
-                        "success": False,
-                        "error": f"Failed to push changes: {push_result.get('error', 'Unknown error')}"
-                    }
+            # Push changes - with proper conflict resolution
+            push_success = self._push_with_conflict_resolution()
+            if not push_success['success']:
+                return push_success
             
             logger.info("Successfully committed and pushed to GitHub")
             return {
