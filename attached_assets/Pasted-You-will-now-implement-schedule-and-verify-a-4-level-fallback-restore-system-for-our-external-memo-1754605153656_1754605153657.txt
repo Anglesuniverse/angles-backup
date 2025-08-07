@@ -1,0 +1,85 @@
+You will now implement, schedule, and verify a 4-level fallback restore system for our external memory architecture (GitHub → Supabase → Local → Notion), with automated weekly tests and enhanced logging.
+
+## Phase 1 — Build: `memory_recovery.py`
+1. Create `memory_recovery.py` with:
+   - Restore functions:
+     - `restore_from_github()`
+     - `restore_from_supabase()`
+     - `restore_from_local()`
+     - `restore_from_notion()`
+   - Each function:
+     - Returns JSON data if successful, else `None`
+     - Logs activity to `last_restore.log` and to a `restore_history.json` file (append mode)
+   - Priority order: GitHub → Supabase → Local → Notion
+   - Implement `auto_restore()`:
+     - Attempts restore in order of priority
+     - Stops at first success
+     - Logs the source, timestamp, and status ("success" / "fail")
+   - Environment variables:
+     - `GITHUB_TOKEN`, `GITHUB_REPO`, `SUPABASE_URL`, `SUPABASE_KEY`, `NOTION_API_KEY`, `NOTION_DATABASE_ID`
+
+2. Add `mock=True` parameter for all restore functions so tests can run without hitting live APIs.
+
+3. Implement integrity check:
+   - After restore, validate JSON structure has keys: `source` and `data`
+   - If validation fails, continue to next source
+
+---
+
+## Phase 2 — Test: `memory_recovery_test.py`
+1. Create dummy JSON backups:
+   - `backup_github.json` → `{ "source": "GitHub", "data": "This is GitHub backup" }`
+   - `backup_supabase.json` → `{ "source": "Supabase", "data": "This is Supabase backup" }`
+   - `backup_local.json` → `{ "source": "Local", "data": "This is Local backup" }`
+   - `backup_notion.json` → `{ "source": "Notion", "data": "This is Notion backup" }`
+
+2. `memory_recovery_test.py` should:
+   - Import restore functions
+   - Run tests forcing each level individually
+   - Test `auto_restore()` in scenarios:
+     - Only GitHub available
+     - GitHub down, Supabase up
+     - All but Local down
+     - Only Notion up
+   - Log all results in `last_restore.log`
+   - Append test outcomes to `restore_history.json`
+
+---
+
+## Phase 3 — Automation
+1. Create a cron-like scheduler in Replit:
+   - Use Python's `schedule` library or Replit's built-in "Always On" + `while True` loop
+   - Run `memory_recovery_test.py` once per week automatically
+   - After each run, push `restore_history.json` and `last_restore.log` to GitHub for permanent backup
+
+2. Store test results in Supabase as a "restore_checks" table with:
+   - `timestamp`
+   - `successful_source`
+   - `status`
+   - `log_url` (link to GitHub log file)
+
+---
+
+## Phase 4 — Extra Enhancements
+1. **Notification system**:
+   - If all restore sources fail, send a webhook POST to a specified URL (`FAILURE_WEBHOOK_URL` env variable)
+   - Include error details and last successful restore date
+
+2. **Version stamping**:
+   - Each backup should include `"version": "<YYYY-MM-DD>"` in its JSON
+   - `auto_restore()` should refuse older backups if a newer one is available in a lower-priority source
+
+3. **Self-healing**:
+   - If restore from GitHub fails but Supabase succeeds, automatically push the Supabase backup to GitHub to sync versions.
+
+---
+
+Deliverables from this prompt:
+- `memory_recovery.py`
+- `memory_recovery_test.py`
+- Four dummy JSON backups
+- `restore_history.json`
+- `last_restore.log`
+- Working cron/scheduler in Replit
+- Automatic GitHub push after each weekly test
+- Supabase log table `restore_checks` populated on each run
