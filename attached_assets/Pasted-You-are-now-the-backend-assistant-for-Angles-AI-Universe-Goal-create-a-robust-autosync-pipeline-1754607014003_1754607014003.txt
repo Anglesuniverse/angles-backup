@@ -1,0 +1,68 @@
+You are now the backend assistant for Angles AI Universe.
+
+Goal: create a robust autosync pipeline that runs inside this Replit project and keeps Supabase (primary) and Notion (secondary) in sync for the three tables:
+- decision_vault (id, decision, type, date, created_at, notion_synced boolean default false)
+- memory_log (id, event_type, event_description, created_at, notion_synced boolean default false)
+- agent_activity (id, agent_name, activity_description, status, created_at, notion_synced boolean default false)
+
+Environment variables are already set in Replit Secrets:
+- SUPABASE_URL
+- SUPABASE_ANON_KEY          (use this, NOT the service role)
+- NOTION_API_KEY             (optional; if absent, skip Notion)
+- NOTION_DATABASE_ID         (optional; if absent, skip Notion)
+
+What to build (Python):
+
+1) Create a file `memory_bridge.py` with:
+   - A Supabase client using `supabase` Python SDK (or if not available, use `requests` to call PostgREST).
+   - A Notion client using `requests` with "Notion-Version: 2022-06-28".
+   - Functions:
+     * fetch_unsynced(table): returns rows where notion_synced=false, ordered by created_at asc, limited in batches of 50.
+     * upsert_notion(page_payload): posts a page to Notion database using NOTION_API_KEY and NOTION_DATABASE_ID.
+     * mark_synced(table, row_id): sets notion_synced=true for that row.
+     * push_batch_to_notion(table, mapping_fn): pulls batch from table, maps each row to a Notion page payload, posts it, and marks_synced if success; if Notion creds missing, skip gracefully.
+     * healthcheck(): validates SUPABASE_URL/KEY by hitting /rest/v1/ root or `select(1)` on decision_vault.
+   - Table-to-Notion mapping functions:
+     * map_decision(row) -> Notion properties: { title from decision, date from date, tag from type }
+     * map_memory(row)   -> Notion properties: { title from event_type, description from event_description }
+     * map_agent(row)    -> Notion properties: { title from agent_name, status from status, description from activity_description }
+   - A simple local queue fallback:
+     * If Supabase or Notion is unreachable, append a JSON line to `./sync_queue.jsonl` with {target:"notion", table, payload}.
+     * On next successful run, drain the queue first.
+   - Main `sync_all()` that runs in order:
+     * healthcheck()
+     * push_batch_to_notion('decision_vault', map_decision)
+     * push_batch_to_notion('memory_log', map_memory)
+     * push_batch_to_notion('agent_activity', map_agent)
+
+2) Add a helper file `sync_runner.py` with:
+   - from memory_bridge import sync_all
+   - if __name__ == "__main__": sync_all()
+
+3) Scheduling:
+   - Add a lightweight scheduler that runs `sync_all()` every 2 minutes:
+     * If Replit has a built-in "Scheduled tasks", register it.
+     * Otherwise, add `node keepalive.js` + `python sync_runner.py` via a Replit "Always On" pattern or use Python `schedule` in a `main.py` that loops.
+   - Ensure manual trigger still works by running: `python sync_runner.py`.
+
+4) Reliability & Safety:
+   - Use the ANON key only.
+   - All requests to Supabase must include `apikey` header and `Authorization: Bearer <ANON_KEY>`.
+   - Handle HTTP failures with retry (backoff: 1s, 2s, 4s) up to 3 attempts before queueing locally.
+   - Do not crash on missing NOTION secrets; log a warning and continue syncing Supabase only.
+
+5) Developer Experience:
+   - Add `run_sync_test()` inside `memory_bridge.py` that:
+     * Inserts one sample row into decision_vault via Supabase (decision="Test sync", type="system", date=today).
+     * Runs `sync_all()`.
+     * Prints a concise summary: how many rows synced for each table and whether Notion was enabled.
+   - Provide clear console logs with ✅/⚠️/❌ markers for each step.
+
+6) Return as output:
+   - The full contents of memory_bridge.py and sync_runner.py
+   - Any minimal updates to requirements (e.g., `supabase`, `python-dotenv`, or confirm using `requests` only).
+   - Short instructions at the end on how to run:
+     * `python sync_runner.py` (manual)
+     * Where to configure Replit Scheduler / Always On loop.
+
+Implement now. Provide the code files ready to paste, with no placeholders.
