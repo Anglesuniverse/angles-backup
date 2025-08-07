@@ -16,6 +16,10 @@ author = "agent"
 task = "workflow.run"
 args = "Memory System Scheduler"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Daily Backup at 02:00 UTC"
+
 [[workflows.workflow]]
 name = "Memory System Scheduler"
 author = "agent"
@@ -23,6 +27,17 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python run_all.py"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[workflows.workflow]]
+name = "Daily Backup at 02:00 UTC"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python daily_backup_scheduler.py"
 
 [workflows.workflow.metadata]
 outputType = "console"
