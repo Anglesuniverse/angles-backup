@@ -1,0 +1,85 @@
+Goal: Extend our existing memory_sync_agent.py to include safe GitHub backups and a scheduled run. Do not expose any secrets in code; always read from environment.
+
+
+
+Do:
+
+
+
+Files & structure
+Keep existing memory_sync_agent.py (Supabase ↔ Notion sync).
+Create backup/ folder with:
+git_backup.py – commits & pushes sanitized exports/logs.
+__init__.py
+
+Create logs/ (git-ignored) and write rotating logs here (max 5 files, 1MB each).
+Add export/ folder for sanitized JSON exports from Supabase (no secrets, no PII).
+Add .gitignore entries: logs/, export/*.tmp, *.sqlite, .env*
+
+memory_sync_agent.py
+Read env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, NOTION_API_KEY, NOTION_DATABASE_ID.
+Use modern clients: supabase-py (>=2.x) or postgrest as needed; requests for Notion.
+Sync flow:
+Pull unsynced rows from decision_vault (boolean notion_synced = false).
+For each row: POST to Notion (title: decision, date: date, tags from type), mark as synced on success.
+
+Logging: use logging with RotatingFileHandler to logs/memory_sync.log.
+After successful sync, write a sanitized export of the rows handled to export/decisions_YYYYMMDD.json.
+
+backup/git_backup.py
+Read env: GITHUB_TOKEN, GIT_USERNAME, GIT_EMAIL, REPO_URL.
+If REPO_URL is https, embed token at runtime (do NOT print it).
+git init if needed, set user, add export/*.json and logs/*.log (logs optional), commit "[auto] memory sync <timestamp>", push to main. Handle first‑push (set upstream) and idempotence.
+
+scheduler
+Add a small run_all.py that:
+Runs memory_sync_agent.py
+Then backup/git_backup.py
+Prints concise status.
+
+Create a Replit Scheduled Task to run python run_all.py every 6 hours. If schedules are not available, create a cron.json or Replit “Deploys → Schedules” equivalent.
+
+Safety
+Never commit secrets. Never include Supabase keys or Notion key in exports.
+If any API fails, retry with backoff (3 attempts), then log error and continue.
+On success, print: OK: synced <n> items, exported file <path>, backup pushed to GitHub.
+
+README.md
+Generate/update a README with:
+Required Secrets list
+How to run locally: python run_all.py
+How to enable Replit schedule
+Data flow diagram (ASCII) of Supabase ↔ Notion → export → GitHub backup
+Troubleshooting (auth errors, RLS, Notion 400s)
+
+
+
+
+
+
+Deliverables:
+
+
+
+memory_sync_agent.py (updated)
+backup/git_backup.py
+run_all.py
+README.md
+.gitignore updated
+Scheduled Task configured to run every 6h
+
+
+
+
+Constraints:
+
+
+
+English code & comments.
+No printing of secrets, ever.
+Use environment variables only.
+
+
+
+
+Make the changes now.

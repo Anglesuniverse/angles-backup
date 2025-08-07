@@ -1,0 +1,36 @@
+# Environment files
+.env
+.env.*
+
+# Log files
+logs/
+*.log
+
+# Temporary exports
+export/*.tmp
+
+# Database files
+*.sqlite
+*.db
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Replit files
+.replit
+replit.nix

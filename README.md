@@ -1,205 +1,261 @@
-# Angles AI Universe™ Memory Bridge
+# Angles AI Universe™ Memory System
 
-A sophisticated memory bridge system that connects Replit with Supabase, enabling persistent AI memory management across sessions. This system allows decisions and system instructions to be saved, loaded, and synced automatically.
+A comprehensive memory management system that syncs AI decisions between Supabase and Notion, with automated GitHub backups and scheduled execution.
 
-## 🚀 Features
+## 🚀 Overview
 
-- **Persistent Memory**: Store AI decisions and instructions in Supabase
-- **Cross-Session Sync**: Maintain memory continuity between different sessions  
-- **Notion Integration**: Optional sync with Notion databases for collaboration
-- **Automated Processing**: Handles unsynced decisions automatically
-- **Comprehensive Logging**: Detailed logs for monitoring and debugging
-- **Modular Design**: Easy to extend and customize for different use cases
+This system provides persistent memory for AI operations by:
 
-## 📋 Prerequisites
+1. **Memory Sync Agent** - Syncs unsynced decisions from Supabase to Notion
+2. **Git Backup Agent** - Creates safe GitHub backups of sanitized exports and logs  
+3. **Orchestrated Execution** - Coordinates both agents with concise status reporting
+4. **Scheduled Automation** - Runs automatically every 6 hours via Replit schedules
 
-- Python 3.8+
-- Supabase account and project
-- Notion account (optional, for Notion integration)
-- Required Python packages: `supabase`, `python-dotenv`, `requests`
+## 📋 Required Secrets
 
-## ⚙️ Setup
+Add these environment variables to your Replit secrets:
 
-### 1. Environment Configuration
+### Supabase Configuration
+```
+SUPABASE_URL=https://your-project-id.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
+```
+*Note: SUPABASE_KEY is accepted as fallback for SUPABASE_SERVICE_ROLE_KEY*
 
-1. Copy the environment template:
-   ```bash
-   cp .env.template .env
-   ```
-
-2. Fill in your credentials in `.env`:
-   ```env
-   SUPABASE_URL=https://your-project-id.supabase.co
-   SUPABASE_KEY=your_supabase_anon_key_here
-   NOTION_API_KEY=your_notion_integration_secret_here
-   NOTION_DATABASE_ID=your_notion_database_id_here
-   ```
-
-### 2. Supabase Setup
-
-Make sure your Supabase database has the `decision_vault` table with these columns:
-- `id` (UUID, primary key)
-- `decision` (TEXT)
-- `date` (DATE)  
-- `type` (TEXT)
-- `active` (BOOLEAN)
-- `comment` (TEXT)
-- `created_at` (TIMESTAMPTZ)
-- `updated_at` (TIMESTAMPTZ)
-- `synced` (BOOLEAN, for sync tracking)
-- `synced_at` (TIMESTAMPTZ, for sync tracking)
-
-### 3. Install Dependencies
-
-```bash
-pip install supabase python-dotenv requests
+### Notion Configuration  
+```
+NOTION_API_KEY=your_notion_integration_secret
+NOTION_DATABASE_ID=your_notion_database_id
 ```
 
-## 🔧 Usage
+### GitHub Configuration
+```
+GITHUB_TOKEN=your_github_personal_access_token
+GIT_USERNAME=your_github_username
+GIT_EMAIL=your_email@example.com
+REPO_URL=https://github.com/username/repository-name.git
+```
+
+## 🛠️ How to Run Locally
 
 ### Manual Execution
-
-Run the memory bridge manually:
 ```bash
-python memory_bridge.py
+# Run the complete system
+python run_all.py
+
+# Run components individually
+python memory_sync_agent.py
+python backup/git_backup.py
 ```
 
-### Programmatic Usage
+### Test Connections
+```bash
+# Test Supabase and Notion connections
+python -c "from memory_sync_agent import MemorySyncAgent; agent = MemorySyncAgent(); agent.test_connections()"
 
-```python
-from memory_bridge import MemoryBridge
-
-# Initialize the bridge
-bridge = MemoryBridge()
-
-# Fetch unsynced decisions
-decisions = bridge.fetch_unsynced_decisions()
-print(f"Found {len(decisions)} unsynced decisions")
-
-# Run full sync process
-result = bridge.sync()
-if result["success"]:
-    print(f"Sync successful: {result['message']}")
-else:
-    print(f"Sync failed: {result['error']}")
+# Test GitHub backup setup
+python backup/git_backup.py
 ```
 
-### Individual Functions
+## ⚙️ How to Enable Replit Schedule
 
-```python
-# Fetch unsynced decisions only
-decisions = bridge.fetch_unsynced_decisions()
+### Method 1: Replit UI (Recommended)
+1. Go to your Replit project
+2. Click on **"Tools"** → **"Deployments"**
+3. Navigate to **"Schedules"** tab
+4. Click **"Create Schedule"**
+5. Configure:
+   - **Name**: `Memory System Sync`
+   - **Command**: `python run_all.py`
+   - **Schedule**: `0 */6 * * *` (every 6 hours)
+   - **Environment**: Select your environment with secrets
 
-# Send a specific decision to Notion
-success = bridge.send_to_notion(decision_data)
+### Method 2: Manual Schedule Configuration
+If Replit schedules are not available, the system will fall back to cron-like scheduling.
 
-# Mark a decision as synced
-bridge.mark_as_synced(decision_id)
-```
-
-## 📊 System Architecture
-
-### Core Components
-
-1. **MemoryBridge Class**: Main orchestrator for all sync operations
-2. **fetch_unsynced_decisions()**: Retrieves unprocessed data from Supabase
-3. **send_to_notion()**: Handles Notion API integration (optional)
-4. **mark_as_synced()**: Updates sync status in Supabase
-5. **sync()**: Main workflow that coordinates all operations
-
-### Data Flow
+## 📊 Data Flow Diagram
 
 ```
-Supabase decision_vault → fetch_unsynced_decisions() → send_to_notion() → mark_as_synced()
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   SUPABASE      │    │   NOTION API    │    │   GITHUB REPO   │
+│ decision_vault  │    │   Database      │    │   Backup        │
+└─────────┬───────┘    └─────────┬───────┘    └─────────┬───────┘
+          │                      │                      │
+          │ 1. Fetch unsynced    │ 2. Create pages      │ 4. Push exports
+          │    decisions         │    (title, date,     │    & logs
+          ▼                      │     tags)            ▼
+┌─────────────────────────────────┴──────────────────────────────┐
+│                MEMORY SYNC AGENT                               │
+│  • Rotating logs (5x1MB) → logs/memory_sync.log              │
+│  • Sanitized exports → export/decisions_YYYYMMDD.json        │
+│  • Mark notion_synced=true after success                     │
+└─────────────────┬───────────────────────────────────────────────┘
+                  │ 3. Generate exports
+                  ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   GIT BACKUP AGENT                              │
+│  • git init (if needed) + configure user                      │  
+│  • git add export/*.json logs/*.log                           │
+│  • git commit "[auto] memory sync <timestamp>"                │
+│  • git push origin main (with embedded GitHub token)          │
+└─────────────────────────────────────────────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                     RUN_ALL.PY                                 │
+│  1. python memory_sync_agent.py                               │
+│  2. python backup/git_backup.py                               │
+│  3. Print: "OK: synced <n> items, exported <file>, backup     │
+│            pushed to GitHub"                                   │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-## 📝 Logging
+## 📁 File Structure
 
-The system generates detailed logs in:
-- Console output (INFO level)
-- `memory_bridge.log` file (persistent logging)
+```
+├── memory_sync_agent.py     # Main sync agent (Supabase ↔ Notion)
+├── backup/
+│   ├── __init__.py         # Backup module
+│   └── git_backup.py       # GitHub backup agent
+├── run_all.py              # Orchestrator script
+├── logs/                   # Rotating logs (git-ignored)
+│   └── memory_sync.log     # Main log file
+├── export/                 # Sanitized JSON exports
+│   └── decisions_*.json    # Daily exports
+├── .gitignore              # Excludes logs/, secrets, temp files
+└── README.md               # This file
+```
 
-Log format: `timestamp - logger_name - level - message`
+## 🔧 Database Schema Requirements
 
-## 🔒 Security Notes
+### Supabase `decision_vault` Table
 
-- Store all credentials in `.env` file (never commit to version control)
-- Use environment variables for all sensitive configuration
-- The system validates all required environment variables on startup
-- All API calls include proper timeout handling
+Required columns:
+```sql
+- id (UUID, primary key)
+- decision (TEXT, not null)
+- type (TEXT, not null) 
+- date (DATE, not null)
+- active (BOOLEAN, default true)
+- comment (TEXT, optional)
+- created_at (TIMESTAMPTZ)
+- updated_at (TIMESTAMPTZ)
 
-## 🚨 Error Handling
+-- Sync tracking (one of these):
+- notion_synced (BOOLEAN, default false)     -- Preferred
+- synced (BOOLEAN, default false)            -- Fallback
+```
 
-The memory bridge includes comprehensive error handling:
-- Connection validation before processing
-- Individual decision error isolation  
-- Detailed error logging and statistics
-- Graceful degradation on partial failures
+### Notion Database Properties
+
+Required properties:
+```
+- Name (Title) - Decision title/summary
+- Message (Rich text) - Full decision content  
+- Date (Date) - Decision date
+- Tag (Multi-select) - Decision type + status tags
+```
+
+## 🚨 Troubleshooting
+
+### Authentication Errors
+
+**Supabase RLS (Row Level Security):**
+```
+Error: "permission denied" or "insufficient permissions"
+Solution: Use SUPABASE_SERVICE_ROLE_KEY instead of SUPABASE_KEY, or disable RLS for decision_vault table
+```
+
+**Notion 400 Errors:**
+```
+Error: "Invalid property" or "body failed validation"
+Solution: Verify Notion database has Name, Message, Date, Tag properties with correct types
+```
+
+**GitHub Authentication:**
+```
+Error: "authentication failed" or "remote: Repository not found"
+Solutions:
+1. Verify GITHUB_TOKEN has repo permissions
+2. Check REPO_URL format: https://github.com/username/repo.git
+3. Ensure repository exists and is accessible
+```
+
+### Common Issues
+
+**No unsynced decisions found:**
+```
+1. Check if notion_synced or synced column exists in decision_vault
+2. Verify there are rows with notion_synced=false or synced=false
+3. Check Supabase RLS policies
+```
+
+**Export files not created:**
+```
+1. Verify export/ directory exists and is writable
+2. Check if any decisions were successfully synced
+3. Review logs/memory_sync.log for export errors
+```
+
+**GitHub backup fails:**
+```
+1. Verify git is installed and accessible
+2. Check network connectivity to GitHub
+3. Ensure repository permissions allow pushes
+4. Review git backup logs for detailed errors
+```
+
+### Log Analysis
+
+Check `logs/memory_sync.log` for detailed operation logs:
+```bash
+# View recent logs
+tail -f logs/memory_sync.log
+
+# Search for errors
+grep -i error logs/memory_sync.log
+
+# View sync statistics
+grep -i "sync completed" logs/memory_sync.log
+```
+
+## 🔒 Security Features
+
+- **No Secret Exposure**: All credentials read from environment variables only
+- **Sanitized Exports**: Removes sensitive keywords (key, token, secret, password)
+- **Git-ignored Logs**: Prevents accidental commit of logs with potential secrets
+- **Embedded Token Authentication**: GitHub token embedded in URL at runtime, never stored
+- **Rotating Logs**: Automatic log rotation prevents disk space issues
+
+## 🎯 Success Indicators
+
+When everything works correctly, you should see:
+```
+OK: synced 5 items, exported file export/decisions_20250807.json, backup pushed to GitHub
+```
+
+The system maintains:
+- Rotating logs in `logs/` (max 5 files, 1MB each)
+- Daily JSON exports in `export/` (sanitized, no secrets)
+- Git history of all exports and logs in your GitHub repository
+- Supabase records marked as `notion_synced=true`
+- Corresponding Notion pages with decision content
 
 ## 📈 Monitoring
 
-The sync function returns detailed statistics:
-```python
-{
-    "success": true,
-    "message": "Synced 5/5 decisions", 
-    "stats": {
-        "total_found": 5,
-        "successfully_synced": 5,
-        "failed_sync": 0,
-        "failed_mark": 0,
-        "errors": []
-    },
-    "duration_seconds": 2.45
-}
-```
+The system provides comprehensive monitoring through:
+- Structured logging with timestamps and levels
+- Export file generation for audit trails  
+- Git commit history for backup verification
+- Replit schedule execution logs
+- Status summaries with success/failure counts
 
-## 🔄 Automation
-
-### Scheduled Execution
-
-You can run the memory bridge on a schedule using:
-
-**Cron (Linux/Mac):**
-```bash
-# Run every 5 minutes
-*/5 * * * * cd /path/to/memory_bridge && python memory_bridge.py
-```
-
-**Windows Task Scheduler:**
-Create a task that runs `python memory_bridge.py` at your desired interval.
-
-### Integration with Other Systems
-
-The modular design allows easy integration with:
-- CI/CD pipelines
-- Monitoring systems
-- Other AI/ML workflows
-- Custom scheduling solutions
-
-## 🛠️ Development
-
-### Adding New Sync Targets
-
-To add support for additional services (besides Notion):
-
-1. Create a new method like `send_to_service()`
-2. Add the service configuration to environment variables
-3. Update the `sync()` method to include the new target
-4. Add appropriate error handling and logging
-
-### Customizing Decision Processing
-
-The system can be extended to handle different types of decisions or add custom processing logic by modifying the `send_to_notion()` method or creating new processing methods.
-
-## 📄 License
-
-This system is part of the Angles AI Universe™ backend engineering suite.
-
-## 🤝 Support
-
-For technical support or feature requests, contact the backend engineering team.
+For production monitoring, review:
+1. `logs/memory_sync.log` - Detailed operation logs
+2. `export/decisions_*.json` - Daily export files  
+3. GitHub repository - Backup commit history
+4. Replit schedule logs - Execution history
 
 ---
 
-**Angles AI Universe™** - Enabling persistent AI memory for enhanced learning and decision continuity.
+**Angles AI Universe™** - Enabling persistent AI memory with automated backups and monitoring.
