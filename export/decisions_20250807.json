@@ -1,26 +1,26 @@
 {
-  "export_timestamp": "2025-08-07T22:03:04.651716",
+  "export_timestamp": "2025-08-07T22:08:25.045613",
   "total_decisions": 6,
   "decisions": [
-    {
-      "id": "53146f5b-d474-4a72-b3c9-ee3173945866",
-      "decision": "Use PostgreSQL as primary database for better performance",
-      "type": "technical",
-      "date": "2025-08-07",
-      "active": true,
-      "synced_at": "2025-08-07T22:02:49.376396",
-      "export_timestamp": "2025-08-07T22:02:49.376402",
-      "comment": "Decision made after performance analysis"
-    },
     {
       "id": "3bc0adb1-c3d6-47f6-b6cc-2fbd2f66cdf4",
       "decision": "Implement Code Review for all pull requests",
       "type": "process",
       "date": "2025-08-06",
       "active": true,
-      "synced_at": "2025-08-07T22:02:50.777387",
-      "export_timestamp": "2025-08-07T22:02:50.777392",
+      "synced_at": "2025-08-07T22:08:18.889678",
+      "export_timestamp": "2025-08-07T22:08:18.889683",
       "comment": "Improves code quality and knowledge sharing"
+    },
+    {
+      "id": "53146f5b-d474-4a72-b3c9-ee3173945866",
+      "decision": "Use PostgreSQL as primary database for better performance",
+      "type": "technical",
+      "date": "2025-08-07",
+      "active": true,
+      "synced_at": "2025-08-07T22:08:20.199499",
+      "export_timestamp": "2025-08-07T22:08:20.199505",
+      "comment": "Decision made after performance analysis"
     },
     {
       "id": "8328256c-90ea-4dc3-96b2-a196c68e739a",
@@ -28,8 +28,8 @@
       "type": "security",
       "date": "2025-08-05",
       "active": true,
-      "synced_at": "2025-08-07T22:02:57.776115",
-      "export_timestamp": "2025-08-07T22:02:57.776121",
+      "synced_at": "2025-08-07T22:08:21.528520",
+      "export_timestamp": "2025-08-07T22:08:21.528526",
       "comment": "Security department requirement"
     },
     {
@@ -38,8 +38,8 @@
       "type": "strategy",
       "date": "2025-08-07",
       "active": true,
-      "synced_at": "2025-08-07T22:03:02.017893",
-      "export_timestamp": "2025-08-07T22:03:02.017899",
+      "synced_at": "2025-08-07T22:08:22.541765",
+      "export_timestamp": "2025-08-07T22:08:22.541771",
       "comment": "Tags: decision, core"
     },
     {
@@ -48,8 +48,8 @@
       "type": "technical",
       "date": "2025-08-07",
       "active": true,
-      "synced_at": "2025-08-07T22:03:03.427648",
-      "export_timestamp": "2025-08-07T22:03:03.427654",
+      "synced_at": "2025-08-07T22:08:23.985712",
+      "export_timestamp": "2025-08-07T22:08:23.985719",
       "comment": "Decision made after team discussion"
     },
     {
@@ -58,8 +58,8 @@
       "type": "technical",
       "date": "2025-08-07",
       "active": true,
-      "synced_at": "2025-08-07T22:03:04.651682",
-      "export_timestamp": "2025-08-07T22:03:04.651688",
+      "synced_at": "2025-08-07T22:08:25.045577",
+      "export_timestamp": "2025-08-07T22:08:25.045583",
       "comment": "Decision made after team discussion"
     }
   ],
