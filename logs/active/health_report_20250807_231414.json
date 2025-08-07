@@ -1,0 +1,35 @@
+{
+  "timestamp": "2025-08-07T23:14:10.952422+00:00",
+  "supabase": {
+    "status": "healthy",
+    "details": {
+      "api_responsive": true,
+      "table_accessible": true,
+      "sample_record_count": 5,
+      "response_time_ms": 471
+    }
+  },
+  "notion": {
+    "status": "healthy",
+    "details": {
+      "api_responsive": true,
+      "user_name": "angles_api_integration_2025",
+      "database_accessible": true,
+      "database_title": "ShoppingFriend database",
+      "response_time_ms": 1510
+    }
+  },
+  "github": {
+    "status": "unhealthy",
+    "details": {
+      "error": "Repository 'angles-ai/angles-backup' not found"
+    }
+  },
+  "overall_status": "degraded",
+  "duration_seconds": 4.028671,
+  "checks_completed": {
+    "supabase": true,
+    "notion": true,
+    "github": false
+  }
+}

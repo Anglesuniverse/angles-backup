@@ -1,0 +1,48 @@
+You are the backend automation engineer for the "Angles AI Universe" project. 
+Your task is to implement, run, and schedule an automated monitoring, sync, and recovery system for our LIVE Supabase + Notion + GitHub memory infrastructure. 
+Use Python in this Replit environment with our existing production secrets.
+
+**Goals**:
+1. Create and run `prod_health_check.py` that:
+   - Connects to LIVE Supabase and verifies all production tables (decision_vault, memory_logs, sync_queue) exist and match schema.
+   - Connects to LIVE Notion API and verifies production database IDs are accessible.
+   - Connects to the LIVE GitHub repo (angles-backup) and verifies push/pull access.
+   - Logs results with timestamps to `/logs/prod_system_health.log`.
+
+2. Create and run `prod_sync_manager.py` that:
+   - Pushes any new or updated Supabase records to Notion automatically.
+   - Pulls any updates from Notion and syncs them back to Supabase.
+   - Logs all sync actions with timestamps to `/logs/prod_sync.log`.
+
+3. Create and run `prod_restore_from_github.py` that:
+   - Restores production Supabase tables from GitHub backup if any corruption or loss is detected.
+   - Verifies data integrity after restore.
+   - Logs all restore actions to `/logs/prod_restore.log`.
+
+4. Set up a cron-like job in Replit that:
+   - Runs `prod_health_check.py` every 12 hours.
+   - Runs `prod_sync_manager.py` every hour.
+   - Runs `prod_restore_from_github.py` only if health check fails.
+   - Archives logs older than 60 days automatically.
+
+5. Testing:
+   - Run a first full sync (`prod_sync_manager.py`) now and show the log output.
+   - Run a manual `prod_health_check.py` to verify system readiness.
+   - Document any detected issues.
+
+6. Documentation:
+   - Save `README_PRODUCTION_SYSTEM.md` in the root of the Replit project containing:
+     - Overview of production monitoring and sync process.
+     - Manual trigger instructions for each script.
+     - Cron schedule details.
+     - Log retention policy.
+
+**Constraints**:
+- All secrets are loaded from Replit Secrets Manager (production variables already set).
+- Use latest stable Python libraries for Supabase, Notion, GitHub.
+- Scripts must be modular and reusable.
+- No hardcoded secrets; only use environment variables.
+
+Once complete:
+- Confirm the production system is active and monitoring.
+- Show the latest entries from `/logs/prod_system_health.log` and `/logs/prod_sync.log`.

@@ -1,0 +1,45 @@
+You are the backend automation engineer for the "Angles AI Universe" project. 
+Your task is to fully implement, run, and schedule an automated test and recovery system for our Supabase + Notion + GitHub memory sync. 
+Use Python in this Replit environment with our existing secrets.
+
+**Goals**:
+1. Create and run `health_check.py` that:
+   - Connects to Supabase and verifies table integrity and API access.
+   - Connects to Notion API and verifies database ID access.
+   - Connects to GitHub repo (angles-backup) and verifies push/pull permissions.
+   - Logs results with timestamps to `system_health.log`.
+
+2. Create and run `restore_from_github.py` that:
+   - Pulls the latest `angles-backup` from GitHub.
+   - Restores Supabase database structure and any missing data from the backup files.
+   - Logs actions to `restore.log`.
+
+3. Create `log_manager.py` that:
+   - Archives logs older than 30 days into `/logs/archive`.
+   - Compresses archives to save space.
+   - Keeps last 30 days in `/logs/active`.
+
+4. Set up an automatic cron-like job in Replit that:
+   - Runs `health_check.py` every 24 hours.
+   - Runs `restore_from_github.py` only if health check fails.
+   - Runs `log_manager.py` once a week.
+
+5. Test everything:
+   - Run first manual `health_check.py` and show log output.
+   - Simulate a data loss and run `restore_from_github.py` to verify recovery works.
+   - Show archived logs structure.
+
+6. Document:
+   - Save a `README_TEST_SYSTEM.md` in the root of the Replit project with:
+     - Overview of the system.
+     - Instructions to manually trigger each script.
+     - Cron schedule details.
+     - Log retention policy.
+
+**Constraints**:
+- Code must be plug-and-play with existing environment variables (all secrets already in Replit Secrets Manager).
+- Use the latest recommended Python packages for Supabase, Notion API, and GitHub integration.
+- All scripts must handle errors gracefully and print clear status messages.
+- Avoid hardcoding secrets; always use environment variables.
+
+Once complete, confirm the system is running and show me the first `system_health.log` entries.

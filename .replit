@@ -40,6 +40,10 @@ args = "Sync Health Dashboard"
 task = "workflow.run"
 args = "Health Monitor & Backup"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Automated Test System"
+
 [[workflows.workflow]]
 name = "Memory System Scheduler"
 author = "agent"
@@ -111,6 +115,17 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python run_all.py"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[workflows.workflow]]
+name = "Automated Test System"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python automated_scheduler.py"
 
 [workflows.workflow.metadata]
 outputType = "console"

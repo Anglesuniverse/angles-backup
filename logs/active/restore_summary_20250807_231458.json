@@ -1,0 +1,9 @@
+{
+  "timestamp": "2025-08-07T23:14:58.071237+00:00",
+  "status": "failed",
+  "operations": [],
+  "errors": [
+    "Repository pull failed: Git clone failed: Cloning into '/tmp/angles-backup'...\nremote: Repository not found.\nfatal: repository 'https://github.com/angles-ai/angles-backup.git/' not found\n"
+  ],
+  "restored_records": 0
+}
