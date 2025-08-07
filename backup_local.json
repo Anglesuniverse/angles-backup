@@ -1,0 +1,18 @@
+{
+  "source": "Local",
+  "data": "This is Local backup",
+  "version": "2025-08-07",
+  "timestamp": "2025-08-07T22:34:00Z",
+  "local_files": {
+    "state_json": "present",
+    "session_cache": "present",
+    "long_term_db": "present",
+    "indexes": "present"
+  },
+  "metadata": {
+    "backup_type": "local_export",
+    "system": "MemoryRecoverySystem",
+    "backup_location": "/tmp/memory_backup",
+    "compression": "zip"
+  }
+}

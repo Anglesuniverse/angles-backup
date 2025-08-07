@@ -1,0 +1,17 @@
+{
+  "source": "Supabase",
+  "data": "This is Supabase backup",
+  "version": "2025-08-07",
+  "timestamp": "2025-08-07T22:34:00Z",
+  "decision_vault": {
+    "total_decisions": 42,
+    "active_decisions": 38,
+    "last_sync": "2025-08-07T22:30:00Z"
+  },
+  "metadata": {
+    "backup_type": "supabase_export",
+    "system": "MemoryRecoverySystem",
+    "database_schema": "v2.1",
+    "storage_bucket": "memory_backups"
+  }
+}

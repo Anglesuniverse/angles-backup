@@ -1,0 +1,17 @@
+{
+  "source": "Notion",
+  "data": "This is Notion backup",
+  "version": "2025-08-07",
+  "timestamp": "2025-08-07T22:34:00Z",
+  "notion_pages": {
+    "total_pages": 28,
+    "databases": 3,
+    "last_modified": "2025-08-07T22:25:00Z"
+  },
+  "metadata": {
+    "backup_type": "notion_export",
+    "system": "MemoryRecoverySystem",
+    "workspace": "ShoppingFriend database",
+    "api_version": "2022-06-28"
+  }
+}

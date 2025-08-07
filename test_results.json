@@ -1,0 +1,98 @@
+{
+  "test_run_timestamp": "2025-08-07T22:39:11.917835+00:00",
+  "total_tests": 11,
+  "passed_tests": 11,
+  "failed_tests": 0,
+  "success_rate": 100.0,
+  "duration_seconds": 0.679656,
+  "test_details": [
+    {
+      "test_name": "GitHub Individual",
+      "timestamp": "2025-08-07T22:39:11.427033+00:00",
+      "success": true,
+      "details": "GitHub restore successful",
+      "data_source": "GitHub",
+      "data_size": 330
+    },
+    {
+      "test_name": "Supabase Individual",
+      "timestamp": "2025-08-07T22:39:11.478015+00:00",
+      "success": true,
+      "details": "Supabase restore successful",
+      "data_source": "Supabase",
+      "data_size": 368
+    },
+    {
+      "test_name": "Local Individual",
+      "timestamp": "2025-08-07T22:39:11.521814+00:00",
+      "success": true,
+      "details": "Local restore successful",
+      "data_source": "Local",
+      "data_size": 374
+    },
+    {
+      "test_name": "Notion Individual",
+      "timestamp": "2025-08-07T22:39:11.565966+00:00",
+      "success": true,
+      "details": "Notion restore successful",
+      "data_source": "Notion",
+      "data_size": 358
+    },
+    {
+      "test_name": "Auto-Restore GitHub Only",
+      "timestamp": "2025-08-07T22:39:11.616607+00:00",
+      "success": true,
+      "details": "Auto-restore successful with GitHub only",
+      "data_source": "GitHub",
+      "data_size": 330
+    },
+    {
+      "test_name": "Auto-Restore Supabase Fallback",
+      "timestamp": "2025-08-07T22:39:11.666594+00:00",
+      "success": true,
+      "details": "Auto-restore fallback to Supabase successful",
+      "data_source": "Supabase",
+      "data_size": 368
+    },
+    {
+      "test_name": "Auto-Restore Local Fallback",
+      "timestamp": "2025-08-07T22:39:11.714997+00:00",
+      "success": true,
+      "details": "Auto-restore fallback to Local successful",
+      "data_source": "Local",
+      "data_size": 374
+    },
+    {
+      "test_name": "Auto-Restore Notion Fallback",
+      "timestamp": "2025-08-07T22:39:11.766042+00:00",
+      "success": true,
+      "details": "Auto-restore fallback to Notion successful",
+      "data_source": "Notion",
+      "data_size": 358
+    },
+    {
+      "test_name": "Auto-Restore Priority",
+      "timestamp": "2025-08-07T22:39:11.823348+00:00",
+      "success": true,
+      "details": "Auto-restore correctly prioritized GitHub",
+      "data_source": "GitHub",
+      "data_size": 330
+    },
+    {
+      "test_name": "Auto-Restore All Down",
+      "timestamp": "2025-08-07T22:39:11.890480+00:00",
+      "success": true,
+      "details": "Auto-restore correctly returned None when all sources down",
+      "data_source": null,
+      "data_size": 0
+    },
+    {
+      "test_name": "Integrity Validation",
+      "timestamp": "2025-08-07T22:39:11.914566+00:00",
+      "success": true,
+      "details": "Correctly rejected invalid backup structure",
+      "data_source": null,
+      "data_size": 0
+    }
+  ]
+}

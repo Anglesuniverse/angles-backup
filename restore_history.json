@@ -1,0 +1,444 @@
+[
+  {
+    "timestamp": "2025-08-07T22:35:54.251502+00:00",
+    "source": "github",
+    "status": "success",
+    "data_size": 330,
+    "error": null
+  },
+  {
+    "test_name": "GitHub Individual",
+    "timestamp": "2025-08-07T22:35:54.252617+00:00",
+    "success": true,
+    "details": "GitHub restore successful",
+    "data_source": "GitHub",
+    "data_size": 330
+  },
+  {
+    "timestamp": "2025-08-07T22:35:54.289752+00:00",
+    "source": "supabase",
+    "status": "success",
+    "data_size": 368,
+    "error": null
+  },
+  {
+    "test_name": "Supabase Individual",
+    "timestamp": "2025-08-07T22:35:54.292045+00:00",
+    "success": true,
+    "details": "Supabase restore successful",
+    "data_source": "Supabase",
+    "data_size": 368
+  },
+  {
+    "timestamp": "2025-08-07T22:35:54.331277+00:00",
+    "source": "local",
+    "status": "success",
+    "data_size": 374,
+    "error": null
+  },
+  {
+    "test_name": "Local Individual",
+    "timestamp": "2025-08-07T22:35:54.333037+00:00",
+    "success": true,
+    "details": "Local restore successful",
+    "data_source": "Local",
+    "data_size": 374
+  },
+  {
+    "timestamp": "2025-08-07T22:35:54.370430+00:00",
+    "source": "notion",
+    "status": "success",
+    "data_size": 358,
+    "error": null
+  },
+  {
+    "test_name": "Notion Individual",
+    "timestamp": "2025-08-07T22:35:54.372716+00:00",
+    "success": true,
+    "details": "Notion restore successful",
+    "data_source": "Notion",
+    "data_size": 358
+  },
+  {
+    "timestamp": "2025-08-07T22:35:54.411846+00:00",
+    "source": "github",
+    "status": "success",
+    "data_size": 330,
+    "error": null
+  },
+  {
+    "test_name": "Auto-Restore GitHub Only",
+    "timestamp": "2025-08-07T22:35:54.414741+00:00",
+    "success": true,
+    "details": "Auto-restore successful with GitHub only",
+    "data_source": "GitHub",
+    "data_size": 330
+  },
+  {
+    "timestamp": "2025-08-07T22:35:54.466871+00:00",
+    "source": "github",
+    "status": "fail",
+    "data_size": 0,
+    "error": "[Errno 2] No such file or directory: 'backup_github.json'"
+  },
+  {
+    "timestamp": "2025-08-07T22:35:54.471823+00:00",
+    "source": "supabase",
+    "status": "success",
+    "data_size": 368,
+    "error": null
+  },
+  {
+    "test_name": "Auto-Restore Supabase Fallback",
+    "timestamp": "2025-08-07T22:35:54.581422+00:00",
+    "success": true,
+    "details": "Auto-restore fallback to Supabase successful",
+    "data_source": "Supabase",
+    "data_size": 368
+  },
+  {
+    "timestamp": "2025-08-07T22:35:54.615296+00:00",
+    "source": "github",
+    "status": "fail",
+    "data_size": 0,
+    "error": "[Errno 2] No such file or directory: 'backup_github.json'"
+  },
+  {
+    "timestamp": "2025-08-07T22:35:54.618518+00:00",
+    "source": "supabase",
+    "status": "fail",
+    "data_size": 0,
+    "error": "[Errno 2] No such file or directory: 'backup_supabase.json'"
+  },
+  {
+    "timestamp": "2025-08-07T22:35:54.700343+00:00",
+    "source": "local",
+    "status": "success",
+    "data_size": 374,
+    "error": null
+  },
+  {
+    "test_name": "Auto-Restore Local Fallback",
+    "timestamp": "2025-08-07T22:35:54.702498+00:00",
+    "success": true,
+    "details": "Auto-restore fallback to Local successful",
+    "data_source": "Local",
+    "data_size": 374
+  },
+  {
+    "timestamp": "2025-08-07T22:35:54.738773+00:00",
+    "source": "github",
+    "status": "fail",
+    "data_size": 0,
+    "error": "[Errno 2] No such file or directory: 'backup_github.json'"
+  },
+  {
+    "timestamp": "2025-08-07T22:35:54.752667+00:00",
+    "source": "supabase",
+    "status": "fail",
+    "data_size": 0,
+    "error": "[Errno 2] No such file or directory: 'backup_supabase.json'"
+  },
+  {
+    "timestamp": "2025-08-07T22:35:54.755165+00:00",
+    "source": "local",
+    "status": "fail",
+    "data_size": 0,
+    "error": "[Errno 2] No such file or directory: 'backup_local.json'"
+  },
+  {
+    "timestamp": "2025-08-07T22:35:54.965810+00:00",
+    "source": "notion",
+    "status": "success",
+    "data_size": 358,
+    "error": null
+  },
+  {
+    "test_name": "Auto-Restore Notion Fallback",
+    "timestamp": "2025-08-07T22:35:54.969698+00:00",
+    "success": true,
+    "details": "Auto-restore fallback to Notion successful",
+    "data_source": "Notion",
+    "data_size": 358
+  },
+  {
+    "timestamp": "2025-08-07T22:35:55.005945+00:00",
+    "source": "github",
+    "status": "success",
+    "data_size": 330,
+    "error": null
+  },
+  {
+    "test_name": "Auto-Restore Priority",
+    "timestamp": "2025-08-07T22:35:55.035722+00:00",
+    "success": true,
+    "details": "Auto-restore correctly prioritized GitHub",
+    "data_source": "GitHub",
+    "data_size": 330
+  },
+  {
+    "timestamp": "2025-08-07T22:35:55.083828+00:00",
+    "source": "github",
+    "status": "fail",
+    "data_size": 0,
+    "error": "[Errno 2] No such file or directory: 'backup_github.json'"
+  },
+  {
+    "timestamp": "2025-08-07T22:35:55.155337+00:00",
+    "source": "supabase",
+    "status": "fail",
+    "data_size": 0,
+    "error": "[Errno 2] No such file or directory: 'backup_supabase.json'"
+  },
+  {
+    "timestamp": "2025-08-07T22:35:55.159380+00:00",
+    "source": "local",
+    "status": "fail",
+    "data_size": 0,
+    "error": "[Errno 2] No such file or directory: 'backup_local.json'"
+  },
+  {
+    "timestamp": "2025-08-07T22:35:55.167917+00:00",
+    "source": "notion",
+    "status": "fail",
+    "data_size": 0,
+    "error": "[Errno 2] No such file or directory: 'backup_notion.json'"
+  },
+  {
+    "test_name": "Auto-Restore All Down",
+    "timestamp": "2025-08-07T22:35:55.172858+00:00",
+    "success": true,
+    "details": "Auto-restore correctly returned None when all sources down",
+    "data_source": null,
+    "data_size": 0
+  },
+  {
+    "test_name": "Integrity Validation",
+    "timestamp": "2025-08-07T22:35:55.208034+00:00",
+    "success": true,
+    "details": "Correctly rejected invalid backup structure",
+    "data_source": null,
+    "data_size": 0
+  },
+  {
+    "timestamp": "2025-08-07T22:39:11.424623+00:00",
+    "source": "github",
+    "status": "success",
+    "data_size": 330,
+    "error": null
+  },
+  {
+    "test_name": "GitHub Individual",
+    "timestamp": "2025-08-07T22:39:11.427033+00:00",
+    "success": true,
+    "details": "GitHub restore successful",
+    "data_source": "GitHub",
+    "data_size": 330
+  },
+  {
+    "timestamp": "2025-08-07T22:39:11.474183+00:00",
+    "source": "supabase",
+    "status": "success",
+    "data_size": 368,
+    "error": null
+  },
+  {
+    "test_name": "Supabase Individual",
+    "timestamp": "2025-08-07T22:39:11.478015+00:00",
+    "success": true,
+    "details": "Supabase restore successful",
+    "data_source": "Supabase",
+    "data_size": 368
+  },
+  {
+    "timestamp": "2025-08-07T22:39:11.520242+00:00",
+    "source": "local",
+    "status": "success",
+    "data_size": 374,
+    "error": null
+  },
+  {
+    "test_name": "Local Individual",
+    "timestamp": "2025-08-07T22:39:11.521814+00:00",
+    "success": true,
+    "details": "Local restore successful",
+    "data_source": "Local",
+    "data_size": 374
+  },
+  {
+    "timestamp": "2025-08-07T22:39:11.563559+00:00",
+    "source": "notion",
+    "status": "success",
+    "data_size": 358,
+    "error": null
+  },
+  {
+    "test_name": "Notion Individual",
+    "timestamp": "2025-08-07T22:39:11.565966+00:00",
+    "success": true,
+    "details": "Notion restore successful",
+    "data_source": "Notion",
+    "data_size": 358
+  },
+  {
+    "timestamp": "2025-08-07T22:39:11.613125+00:00",
+    "source": "github",
+    "status": "success",
+    "data_size": 330,
+    "error": null
+  },
+  {
+    "test_name": "Auto-Restore GitHub Only",
+    "timestamp": "2025-08-07T22:39:11.616607+00:00",
+    "success": true,
+    "details": "Auto-restore successful with GitHub only",
+    "data_source": "GitHub",
+    "data_size": 330
+  },
+  {
+    "timestamp": "2025-08-07T22:39:11.660448+00:00",
+    "source": "github",
+    "status": "fail",
+    "data_size": 0,
+    "error": "[Errno 2] No such file or directory: 'backup_github.json'"
+  },
+  {
+    "timestamp": "2025-08-07T22:39:11.663805+00:00",
+    "source": "supabase",
+    "status": "success",
+    "data_size": 368,
+    "error": null
+  },
+  {
+    "test_name": "Auto-Restore Supabase Fallback",
+    "timestamp": "2025-08-07T22:39:11.666594+00:00",
+    "success": true,
+    "details": "Auto-restore fallback to Supabase successful",
+    "data_source": "Supabase",
+    "data_size": 368
+  },
+  {
+    "timestamp": "2025-08-07T22:39:11.702465+00:00",
+    "source": "github",
+    "status": "fail",
+    "data_size": 0,
+    "error": "[Errno 2] No such file or directory: 'backup_github.json'"
+  },
+  {
+    "timestamp": "2025-08-07T22:39:11.707271+00:00",
+    "source": "supabase",
+    "status": "fail",
+    "data_size": 0,
+    "error": "[Errno 2] No such file or directory: 'backup_supabase.json'"
+  },
+  {
+    "timestamp": "2025-08-07T22:39:11.712042+00:00",
+    "source": "local",
+    "status": "success",
+    "data_size": 374,
+    "error": null
+  },
+  {
+    "test_name": "Auto-Restore Local Fallback",
+    "timestamp": "2025-08-07T22:39:11.714997+00:00",
+    "success": true,
+    "details": "Auto-restore fallback to Local successful",
+    "data_source": "Local",
+    "data_size": 374
+  },
+  {
+    "timestamp": "2025-08-07T22:39:11.752579+00:00",
+    "source": "github",
+    "status": "fail",
+    "data_size": 0,
+    "error": "[Errno 2] No such file or directory: 'backup_github.json'"
+  },
+  {
+    "timestamp": "2025-08-07T22:39:11.756823+00:00",
+    "source": "supabase",
+    "status": "fail",
+    "data_size": 0,
+    "error": "[Errno 2] No such file or directory: 'backup_supabase.json'"
+  },
+  {
+    "timestamp": "2025-08-07T22:39:11.760322+00:00",
+    "source": "local",
+    "status": "fail",
+    "data_size": 0,
+    "error": "[Errno 2] No such file or directory: 'backup_local.json'"
+  },
+  {
+    "timestamp": "2025-08-07T22:39:11.763746+00:00",
+    "source": "notion",
+    "status": "success",
+    "data_size": 358,
+    "error": null
+  },
+  {
+    "test_name": "Auto-Restore Notion Fallback",
+    "timestamp": "2025-08-07T22:39:11.766042+00:00",
+    "success": true,
+    "details": "Auto-restore fallback to Notion successful",
+    "data_source": "Notion",
+    "data_size": 358
+  },
+  {
+    "timestamp": "2025-08-07T22:39:11.819965+00:00",
+    "source": "github",
+    "status": "success",
+    "data_size": 330,
+    "error": null
+  },
+  {
+    "test_name": "Auto-Restore Priority",
+    "timestamp": "2025-08-07T22:39:11.823348+00:00",
+    "success": true,
+    "details": "Auto-restore correctly prioritized GitHub",
+    "data_source": "GitHub",
+    "data_size": 330
+  },
+  {
+    "timestamp": "2025-08-07T22:39:11.880496+00:00",
+    "source": "github",
+    "status": "fail",
+    "data_size": 0,
+    "error": "[Errno 2] No such file or directory: 'backup_github.json'"
+  },
+  {
+    "timestamp": "2025-08-07T22:39:11.882569+00:00",
+    "source": "supabase",
+    "status": "fail",
+    "data_size": 0,
+    "error": "[Errno 2] No such file or directory: 'backup_supabase.json'"
+  },
+  {
+    "timestamp": "2025-08-07T22:39:11.886696+00:00",
+    "source": "local",
+    "status": "fail",
+    "data_size": 0,
+    "error": "[Errno 2] No such file or directory: 'backup_local.json'"
+  },
+  {
+    "timestamp": "2025-08-07T22:39:11.888610+00:00",
+    "source": "notion",
+    "status": "fail",
+    "data_size": 0,
+    "error": "[Errno 2] No such file or directory: 'backup_notion.json'"
+  },
+  {
+    "test_name": "Auto-Restore All Down",
+    "timestamp": "2025-08-07T22:39:11.890480+00:00",
+    "success": true,
+    "details": "Auto-restore correctly returned None when all sources down",
+    "data_source": null,
+    "data_size": 0
+  },
+  {
+    "test_name": "Integrity Validation",
+    "timestamp": "2025-08-07T22:39:11.914566+00:00",
+    "success": true,
+    "details": "Correctly rejected invalid backup structure",
+    "data_source": null,
+    "data_size": 0
+  }
+]
