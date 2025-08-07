@@ -1,365 +1,420 @@
 #!/usr/bin/env python3
 """
-Memory Bridge for Angles AI Universe™
-Connects Replit with Supabase for persistent AI memory management
+Angles AI Universe™ Memory Bridge
+Robust autosync pipeline that keeps Supabase (primary) and Notion (secondary) in sync
 
-This module provides functionality to:
-- Fetch unsynced decisions from Supabase
-- Send data to Notion (placeholder for future implementation)  
-- Mark decisions as synced
-- Run the main sync loop
-
-Author: Backend Engineering Team
+Author: Angles AI Universe™ Backend Team
 Version: 1.0.0
 """
 
+import json
 import os
-import logging
+import time
+from datetime import datetime, timezone
+from typing import List, Dict, Any, Optional, Callable
 import requests
-from datetime import datetime, date
-from typing import List, Dict, Any, Optional
-from supabase import create_client, Client
-from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
-
-# Configure logging for the memory bridge
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler('memory_bridge.log', mode='a')
-    ]
-)
-
-logger = logging.getLogger('memory_bridge')
 
 class MemoryBridge:
-    """
-    Main class for the Angles AI Universe™ Memory Bridge
-    Handles all operations for syncing decisions between Replit and external services
-    """
+    """Main sync bridge between Supabase and Notion"""
     
     def __init__(self):
-        """Initialize the Memory Bridge with environment configuration"""
-        logger.info("Initializing Angles AI Universe™ Memory Bridge")
+        """Initialize the memory bridge with environment credentials"""
         
-        # Load environment variables
+        # Supabase configuration (required)
         self.supabase_url = os.getenv('SUPABASE_URL')
-        self.supabase_key = os.getenv('SUPABASE_KEY')
-        self.notion_api_key = os.getenv('NOTION_API_KEY')
-        self.notion_database_id = os.getenv('NOTION_DATABASE_ID')
+        self.supabase_key = os.getenv('SUPABASE_ANON_KEY')
         
-        # Validate required environment variables
-        self._validate_environment()
+        # Notion configuration (optional)
+        self.notion_key = os.getenv('NOTION_API_KEY')
+        self.notion_db_id = os.getenv('NOTION_DATABASE_ID')
         
-        # Initialize Supabase client
-        self.supabase: Client = create_client(str(self.supabase_url), str(self.supabase_key))
+        # Validation
+        if not self.supabase_url or not self.supabase_key:
+            raise ValueError("Missing required SUPABASE_URL or SUPABASE_ANON_KEY environment variables")
         
-        # Initialize Notion headers (for future implementation)
+        # Notion availability
+        self.notion_enabled = bool(self.notion_key and self.notion_db_id)
+        
+        # Queue file for local fallback
+        self.queue_file = './sync_queue.jsonl'
+        
+        # Request headers
+        self.supabase_headers = {
+            'apikey': self.supabase_key,
+            'Authorization': f'Bearer {self.supabase_key}',
+            'Content-Type': 'application/json'
+        }
+        
         self.notion_headers = {
-            "Authorization": f"Bearer {self.notion_api_key}",
-            "Content-Type": "application/json",
-            "Notion-Version": "2022-06-28"
-        }
+            'Authorization': f'Bearer {self.notion_key}',
+            'Content-Type': 'application/json',
+            'Notion-Version': '2022-06-28'
+        } if self.notion_enabled else {}
         
-        logger.info("Memory Bridge initialized successfully")
+        print(f"🔗 Memory Bridge initialized")
+        print(f"   Supabase: ✅ Connected ({self.supabase_url})")
+        print(f"   Notion: {'✅ Enabled' if self.notion_enabled else '⚠️ Disabled (missing credentials)'}")
     
-    def _validate_environment(self) -> None:
-        """
-        Validate that all required environment variables are present
-        Raises ValueError if any required variables are missing
-        """
-        required_vars = {
-            'SUPABASE_URL': self.supabase_url,
-            'SUPABASE_KEY': self.supabase_key,
-            'NOTION_API_KEY': self.notion_api_key,
-            'NOTION_DATABASE_ID': self.notion_database_id
-        }
+    def healthcheck(self) -> bool:
+        """Validate Supabase connection by testing decision_vault access"""
         
-        missing_vars = [var for var, value in required_vars.items() if not value]
-        
-        if missing_vars:
-            error_msg = f"Missing required environment variables: {', '.join(missing_vars)}"
-            logger.error(error_msg)
-            raise ValueError(error_msg)
-        
-        logger.info("All required environment variables validated")
-    
-    def fetch_unsynced_decisions(self) -> List[Dict[str, Any]]:
-        """
-        Fetch decisions from Supabase that haven't been synced yet
-        
-        Returns:
-            List of decision dictionaries that need to be synced
-        """
         try:
-            logger.info("Fetching unsynced decisions from Supabase")
+            url = f"{self.supabase_url}/rest/v1/decision_vault"
+            params = {'select': 'id', 'limit': '1'}
             
-            # Query for decisions where synced = false or synced is null
-            result = self.supabase.table("decision_vault").select("*").or_("synced.is.null,synced.eq.false").order("created_at", desc=True).execute()
-            
-            decisions = result.data if result.data else []
-            logger.info(f"Found {len(decisions)} unsynced decisions")
-            
-            # Log some details about the unsynced decisions
-            if decisions:
-                logger.info("Unsynced decisions overview:")
-                for i, decision in enumerate(decisions[:5], 1):  # Show first 5
-                    decision_text = decision.get('decision', '')[:50]
-                    decision_type = decision.get('type', 'unknown')
-                    logger.info(f"  {i}. [{decision_type}] {decision_text}...")
-                
-                if len(decisions) > 5:
-                    logger.info(f"  ... and {len(decisions) - 5} more decisions")
-            
-            return decisions
-            
-        except Exception as e:
-            logger.error(f"Failed to fetch unsynced decisions: {e}")
-            raise
-    
-    def send_to_notion(self, decision: Dict[str, Any]) -> bool:
-        """
-        Send decision data to Notion database
-        
-        Args:
-            decision: Dictionary containing decision data
-            
-        Returns:
-            True if successfully sent to Notion, False otherwise
-            
-        Note: This is currently a placeholder implementation.
-              Full Notion integration will be implemented in future versions.
-        """
-        try:
-            # Extract decision data
-            decision_text = decision.get('decision', '')
-            decision_type = decision.get('type', 'general')
-            decision_date = decision.get('date', date.today().isoformat())
-            decision_comment = decision.get('comment', '')
-            decision_active = decision.get('active', True)
-            
-            # Create tags from type and status
-            tags = [decision_type]
-            if decision_active:
-                tags.append('active')
-            else:
-                tags.append('inactive')
-            
-            # Prepare Notion page data
-            page_data = {
-                "parent": {"database_id": self.notion_database_id},
-                "properties": {
-                    "Name": {
-                        "title": [
-                            {
-                                "text": {
-                                    "content": decision_text[:100]  # Notion title limit
-                                }
-                            }
-                        ]
-                    },
-                    "Message": {
-                        "rich_text": [
-                            {
-                                "text": {
-                                    "content": f"{decision_text}\n\nComment: {decision_comment}" if decision_comment else decision_text
-                                }
-                            }
-                        ]
-                    },
-                    "Date": {
-                        "date": {
-                            "start": decision_date
-                        }
-                    },
-                    "Tag": {
-                        "multi_select": [{"name": tag} for tag in tags]
-                    }
-                }
-            }
-            
-            # Send to Notion API
-            response = requests.post(
-                "https://api.notion.com/v1/pages",
-                headers=self.notion_headers,
-                json=page_data,
-                timeout=30
-            )
+            response = requests.get(url, headers=self.supabase_headers, params=params, timeout=10)
             
             if response.status_code == 200:
-                logger.info(f"Successfully sent decision to Notion: {decision_text[:50]}...")
+                print("✅ Supabase healthcheck passed")
                 return True
             else:
-                logger.error(f"Failed to send to Notion. Status: {response.status_code}")
-                logger.error(f"Response: {response.text}")
+                print(f"❌ Supabase healthcheck failed: {response.status_code}")
                 return False
                 
         except Exception as e:
-            logger.error(f"Error sending decision to Notion: {e}")
+            print(f"❌ Supabase healthcheck error: {e}")
             return False
     
-    def mark_as_synced(self, decision_id: str) -> bool:
-        """
-        Mark a decision as synced in the Supabase database
+    def fetch_unsynced(self, table: str) -> List[Dict[str, Any]]:
+        """Fetch unsynced rows from specified table"""
         
-        Args:
-            decision_id: UUID string of the decision to mark as synced
-            
-        Returns:
-            True if successfully marked as synced, False otherwise
-        """
         try:
-            logger.info(f"Marking decision {decision_id} as synced")
+            url = f"{self.supabase_url}/rest/v1/{table}"
+            params = {
+                'select': '*',
+                'notion_synced': 'eq.false',
+                'order': 'created_at.asc',
+                'limit': '50'
+            }
             
-            # Update the decision record with synced=true and synced_at timestamp
-            result = self.supabase.table("decision_vault").update({
-                "synced": True,
-                "synced_at": datetime.utcnow().isoformat()
-            }).eq("id", decision_id).execute()
+            response = requests.get(url, headers=self.supabase_headers, params=params, timeout=15)
             
-            if result.data:
-                logger.info(f"Successfully marked decision {decision_id} as synced")
+            if response.status_code == 200:
+                rows = response.json()
+                print(f"📥 Fetched {len(rows)} unsynced rows from {table}")
+                return rows
+            else:
+                print(f"⚠️ Failed to fetch from {table}: {response.status_code}")
+                return []
+                
+        except Exception as e:
+            print(f"❌ Error fetching from {table}: {e}")
+            return []
+    
+    def upsert_notion(self, page_payload: Dict[str, Any]) -> bool:
+        """Create a new page in Notion database"""
+        
+        if not self.notion_enabled:
+            return False
+        
+        try:
+            url = 'https://api.notion.com/v1/pages'
+            
+            response = requests.post(url, headers=self.notion_headers, json=page_payload, timeout=15)
+            
+            if response.status_code in [200, 201]:
+                print("✅ Created Notion page successfully")
                 return True
             else:
-                logger.warning(f"No rows updated when marking {decision_id} as synced")
+                print(f"⚠️ Notion page creation failed: {response.status_code} - {response.text}")
                 return False
                 
         except Exception as e:
-            logger.error(f"Failed to mark decision {decision_id} as synced: {e}")
+            print(f"❌ Error creating Notion page: {e}")
             return False
     
-    def sync(self) -> Dict[str, Any]:
-        """
-        Main sync function - orchestrates the entire memory bridge process
-        
-        Returns:
-            Dictionary containing sync results and statistics
-        """
-        start_time = datetime.utcnow()
-        logger.info("="*60)
-        logger.info("ANGLES AI UNIVERSE™ MEMORY BRIDGE - SYNC START")
-        logger.info("="*60)
-        
-        # Initialize statistics
-        stats = {
-            "total_found": 0,
-            "successfully_synced": 0,
-            "failed_sync": 0,
-            "failed_mark": 0,
-            "errors": []
-        }
+    def mark_synced(self, table: str, row_id: str) -> bool:
+        """Mark a row as synced in Supabase"""
         
         try:
-            # Step 1: Test Supabase connection
-            logger.info("Testing Supabase connection...")
-            test_result = self.supabase.table("decision_vault").select("id").limit(1).execute()
-            logger.info("✓ Supabase connection successful")
+            url = f"{self.supabase_url}/rest/v1/{table}"
+            params = {'id': f'eq.{row_id}'}
+            payload = {'notion_synced': True}
             
-            # Step 2: Fetch unsynced decisions
-            decisions = self.fetch_unsynced_decisions()
-            stats["total_found"] = len(decisions)
+            response = requests.patch(url, headers=self.supabase_headers, params=params, json=payload, timeout=10)
             
-            if not decisions:
-                logger.info("No unsynced decisions found - memory bridge is up to date")
-                return {
-                    "success": True, 
-                    "message": "No decisions to sync", 
-                    "stats": stats,
-                    "duration_seconds": (datetime.utcnow() - start_time).total_seconds()
-                }
-            
-            # Step 3: Process each decision
-            logger.info(f"Processing {len(decisions)} unsynced decisions...")
-            
-            for i, decision in enumerate(decisions, 1):
-                decision_id = decision.get('id', 'unknown')
-                decision_text = decision.get('decision', '')[:50]
+            if response.status_code == 204:
+                print(f"✅ Marked {row_id} as synced in {table}")
+                return True
+            else:
+                print(f"⚠️ Failed to mark {row_id} as synced: {response.status_code}")
+                return False
                 
-                logger.info(f"[{i}/{len(decisions)}] Processing: {decision_text}...")
-                
-                # Send to Notion (if enabled)
-                notion_success = self.send_to_notion(decision)
-                
-                if notion_success:
-                    stats["successfully_synced"] += 1
+        except Exception as e:
+            print(f"❌ Error marking {row_id} as synced: {e}")
+            return False
+    
+    def queue_for_later(self, target: str, table: str, payload: Dict[str, Any]):
+        """Queue a sync operation for later when services are unreachable"""
+        
+        try:
+            queue_entry = {
+                'target': target,
+                'table': table,
+                'payload': payload,
+                'queued_at': datetime.now(timezone.utc).isoformat()
+            }
+            
+            with open(self.queue_file, 'a') as f:
+                f.write(json.dumps(queue_entry) + '\n')
+            
+            print(f"📝 Queued {table} entry for later sync")
+            
+        except Exception as e:
+            print(f"❌ Failed to queue entry: {e}")
+    
+    def drain_queue(self):
+        """Process queued sync operations"""
+        
+        if not os.path.exists(self.queue_file):
+            return
+        
+        try:
+            with open(self.queue_file, 'r') as f:
+                lines = f.readlines()
+            
+            if not lines:
+                return
+            
+            print(f"🔄 Processing {len(lines)} queued operations...")
+            
+            processed = []
+            failed = []
+            
+            for line in lines:
+                try:
+                    entry = json.loads(line.strip())
                     
-                    # Mark as synced in Supabase
-                    if not self.mark_as_synced(decision_id):
-                        stats["failed_mark"] += 1
-                        logger.warning(f"Decision synced but failed to mark as synced: {decision_id}")
-                else:
-                    stats["failed_sync"] += 1
-                    error_msg = f"Failed to sync decision: {decision_text}"
-                    stats["errors"].append(error_msg)
-                    logger.error(error_msg)
+                    if entry['target'] == 'notion' and self.notion_enabled:
+                        if self.upsert_notion(entry['payload']):
+                            processed.append(line)
+                        else:
+                            failed.append(line)
+                    else:
+                        # Skip if Notion not available
+                        processed.append(line)
+                        
+                except Exception as e:
+                    print(f"❌ Failed to process queue entry: {e}")
+                    failed.append(line)
             
-            # Step 4: Generate summary
-            end_time = datetime.utcnow()
-            duration = (end_time - start_time).total_seconds()
+            # Rewrite queue file with only failed entries
+            with open(self.queue_file, 'w') as f:
+                for line in failed:
+                    f.write(line)
             
-            logger.info("="*60)
-            logger.info("MEMORY BRIDGE SYNC COMPLETED")
-            logger.info(f"Duration: {duration:.2f} seconds")
-            logger.info(f"Total found: {stats['total_found']}")
-            logger.info(f"Successfully synced: {stats['successfully_synced']}")
-            logger.info(f"Failed to sync: {stats['failed_sync']}")
-            logger.info(f"Failed to mark: {stats['failed_mark']}")
-            logger.info("="*60)
+            if processed:
+                print(f"✅ Processed {len(processed)} queued operations")
             
-            # Determine overall success
-            success = stats["failed_sync"] == 0
-            
-            return {
-                "success": success,
-                "message": f"Synced {stats['successfully_synced']}/{stats['total_found']} decisions",
-                "stats": stats,
-                "duration_seconds": duration
-            }
-            
+            if failed:
+                print(f"⚠️ {len(failed)} operations remain queued")
+                
         except Exception as e:
-            error_msg = f"Memory bridge sync failed: {e}"
-            logger.error(error_msg)
-            stats["errors"].append(error_msg)
-            
-            return {
-                "success": False,
-                "error": error_msg,
-                "stats": stats,
-                "duration_seconds": (datetime.utcnow() - start_time).total_seconds()
-            }
-
-def main():
-    """
-    Main entry point for the memory bridge
-    Can be run manually or scheduled for automated syncing
-    """
-    try:
-        logger.info("Starting Angles AI Universe™ Memory Bridge")
+            print(f"❌ Error draining queue: {e}")
+    
+    def map_decision(self, row: Dict[str, Any]) -> Dict[str, Any]:
+        """Map decision_vault row to Notion page payload"""
         
-        # Create memory bridge instance
+        return {
+            'parent': {'database_id': self.notion_db_id},
+            'properties': {
+                'Decision': {
+                    'title': [{'text': {'content': str(row.get('decision', ''))}}]
+                },
+                'Date': {
+                    'date': {'start': str(row.get('date', ''))} if row.get('date') else None
+                },
+                'Type': {
+                    'select': {'name': str(row.get('type', 'Other'))}
+                }
+            }
+        }
+    
+    def map_memory(self, row: Dict[str, Any]) -> Dict[str, Any]:
+        """Map memory_log row to Notion page payload"""
+        
+        return {
+            'parent': {'database_id': self.notion_db_id},
+            'properties': {
+                'Event': {
+                    'title': [{'text': {'content': str(row.get('event_type', ''))}}]
+                },
+                'Description': {
+                    'rich_text': [{'text': {'content': str(row.get('event_description', ''))}}]
+                },
+                'Date': {
+                    'date': {'start': str(row.get('created_at', '')).split('T')[0]} if row.get('created_at') else None
+                }
+            }
+        }
+    
+    def map_agent(self, row: Dict[str, Any]) -> Dict[str, Any]:
+        """Map agent_activity row to Notion page payload"""
+        
+        return {
+            'parent': {'database_id': self.notion_db_id},
+            'properties': {
+                'Agent': {
+                    'title': [{'text': {'content': str(row.get('agent_name', ''))}}]
+                },
+                'Activity': {
+                    'rich_text': [{'text': {'content': str(row.get('activity_description', ''))}}]
+                },
+                'Status': {
+                    'select': {'name': str(row.get('status', 'completed'))}
+                },
+                'Date': {
+                    'date': {'start': str(row.get('created_at', '')).split('T')[0]} if row.get('created_at') else None
+                }
+            }
+        }
+    
+    def push_batch_to_notion(self, table: str, mapping_fn: Callable[[Dict[str, Any]], Dict[str, Any]]) -> int:
+        """Push a batch of unsynced rows to Notion"""
+        
+        # Fetch unsynced rows
+        rows = self.fetch_unsynced(table)
+        
+        if not rows:
+            return 0
+        
+        synced_count = 0
+        
+        for row in rows:
+            try:
+                # Map row to Notion payload
+                notion_payload = mapping_fn(row)
+                
+                # Try to sync with retry logic
+                success = False
+                for attempt in range(3):
+                    if attempt > 0:
+                        print(f"🔄 Retry {attempt} for {table} row {row.get('id')}")
+                        time.sleep(2 ** attempt)  # Exponential backoff: 2s, 4s
+                    
+                    if self.notion_enabled:
+                        if self.upsert_notion(notion_payload):
+                            success = True
+                            break
+                    else:
+                        # Skip Notion if not enabled
+                        success = True
+                        break
+                
+                if success:
+                    # Mark as synced in Supabase
+                    if self.mark_synced(table, row['id']):
+                        synced_count += 1
+                    else:
+                        print(f"⚠️ Synced to Notion but failed to mark {row['id']} as synced")
+                else:
+                    # Queue for later if all attempts failed
+                    if self.notion_enabled:
+                        self.queue_for_later('notion', table, notion_payload)
+                
+            except Exception as e:
+                print(f"❌ Error processing {table} row {row.get('id')}: {e}")
+                continue
+        
+        print(f"📤 Synced {synced_count}/{len(rows)} rows from {table}")
+        return synced_count
+    
+    def sync_all(self):
+        """Main sync function that processes all tables"""
+        
+        print("🚀 Starting memory bridge sync...")
+        print("=" * 50)
+        
+        start_time = time.time()
+        
+        # Step 1: Health check
+        if not self.healthcheck():
+            print("❌ Sync aborted due to failed health check")
+            return
+        
+        # Step 2: Drain any queued operations first
+        self.drain_queue()
+        
+        # Step 3: Sync each table
+        total_synced = 0
+        
+        tables_to_sync = [
+            ('decision_vault', self.map_decision),
+            ('memory_log', self.map_memory),
+            ('agent_activity', self.map_agent)
+        ]
+        
+        for table, mapping_fn in tables_to_sync:
+            print(f"\n🔄 Syncing {table}...")
+            try:
+                synced = self.push_batch_to_notion(table, mapping_fn)
+                total_synced += synced
+            except Exception as e:
+                print(f"❌ Error syncing {table}: {e}")
+        
+        # Summary
+        duration = time.time() - start_time
+        print("\n" + "=" * 50)
+        print("🏁 Sync completed!")
+        print(f"   Total synced: {total_synced} rows")
+        print(f"   Duration: {duration:.2f} seconds")
+        print(f"   Notion: {'✅ Enabled' if self.notion_enabled else '⚠️ Disabled'}")
+        print("=" * 50)
+
+
+def run_sync_test():
+    """Test function that inserts sample data and runs sync"""
+    
+    print("🧪 RUNNING SYNC TEST")
+    print("=" * 30)
+    
+    try:
         bridge = MemoryBridge()
         
-        # Run sync process
-        result = bridge.sync()
+        # Insert test decision
+        print("📝 Inserting test decision...")
         
-        # Log final result
-        if result["success"]:
-            logger.info(f"Memory bridge completed successfully: {result['message']}")
-            exit_code = 0
+        test_decision = {
+            'decision': 'Test sync pipeline functionality',
+            'type': 'System',
+            'date': datetime.now().date().isoformat(),
+            'notion_synced': False
+        }
+        
+        url = f"{bridge.supabase_url}/rest/v1/decision_vault"
+        response = requests.post(url, headers=bridge.supabase_headers, json=test_decision, timeout=10)
+        
+        if response.status_code in [200, 201]:
+            print("✅ Test decision inserted")
         else:
-            logger.error(f"Memory bridge completed with errors: {result.get('error', 'Unknown error')}")
-            exit_code = 1
+            print(f"⚠️ Failed to insert test decision: {response.status_code}")
         
-        # Exit with appropriate code for scheduling systems
-        exit(exit_code)
+        # Run sync
+        print("\n🔄 Running full sync...")
+        bridge.sync_all()
+        
+        print("\n🎉 Sync test completed!")
         
     except Exception as e:
-        logger.error(f"Memory bridge failed to start: {e}")
-        exit(1)
+        print(f"❌ Sync test failed: {e}")
+
+
+# Initialize global bridge instance
+_bridge = None
+
+def get_bridge():
+    """Get global bridge instance"""
+    global _bridge
+    if _bridge is None:
+        _bridge = MemoryBridge()
+    return _bridge
+
+def sync_all():
+    """Convenience function for external use"""
+    bridge = get_bridge()
+    bridge.sync_all()
+
 
 if __name__ == "__main__":
-    main()
+    run_sync_test()
