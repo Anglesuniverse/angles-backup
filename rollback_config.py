@@ -1,22 +1,21 @@
 #!/usr/bin/env python3
 """
-Configuration and Memory State Rollback System for Angles AI Universe™
-Allows rollback of config files and MemorySyncAgent™ state to previous versions
+Angles AI Universe™ Configuration Rollback System
+Interactive rollback tool for core configuration files
 
 This module provides:
-- Interactive rollback selection for config and memory files
-- Decryption of encrypted memory backups
+- Interactive rollback selection for configuration files
+- File type and version selection interface
 - Git commit tracking for rollback operations
-- Notion logging for rollback activities
-- Safety validation before rollback execution
+- Notion logging for Configuration Change Log
+- Security validation for rollback operations
 
 Author: Angles AI Universe™ Backend Team
-Version: 1.0.0
+Version: 2.0.0
 """
 
 import os
 import sys
-import json
 import shutil
 import logging
 import subprocess
@@ -24,7 +23,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Tuple
 from dataclasses import dataclass
-from cryptography.fernet import Fernet
 
 # Add project root to path for imports
 sys.path.append(str(Path(__file__).parent))
@@ -32,50 +30,54 @@ sys.path.append(str(Path(__file__).parent))
 from notion_backup_logger import create_notion_logger
 
 @dataclass
-class BackupFile:
-    """Information about a backup file"""
+class ConfigBackup:
+    """Information about a configuration backup file"""
     backup_path: Path
     original_path: str
     timestamp: str
-    file_type: str
-    encrypted: bool
     file_size: int
     
-class ConfigMemoryRollback:
-    """Handles rollback of both config files and memory state files"""
+class AnglesConfigRollback:
+    """Handles rollback of Angles AI Universe™ core configuration files"""
     
     def __init__(self):
         """Initialize the rollback system"""
         self.logger = self._setup_logging()
         self.notion_logger = create_notion_logger()
         
-        # Version storage directories
+        # Version storage directory
         self.config_versions_dir = Path('config_versions')
-        self.memory_versions_dir = Path('memory_versions')
-        
-        # Encryption setup for memory files
-        self.encryption_key = self._load_encryption_key()
         
         # Git configuration
-        self.git_username = os.getenv('GIT_USERNAME', 'MemorySync Agent')
-        self.git_email = os.getenv('GIT_EMAIL', 'memory@anglesuniverse.com')
+        self.git_username = os.getenv('GIT_USERNAME', 'Angles Config Agent')
+        self.git_email = os.getenv('GIT_EMAIL', 'config@anglesuniverse.com')
         
-        self.logger.info("⏪ CONFIG & MEMORY ROLLBACK SYSTEM INITIALIZED")
-        self.logger.info("=" * 50)
+        # Configuration file mapping
+        self.config_file_map = {
+            'CorePrompt': ['config/CorePrompt.yaml', 'CorePrompt.yaml'],
+            'ExecPrompt': ['config/ExecPrompt.yaml', 'ExecPrompt.yaml'],
+            'agent_config': ['config/agent_config.json', 'agent_config.json'],
+            'memory_settings': ['config/memory_settings.json', 'memory_settings.json'],
+            'db_schema': ['config/db_schema.sql', 'db_schema.sql'],
+            'system_variables': ['config/system_variables.env', 'system_variables.env']
+        }
+        
+        self.logger.info("⏪ ANGLES AI UNIVERSE™ CONFIG ROLLBACK SYSTEM INITIALIZED")
+        self.logger.info("=" * 60)
     
     def _setup_logging(self) -> logging.Logger:
         """Setup rollback-specific logging"""
         log_dir = Path('logs')
         log_dir.mkdir(exist_ok=True)
         
-        logger = logging.getLogger('config_memory_rollback')
+        logger = logging.getLogger('angles_config_rollback')
         logger.setLevel(logging.INFO)
         
         # Clear any existing handlers
         logger.handlers.clear()
         
         # File handler
-        file_handler = logging.FileHandler('logs/rollback.log')
+        file_handler = logging.FileHandler('logs/config_rollback.log')
         file_handler.setLevel(logging.INFO)
         
         # Console handler
@@ -91,28 +93,6 @@ class ConfigMemoryRollback:
         logger.addHandler(console_handler)
         
         return logger
-    
-    def _load_encryption_key(self) -> Optional[Fernet]:
-        """Load encryption key for memory files"""
-        key_file = Path('memory_encryption.key')
-        
-        if not key_file.exists():
-            self.logger.warning("🔐 Encryption key not found - encrypted memory files cannot be restored")
-            return None
-        
-        try:
-            with open(key_file, 'rb') as f:
-                key = f.read()
-            return Fernet(key)
-        except Exception as e:
-            self.logger.error(f"Failed to load encryption key: {e}")
-            return None
-    
-    def _decrypt_file_content(self, encrypted_content: bytes) -> bytes:
-        """Decrypt file content"""
-        if not self.encryption_key:
-            raise ValueError("Encryption key not available")
-        return self.encryption_key.decrypt(encrypted_content)
     
     def _run_git_command(self, command: List[str]) -> Dict[str, Any]:
         """Execute git command with error handling"""
@@ -137,68 +117,56 @@ class ConfigMemoryRollback:
         except Exception as e:
             return {"success": False, "error": str(e)}
     
-    def list_available_backups(self, file_type: Optional[str] = None) -> Dict[str, List[BackupFile]]:
-        """List all available backup files"""
-        backups: Dict[str, List[BackupFile]] = {}
+    def list_available_config_backups(self, file_type: Optional[str] = None) -> Dict[str, List[ConfigBackup]]:
+        """List all available configuration backup files"""
+        backups: Dict[str, List[ConfigBackup]] = {}
         
-        # Determine which directories to scan
-        dirs_to_scan = []
-        if file_type is None or file_type == 'config':
-            dirs_to_scan.append(('config', self.config_versions_dir))
-        if file_type is None or file_type == 'memory':
-            dirs_to_scan.append(('memory', self.memory_versions_dir))
+        if not self.config_versions_dir.exists():
+            return backups
         
-        for backup_type, backup_dir in dirs_to_scan:
-            if not backup_dir.exists():
-                continue
-            
-            for backup_file in backup_dir.glob('*'):
-                if backup_file.is_file():
-                    try:
-                        # Parse filename to extract information
-                        name_parts = backup_file.stem.split('_')
-                        if len(name_parts) >= 3:
-                            # Extract timestamp (last two parts: date_time)
-                            timestamp = '_'.join(name_parts[-2:])
-                            base_name = '_'.join(name_parts[:-2])
-                            
-                            # Reconstruct original path
-                            if backup_type == 'config':
-                                original_path = f"{base_name}{backup_file.suffix}"
-                            else:  # memory
-                                if base_name in ['state', 'session_cache']:
-                                    original_path = f"memory/{base_name}.json"
-                                elif base_name == 'long_term':
-                                    original_path = f"memory/{base_name}.db"
-                                else:
-                                    original_path = f"memory/indexes/{base_name}"
-                            
-                            # Check if file is encrypted (memory files might be)
-                            encrypted = backup_type == 'memory'
-                            try:
-                                # Try to detect if file is encrypted by reading first few bytes
-                                with open(backup_file, 'rb') as f:
-                                    first_bytes = f.read(16)
-                                    # Fernet encrypted files start with specific patterns
-                                    encrypted = backup_type == 'memory' and not first_bytes.startswith(b'{')
-                            except:
-                                encrypted = backup_type == 'memory'
-                            
-                            backup_info = BackupFile(
-                                backup_path=backup_file,
-                                original_path=original_path,
-                                timestamp=timestamp,
-                                file_type=backup_type,
-                                encrypted=encrypted,
-                                file_size=backup_file.stat().st_size
-                            )
-                            
-                            if original_path not in backups:
-                                backups[original_path] = []
-                            backups[original_path].append(backup_info)
-                            
-                    except Exception as e:
-                        self.logger.debug(f"Could not parse backup file {backup_file}: {e}")
+        for backup_file in self.config_versions_dir.glob('*'):
+            if backup_file.is_file():
+                try:
+                    # Parse filename to extract information
+                    name_parts = backup_file.stem.split('_')
+                    if len(name_parts) >= 3:
+                        # Extract timestamp (last two parts: date_time)
+                        timestamp = '_'.join(name_parts[-2:])
+                        base_name = '_'.join(name_parts[:-2])
+                        
+                        # Determine original path
+                        original_path = None
+                        for config_type, paths in self.config_file_map.items():
+                            if base_name.lower() == config_type.lower():
+                                # Find which path exists or use the first one
+                                for path in paths:
+                                    if Path(path).exists():
+                                        original_path = path
+                                        break
+                                if not original_path:
+                                    original_path = paths[0]  # Default to first option
+                                break
+                        
+                        if not original_path:
+                            continue  # Skip unknown file types
+                        
+                        # Filter by file type if specified
+                        if file_type and base_name.lower() != file_type.lower():
+                            continue
+                        
+                        backup_info = ConfigBackup(
+                            backup_path=backup_file,
+                            original_path=original_path,
+                            timestamp=timestamp,
+                            file_size=backup_file.stat().st_size
+                        )
+                        
+                        if original_path not in backups:
+                            backups[original_path] = []
+                        backups[original_path].append(backup_info)
+                        
+                except Exception as e:
+                    self.logger.debug(f"Could not parse backup file {backup_file}: {e}")
         
         # Sort backups by timestamp (newest first)
         for file_path in backups:
@@ -206,14 +174,46 @@ class ConfigMemoryRollback:
         
         return backups
     
-    def display_backup_selection_menu(self, backups: Dict[str, List[BackupFile]]) -> Optional[BackupFile]:
+    def display_file_type_menu(self) -> Optional[str]:
+        """Display menu for file type selection"""
+        print("\n📁 AVAILABLE CONFIGURATION FILE TYPES:")
+        print("=" * 45)
+        
+        file_types = list(self.config_file_map.keys())
+        
+        for i, file_type in enumerate(file_types, 1):
+            print(f"  {i:2d}. {file_type}")
+        
+        print(f"   0. All files")
+        print()
+        
+        while True:
+            try:
+                choice = input("Select file type (0 for all, or 1-{num}): ".format(num=len(file_types))).strip()
+                
+                if choice == '0':
+                    return None  # All files
+                
+                choice_num = int(choice)
+                if 1 <= choice_num <= len(file_types):
+                    return file_types[choice_num - 1]
+                else:
+                    print(f"❌ Invalid selection. Please choose 0-{len(file_types)}")
+                    
+            except ValueError:
+                print("❌ Invalid input. Please enter a number")
+            except KeyboardInterrupt:
+                print("\n❌ Selection cancelled by user")
+                return None
+    
+    def display_backup_selection_menu(self, backups: Dict[str, List[ConfigBackup]]) -> Optional[ConfigBackup]:
         """Display interactive menu for backup selection"""
         if not backups:
             print("❌ No backup files found")
             return None
         
-        print("\n📁 AVAILABLE BACKUP FILES:")
-        print("=" * 40)
+        print("\n📄 AVAILABLE CONFIGURATION BACKUPS:")
+        print("=" * 45)
         
         # Create numbered list of all backups
         backup_list = []
@@ -227,11 +227,7 @@ class ConfigMemoryRollback:
                 size_kb = backup.file_size / 1024
                 size_str = f"{size_kb:.1f} KB" if size_kb < 1024 else f"{size_kb/1024:.1f} MB"
                 
-                # Format display
-                encryption_marker = "🔐" if backup.encrypted else "📄"
-                type_marker = "⚙️" if backup.file_type == 'config' else "🧠"
-                
-                print(f"  {index:2d}. {encryption_marker} {type_marker} {backup.timestamp} ({size_str})")
+                print(f"  {index:2d}. 📄 {backup.timestamp} ({size_str})")
         
         print(f"\n   0. Cancel rollback")
         print()
@@ -251,11 +247,10 @@ class ConfigMemoryRollback:
                     # Confirm selection
                     print(f"\n📋 SELECTED BACKUP:")
                     print(f"   File: {selected_backup.original_path}")
-                    print(f"   Type: {selected_backup.file_type}")
                     print(f"   Timestamp: {selected_backup.timestamp}")
-                    print(f"   Encrypted: {'Yes' if selected_backup.encrypted else 'No'}")
+                    print(f"   Size: {selected_backup.file_size} bytes")
                     
-                    confirm = input("\nConfirm restore? (y/N): ").strip().lower()
+                    confirm = input("\nConfirm rollback? (y/N): ").strip().lower()
                     if confirm == 'y':
                         return selected_backup
                     else:
@@ -270,8 +265,8 @@ class ConfigMemoryRollback:
                 print("\n❌ Rollback cancelled by user")
                 return None
     
-    def restore_backup_file(self, backup: BackupFile, dry_run: bool = False) -> Dict[str, Any]:
-        """Restore a backup file to its original location"""
+    def restore_config_backup(self, backup: ConfigBackup, dry_run: bool = False) -> Dict[str, Any]:
+        """Restore a configuration backup to its original location"""
         try:
             self.logger.info(f"{'🧪 DRY RUN:' if dry_run else '⏪'} Restoring {backup.original_path} from {backup.timestamp}")
             
@@ -281,24 +276,16 @@ class ConfigMemoryRollback:
             
             if dry_run:
                 # Just validate that we can read the backup
-                if backup.encrypted:
-                    if not self.encryption_key:
-                        return {
-                            "success": False,
-                            "error": "Cannot decrypt backup - encryption key not available"
-                        }
-                    
-                    try:
-                        with open(backup.backup_path, 'rb') as f:
-                            encrypted_content = f.read()
-                        self._decrypt_file_content(encrypted_content)
-                    except Exception as e:
-                        return {
-                            "success": False,
-                            "error": f"Cannot decrypt backup: {e}"
-                        }
+                try:
+                    with open(backup.backup_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                    self.logger.info(f"✅ DRY RUN: Backup can be restored to {backup.original_path}")
+                except Exception as e:
+                    return {
+                        "success": False,
+                        "error": f"Cannot read backup: {e}"
+                    }
                 
-                self.logger.info(f"✅ DRY RUN: Backup can be restored to {backup.original_path}")
                 return {"success": True, "dry_run": True}
             
             # Create backup of current file if it exists
@@ -308,33 +295,14 @@ class ConfigMemoryRollback:
                 self.logger.info(f"📋 Created current file backup: {current_backup}")
             
             # Restore the file
-            if backup.encrypted:
-                if not self.encryption_key:
-                    return {
-                        "success": False,
-                        "error": "Cannot decrypt backup - encryption key not available"
-                    }
-                
-                # Read and decrypt
-                with open(backup.backup_path, 'rb') as f:
-                    encrypted_content = f.read()
-                
-                decrypted_content = self._decrypt_file_content(encrypted_content)
-                
-                # Write decrypted content
-                with open(original_path, 'wb') as f:
-                    f.write(decrypted_content)
-            else:
-                # Simple copy for unencrypted files
-                shutil.copy2(backup.backup_path, original_path)
+            shutil.copy2(backup.backup_path, original_path)
             
             self.logger.info(f"✅ Successfully restored {backup.original_path}")
             
             return {
                 "success": True,
                 "original_path": backup.original_path,
-                "backup_timestamp": backup.timestamp,
-                "file_type": backup.file_type
+                "backup_timestamp": backup.timestamp
             }
             
         except Exception as e:
@@ -344,7 +312,7 @@ class ConfigMemoryRollback:
                 "error": str(e)
             }
     
-    def commit_rollback_changes(self, backup: BackupFile) -> Dict[str, Any]:
+    def commit_rollback_changes(self, backup: ConfigBackup) -> Dict[str, Any]:
         """Commit and push rollback changes to Git"""
         try:
             # Add restored file to git
@@ -356,7 +324,7 @@ class ConfigMemoryRollback:
                 }
             
             # Create rollback commit message
-            commit_message = f"{backup.file_type.title()} rollback: {Path(backup.original_path).name} {backup.timestamp}"
+            commit_message = f"Rollback to {Path(backup.original_path).name} {backup.timestamp}"
             
             # Commit changes
             commit_result = self._run_git_command(['git', 'commit', '-m', commit_message])
@@ -390,17 +358,18 @@ class ConfigMemoryRollback:
                 "error": str(e)
             }
     
-    def log_rollback_to_notion(self, backup: BackupFile, git_commit: str):
-        """Log rollback to Notion Memory Change Log"""
+    def log_rollback_to_notion(self, backup: ConfigBackup, git_commit: str):
+        """Log rollback to Notion Configuration Change Log"""
         try:
-            # Log using the backup logger (will be extended to support memory changes)
+            # Log using the backup logger (adapted for configuration changes)
             self.notion_logger.log_memory_change(
                 file_changed=Path(backup.original_path).name,
                 action="Rollback",
                 timestamp=backup.timestamp,
                 git_commit_id=git_commit,
-                file_type=backup.file_type,
-                encrypted=backup.encrypted
+                file_type="config",
+                encrypted=False,
+                details=f"Rolled back to version {backup.timestamp}"
             )
             
             self.logger.info(f"📝 Logged rollback to Notion: {Path(backup.original_path).name}")
@@ -412,15 +381,19 @@ class ConfigMemoryRollback:
         """Run interactive rollback process"""
         start_time = datetime.now()
         
-        self.logger.info(f"🔍 {'DRY RUN: ' if dry_run else ''}Starting interactive rollback...")
+        self.logger.info(f"🔍 {'DRY RUN: ' if dry_run else ''}Starting interactive configuration rollback...")
+        
+        # Get file type selection if not provided
+        if file_type is None:
+            file_type = self.display_file_type_menu()
         
         # List available backups
-        backups = self.list_available_backups(file_type)
+        backups = self.list_available_config_backups(file_type)
         
         if not backups:
             return {
                 "success": False,
-                "error": "No backup files found",
+                "error": "No backup files found for the selected file type",
                 "duration": (datetime.now() - start_time).total_seconds()
             }
         
@@ -435,7 +408,7 @@ class ConfigMemoryRollback:
             }
         
         # Restore the selected backup
-        restore_result = self.restore_backup_file(selected_backup, dry_run)
+        restore_result = self.restore_config_backup(selected_backup, dry_run)
         
         if not restore_result['success']:
             return {
@@ -451,8 +424,7 @@ class ConfigMemoryRollback:
                 "dry_run": True,
                 "selected_backup": {
                     "original_path": selected_backup.original_path,
-                    "timestamp": selected_backup.timestamp,
-                    "file_type": selected_backup.file_type
+                    "timestamp": selected_backup.timestamp
                 },
                 "duration": duration
             }
@@ -470,8 +442,7 @@ class ConfigMemoryRollback:
             "success": git_result['success'],
             "selected_backup": {
                 "original_path": selected_backup.original_path,
-                "timestamp": selected_backup.timestamp,
-                "file_type": selected_backup.file_type
+                "timestamp": selected_backup.timestamp
             },
             "git_commit": git_result.get('commit_hash'),
             "git_message": git_result.get('commit_message'),
@@ -480,25 +451,25 @@ class ConfigMemoryRollback:
         }
 
 def main():
-    """Main entry point for rollback system"""
+    """Main entry point for configuration rollback system"""
     import argparse
     
-    parser = argparse.ArgumentParser(description="Config and Memory State Rollback System")
-    parser.add_argument('--type', choices=['config', 'memory'], help='File type to rollback')
+    parser = argparse.ArgumentParser(description="Angles AI Universe™ Configuration Rollback System")
+    parser.add_argument('--type', help='Configuration file type to rollback')
     parser.add_argument('--dry-run', action='store_true', help='Preview rollback without making changes')
     
     args = parser.parse_args()
     
     try:
         print()
-        print("⏪ ANGLES AI UNIVERSE™ CONFIG & MEMORY ROLLBACK")
+        print("⏪ ANGLES AI UNIVERSE™ CONFIGURATION ROLLBACK")
         print("=" * 55)
         print(f"Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} UTC")
         if args.dry_run:
             print("🧪 DRY RUN MODE - No changes will be made")
         print()
         
-        rollback_system = ConfigMemoryRollback()
+        rollback_system = AnglesConfigRollback()
         result = rollback_system.run_interactive_rollback(args.type, args.dry_run)
         
         # Print results
@@ -521,7 +492,7 @@ def main():
             print(f"🚫 Error: {result.get('error', 'Unknown error')}")
         
         print(f"⏱️ Duration: {result['duration']:.1f}s")
-        print(f"📝 Logs: logs/rollback.log")
+        print(f"📝 Logs: logs/config_rollback.log")
         print()
         
         # Exit with appropriate code

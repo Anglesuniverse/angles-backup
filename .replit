@@ -20,6 +20,10 @@ args = "Memory System Scheduler"
 task = "workflow.run"
 args = "Daily Backup at 02:00 UTC"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Config Monitor"
+
 [[workflows.workflow]]
 name = "Memory System Scheduler"
 author = "agent"
@@ -38,6 +42,17 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python daily_backup_scheduler.py"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[workflows.workflow]]
+name = "Config Monitor"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python config_monitor_service.py --interval 60"
 
 [workflows.workflow.metadata]
 outputType = "console"

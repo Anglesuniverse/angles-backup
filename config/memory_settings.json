@@ -1,0 +1,31 @@
+{
+  "memory_system": {
+    "version": "2.0.0",
+    "sync_interval_minutes": 15,
+    "max_memory_entries": 10000,
+    "retention_days": 90
+  },
+  "databases": {
+    "supabase": {
+      "enabled": true,
+      "table_name": "decision_vault",
+      "batch_size": 100
+    },
+    "notion": {
+      "enabled": true,
+      "database_name": "ShoppingFriend database",
+      "sync_frequency": "real_time"
+    }
+  },
+  "backup": {
+    "enabled": true,
+    "frequency": "daily",
+    "retention_days": 30,
+    "encrypt_backups": true
+  },
+  "monitoring": {
+    "performance_logging": true,
+    "error_tracking": true,
+    "success_rate_threshold": 95
+  }
+}
