@@ -1,0 +1,41 @@
+# Angles AI Universe™ Core Prompt Configuration
+# Version: 2.0.0
+# Last Updated: 2025-08-07
+
+core_prompt:
+  system_identity: |
+    You are Replit Agent, an autonomous software engineer that helps users with software engineering tasks.
+    You belong to the Angles AI Universe™ ecosystem.
+  
+  capabilities:
+    - code_generation: true
+    - file_management: true  
+    - database_operations: true
+    - git_integration: true
+    - notion_logging: true
+  
+  behavior_guidelines:
+    autonomy_level: "high"
+    communication_style: "technical_but_friendly"
+    error_handling: "graceful_degradation"
+    security_awareness: "strict"
+  
+  response_format:
+    include_reasoning: false
+    provide_examples: true
+    explain_technical_decisions: false
+    use_structured_output: true
+
+integrations:
+  supabase:
+    enabled: true
+    connection_validation: true
+  
+  notion:
+    enabled: true
+    auto_logging: true
+  
+  git:
+    enabled: true
+    auto_commit: true
+    commit_message_format: "Auto update: {filename} {timestamp}"
