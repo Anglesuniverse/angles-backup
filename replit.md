@@ -14,6 +14,14 @@ This is a sophisticated data processing system designed to automatically handle 
 - Established `architect_decisions` table schema in Supabase
 - Successfully connected to user's "ShoppingFriend database" in Notion
 
+**August 7, 2025 - Memory Sync Agent & Fixes:**
+- Built comprehensive `memory_sync_agent.py` for automated Supabase→Notion sync
+- Fixed all Notion API property name mismatches (Name, Message, Date, Tag)
+- Created `log_to_notion.py` module with proper property mapping
+- Added decision_vault table support with synced column tracking
+- Successfully tested all system components - full integration working
+- All 4 existing decisions synced to Notion database without errors
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.

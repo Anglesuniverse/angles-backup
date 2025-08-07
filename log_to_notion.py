@@ -49,12 +49,21 @@ def log_to_notion(message: str, tags: List[str] = []) -> bool:
         if tag and tag.strip():
             tag_objects.append({"name": tag.strip()})
     
-    # Prepare the data payload
+    # Prepare the data payload using correct Notion property names
     data = {
         "parent": {"database_id": database_id},
         "properties": {
-            "message": {
+            "Name": {
                 "title": [
+                    {
+                        "text": {
+                            "content": message.strip()[:100]  # Shorter for title
+                        }
+                    }
+                ]
+            },
+            "Message": {
+                "rich_text": [
                     {
                         "text": {
                             "content": message.strip()
@@ -62,12 +71,12 @@ def log_to_notion(message: str, tags: List[str] = []) -> bool:
                     }
                 ]
             },
-            "date": {
+            "Date": {
                 "date": {
                     "start": date.today().isoformat()
                 }
             },
-            "tag": {
+            "Tag": {
                 "multi_select": tag_objects
             }
         }
