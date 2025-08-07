@@ -367,7 +367,7 @@ class RestoreSanityChecker(SanityChecker):
         # Focus only on core dependencies that are essential for restore operations
         # Skip complex dependency file parsing to avoid false positives
         
-        core_dependencies = {
+        core_dependencies: Dict[str, Optional[str]] = {
             'supabase': None,
             'notion-client': None, 
             'pydantic': None,
