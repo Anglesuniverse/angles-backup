@@ -1,0 +1,25 @@
+{
+  "scheduler": {
+    "run_time": "03:00",
+    "timezone": "UTC"
+  },
+  "notifications": {
+    "method": "slack",
+    "email_enabled": false,
+    "slack_enabled": true
+  },
+  "backup": {
+    "repository": "angles-backup",
+    "auto_commit": true,
+    "retention_days": 30
+  },
+  "restore": {
+    "auto_migrate": false,
+    "dry_run_default": true
+  },
+  "health_check": {
+    "timeout_seconds": 30,
+    "max_unsynced_warning": 10,
+    "max_unsynced_error": 50
+  }
+}

@@ -1,36 +1,93 @@
-# Environment files
+# Angles AI Universe™ - GitIgnore Configuration
+
+# Sensitive files - NEVER commit these
 .env
-.env.*
+.env.local
+.env.production
+config.local.json
+secrets.json
 
-# Log files
-logs/
-*.log
+# Logs - exclude detailed logs but keep log directory structure
+logs/*.log
+logs/health_check.log
+logs/backup.log
+logs/restore.log
+logs/scheduler.log
+logs/automated_runs.log
+!logs/.gitkeep
 
-# Temporary exports
-export/*.tmp
+# Temporary files
+*.tmp
+*.temp
+sync_queue.jsonl
+*.pid
+*.lock
 
-# Database files
-*.sqlite
-*.db
-
-# Python cache
+# Python
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*$py.class
+*.so
 .Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
 *.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
-# IDE files
+# IDE and editor files
 .vscode/
 .idea/
 *.swp
 *.swo
-
-# OS files
+*~
 .DS_Store
-Thumbs.db
 
-# Replit files
+# Replit specific
 .replit
 replit.nix
+.config/
+
+# Backup files (keep structure but not sensitive content)
+backups/*.json
+exports/*.json
+*.backup
+
+# Node modules (if any)
+node_modules/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+
+# pytest
+.pytest_cache/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json

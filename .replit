@@ -36,6 +36,10 @@ args = "Weekly Recovery Tests"
 task = "workflow.run"
 args = "Sync Health Dashboard"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Health Monitor & Backup"
+
 [[workflows.workflow]]
 name = "Memory System Scheduler"
 author = "agent"
@@ -99,3 +103,14 @@ author = "agent"
 task = "shell.exec"
 args = "python tools/health_server.py --port 5000"
 waitForPort = 5000
+
+[[workflows.workflow]]
+name = "Health Monitor & Backup"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python run_all.py"
+
+[workflows.workflow.metadata]
+outputType = "console"

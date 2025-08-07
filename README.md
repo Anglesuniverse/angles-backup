@@ -1,224 +1,281 @@
-# Angles AI Universe™ Memory System - Backup & Restore
+# Angles AI Universe™ Health Monitoring & Backup System
 
 ## Overview
 
-The Angles AI Universe™ Memory System provides comprehensive backup and restore capabilities for the memory data and decision vault. The system supports both manual and automated backups with multiple restore sources.
+Comprehensive automated health monitoring and backup system for Supabase-Notion sync infrastructure with GitHub backup integration, automated scheduling, and full restore capabilities.
 
-## Backup System
+## Features
 
-### Manual Backups
+- 🔍 **Health Monitoring**: Automated checks for Supabase, Notion API, and sync status
+- 📦 **GitHub Backup**: Automated timestamped backups to GitHub repository
+- 🔄 **Restore System**: Full restore capabilities with dry-run and schema validation
+- 📧 **Notifications**: Slack webhook and email notifications for failures
+- ⏰ **Automated Scheduling**: Daily runs at 03:00 UTC via Replit workflows
+- 🧪 **Test Mode**: Comprehensive testing with simulated failures
+- 📊 **Detailed Logging**: Complete audit trail with structured logging
 
-Create on-demand backups with optional tagging:
+## Quick Start
 
-```bash
-# Standard manual backup
-python run_backup_manual.py
+### 1. Setup Environment Secrets
 
-# Tagged backup
-python run_backup_manual.py --tag "hotfix-v2.1.0"
+Configure these secrets in your Replit environment:
 
-# Memory-only backup (skip GitHub)
-python run_backup_manual.py --no-github
+**Required:**
+- `SUPABASE_URL` - Your Supabase project URL
+- `SUPABASE_KEY` - Supabase anon or service role key
+- `GITHUB_TOKEN` - GitHub personal access token with repo access
 
-# Unencrypted backup
-python run_backup_manual.py --no-encryption
+**Optional (for notifications):**
+- `SLACK_WEBHOOK_URL` - Slack webhook for error notifications
+- `NOTION_API_KEY` - Notion integration token (for sync monitoring)
+- `NOTION_DATABASE_ID` - Notion database ID
 
-# Skip sanity checks
-python run_backup_manual.py --no-sanity-check
-```
+**Email notifications (alternative to Slack):**
+- `SMTP_SERVER` - SMTP server hostname
+- `SMTP_PORT` - SMTP server port (usually 587)
+- `SMTP_USERNAME` - SMTP username
+- `SMTP_PASSWORD` - SMTP password
+- `EMAIL_RECIPIENT` - Email address for notifications
 
-### Automated Backups
-
-- **Daily Backups**: Automatically run at 02:00 UTC
-- **Memory Backups**: Automatically run at 03:00 UTC
-- **Configuration Backups**: Monitor and backup configuration changes every 60 seconds
-
-### Backup Storage
-
-Backups are stored in multiple locations:
-
-- **Supabase Storage**: Private bucket with organized prefixes (`manual/`, `daily/`)
-- **GitHub Repository**: Committed to the repository with tagged commits
-- **Local Storage**: Temporary files during processing
-
-## Restore System
-
-### Usage
-
-The restore system supports multiple sources and safety features:
+### 2. Initial Setup
 
 ```bash
-# Restore from Supabase storage
-python restore_memory.py --source supabase --file memory_backup_2025-08-07.zip
+# Run the automated setup
+python scripts/scheduler.py
 
-# Restore from GitHub repository
-python restore_memory.py --source github --tag v2.1.0
+# Test the system
+python run_manual.py --health --test
 
-# Restore from local file
-python restore_memory.py --source local --file /backups/backup.zip --force
+# Run a live health check
+python run_manual.py --health
 
-# Dry-run mode (simulate without changes)
-python restore_memory.py --source supabase --file backup.zip --dry-run
+# Run health check and backup
+python run_manual.py --all
 ```
 
-### Restore Sources
+### 3. Configure Automated Scheduling
 
-1. **Supabase Storage**: Restore from the private memory_backups bucket
-2. **GitHub Repository**: Clone and restore from repository backups
-3. **Local Files**: Restore from local backup files
+Add a new workflow in Replit:
+- **Name**: `Health Monitor & Backup`
+- **Command**: `python run_all.py`
+- **Schedule**: Daily at 03:00 UTC
 
-### Safety Features
+## Usage
 
-- **Dry-run Mode**: Test restore operations without making changes
-- **Pre-restore Snapshots**: Automatic backup before restore operations
-- **Confirmation Prompts**: Double confirmation unless `--force` is used
-- **Structure Validation**: Verify backup integrity before restoration
-
-### Restore Process
-
-1. **Source Validation**: Verify backup source availability
-2. **File Download**: Retrieve backup from specified source
-3. **Decryption**: Automatic AES-256 decryption if needed
-4. **Validation**: Verify backup structure and metadata
-5. **Extraction**: Unpack backup to temporary directory
-6. **Memory Restore**: Restore memory files to `memory/` directory
-7. **Database Restore**: Restore decision_vault records to Supabase
-8. **Logging**: Log restore actions to Notion and local logs
-
-## Security Features
-
-### Encryption
-
-- **AES-256 Encryption**: All backups encrypted using Fernet
-- **Key Management**: Uses `BACKUP_ENCRYPTION_KEY` environment variable
-- **Automatic Decryption**: Restore system handles decryption transparently
-
-### Access Control
-
-- **Environment Variables**: All credentials stored as environment secrets
-- **Private Storage**: Supabase buckets configured as private
-- **Git Authentication**: Uses token-based authentication for GitHub
-
-## File Structure
-
-### Backup Contents
-
-Each backup contains:
-
-```
-backup.zip
-├── backup_metadata.json     # Backup information and metadata
-├── state.json              # Current memory state
-├── session_cache.json      # Session cache data
-├── long_term.db           # Long-term memory database
-└── indexes/               # Search and category indexes
-    ├── search_index.json
-    └── category_index.json
-```
-
-### Directory Structure
-
-```
-project/
-├── backup_utils.py         # Unified backup utilities
-├── run_backup_manual.py    # Manual backup CLI
-├── restore_memory.py       # Memory restore system
-├── backups/                # Local backup directory
-├── logs/                   # System logs
-│   ├── backup_manual.log
-│   ├── restore.log
-│   └── memory_backup.log
-└── memory/                 # Memory system files
-    ├── state.json
-    ├── session_cache.json
-    ├── long_term.db
-    └── indexes/
-```
-
-## Environment Variables
-
-Required environment variables:
+### Manual Operations
 
 ```bash
-# Supabase Configuration
-SUPABASE_URL=your_supabase_url
-SUPABASE_KEY=your_supabase_key
+# Health check only
+python run_manual.py --health
 
-# Backup Encryption
-BACKUP_ENCRYPTION_KEY=your_fernet_key
+# Health check in test mode (simulates failures)
+python run_manual.py --health --test
 
-# GitHub Integration
-GITHUB_TOKEN=your_github_token
-REPO_URL=your_repository_url
+# Backup only
+python run_manual.py --backup
 
-# Notion Integration (optional)
-NOTION_TOKEN=your_notion_token
-NOTION_DATABASE_ID=your_database_id
+# Complete process (health check + backup)
+python run_manual.py --all
+
+# Restore (dry-run)
+python run_manual.py --restore
+
+# Live restore
+python run_manual.py --restore --live-restore
+
+# Restore specific backup
+python run_manual.py --restore --backup-file decision_vault_2025-08-07_15-30-00.json
 ```
 
-## Retention Policies
+### Direct Script Usage
 
-- **Manual Backups**: 15 days retention
-- **Daily Backups**: 30 days retention
-- **Configuration Backups**: 10 most recent versions per file type
+```bash
+# Health check with exit codes
+python scripts/health_check.py          # 0=OK, 1=Warnings, 2=Errors
+python scripts/health_check.py --test   # Test mode
+
+# Backup to GitHub
+python scripts/backup_to_github.py
+
+# Restore from GitHub
+python scripts/restore_from_github.py --dry-run
+python scripts/restore_from_github.py --live
+python scripts/restore_from_github.py --file backup.json --live
+```
+
+## Configuration
+
+### config.json
+
+```json
+{
+  "scheduler": {
+    "run_time": "03:00",
+    "timezone": "UTC"
+  },
+  "notifications": {
+    "method": "slack",
+    "email_enabled": false,
+    "slack_enabled": true
+  },
+  "backup": {
+    "repository": "angles-backup",
+    "auto_commit": true,
+    "retention_days": 30
+  },
+  "restore": {
+    "auto_migrate": false,
+    "dry_run_default": true
+  },
+  "health_check": {
+    "timeout_seconds": 30,
+    "max_unsynced_warning": 10,
+    "max_unsynced_error": 50
+  }
+}
+```
+
+## System Components
+
+### Health Monitoring (`scripts/health_check.py`)
+
+- Tests Supabase connection and table access
+- Validates Notion API connectivity
+- Counts unsynced records in decision_vault
+- Configurable warning/error thresholds
+- Comprehensive logging and notifications
+
+**Exit Codes:**
+- `0` - All checks passed
+- `1` - Warnings detected (e.g., some unsynced records)
+- `2` - Errors detected (e.g., connection failures)
+
+### Backup System (`scripts/backup_to_github.py`)
+
+- Exports complete decision_vault table as JSON
+- Uploads to GitHub with timestamped filenames
+- Automatic cleanup of old backups (configurable retention)
+- Metadata tracking and verification
+
+### Restore System (`scripts/restore_from_github.py`)
+
+- Downloads latest or specific backup from GitHub
+- Schema compatibility checking
+- Diff analysis between current and backup data
+- Dry-run mode for safe preview
+- Selective restore (insert missing, update modified)
+
+### Automated Scheduling
+
+- **`run_all.py`** - Main automated runner
+- **`run_manual.py`** - Manual execution with options
+- **`scripts/scheduler.py`** - Setup and configuration tool
+
+## Backup File Structure
+
+```json
+{
+  "metadata": {
+    "timestamp": "2025-08-07T15:30:00.000Z",
+    "record_count": 42,
+    "backup_version": "1.0.0",
+    "source": "decision_vault",
+    "schema_version": "1.0"
+  },
+  "data": [
+    {
+      "id": "uuid-here",
+      "decision": "Implement automated health monitoring",
+      "type": "Architecture",
+      "date": "2025-08-07",
+      "created_at": "2025-08-07T12:00:00.000Z"
+    }
+  ]
+}
+```
+
+## Logging
+
+All operations are logged to:
+- `logs/health_check.log` - Health monitoring results
+- `logs/backup.log` - Backup operations
+- `logs/restore.log` - Restore operations
+- `logs/scheduler.log` - Scheduler setup and configuration
+- `logs/automated_runs.log` - Daily automated executions
+
+## Notifications
+
+### Slack Integration
+
+Configure `SLACK_WEBHOOK_URL` secret and set notification method to "slack" in config.json.
+
+Sample notification:
+```
+🚨 Angles AI Universe™ Health Alert
+
+Status: ERRORS
+Timestamp: 2025-08-07 15:30:00 UTC
+Duration: 12.34 seconds
+
+Errors (2):
+  • Supabase connection timeout
+  • 25 unsynced records detected (error threshold: 20)
+
+Please check the system and resolve issues.
+```
+
+### Email Integration
+
+Configure SMTP settings and set notification method to "email" in config.json.
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Encryption Errors**: Verify `BACKUP_ENCRYPTION_KEY` is properly set
-2. **Supabase Access**: Check RLS policies for bucket creation permissions
-3. **GitHub Access**: Ensure `GITHUB_TOKEN` has repository write permissions
-4. **File Not Found**: Use dry-run mode to verify backup file locations
+**Health check fails with connection timeout:**
+- Verify SUPABASE_URL and SUPABASE_KEY are correct
+- Check network connectivity
+- Increase timeout_seconds in config.json
 
-### Logs
+**Backup fails with GitHub API error:**
+- Verify GITHUB_TOKEN has repo access
+- Check repository name in config.json
+- Ensure repository exists and is accessible
 
-Check system logs for detailed error information:
+**Restore shows schema compatibility warnings:**
+- Set auto_migrate to true in config.json for automatic handling
+- Manually review schema differences
+- Use dry-run mode to preview changes
 
-- `logs/backup_manual.log` - Manual backup operations
-- `logs/restore.log` - Restore operations
-- `logs/memory_backup.log` - Daily backup operations
+**No notifications received:**
+- Verify webhook URL or SMTP credentials
+- Check notification method in config.json
+- Review logs for notification errors
 
-### Support
+### Log Analysis
 
-All operations are logged to Notion for tracking and support purposes. Check the backup/restore notifications in your Notion database for operation status and details.
+```bash
+# Recent health check results
+tail -f logs/health_check.log
 
-## Advanced Usage
+# Backup status
+tail -f logs/backup.log
 
-### Backup with Custom Configuration
+# Automated run summary
+tail -f logs/automated_runs.log
 
-```python
-from backup_utils import UnifiedBackupManager, BackupConfig
-
-config = BackupConfig(
-    backup_type='manual',
-    tag='custom-backup',
-    include_memory=True,
-    include_github=True,
-    encryption_enabled=True,
-    retention_days=15
-)
-
-backup_manager = UnifiedBackupManager(config)
-result = backup_manager.run_unified_backup()
+# All system logs
+tail -f logs/*.log
 ```
 
-### Restore with Custom Options
+## Security
 
-The restore system provides programmatic access for advanced use cases:
+- All sensitive credentials stored in Replit Secrets
+- GitHub backups exclude sensitive environment variables
+- Backup files include checksums for integrity verification
+- Restore operations include validation and dry-run modes
+- Comprehensive audit logging for all operations
 
-```python
-from restore_memory import MemoryRestoreManager
+## License
 
-restore_manager = MemoryRestoreManager(dry_run=True)
-success = restore_manager.run_restore(
-    source='local',
-    filename='backup.zip',
-    force=True
-)
-```
-
----
-
-**Angles AI Universe™ Backend Team**  
-Version 2.0.0 - August 2025
+© 2025 Angles AI Universe™ Backend Team

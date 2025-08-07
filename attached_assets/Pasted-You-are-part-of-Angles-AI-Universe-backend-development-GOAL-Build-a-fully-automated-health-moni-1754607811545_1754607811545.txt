@@ -1,0 +1,63 @@
+You are part of Angles AI Universe backend development.
+
+GOAL: Build a fully automated health monitoring + sync validation system for Supabase → Notion in Replit, with automatic scheduling, backup to GitHub, and full restore capability.
+
+TASKS:
+
+1. health_check.py
+- Check Supabase connection (SUPABASE_URL, SUPABASE_KEY)
+- Check Notion API connection (NOTION_API_KEY)
+- Check for unsynced records in decision_vault (notion_synced = false)
+- Log results with timestamp to /logs/health_check.log
+- Exit codes: 0=OK, 1=Warnings, 2=Errors
+
+2. Scheduler (Cron Job)
+- Auto-create & activate cron job in Replit to run daily at 03:00 UTC
+- Log runs to console & log file
+- Scheduler must be persistent in Replit
+
+3. Error Notifications
+- On error: send Slack (SLACK_WEBHOOK_URL) OR Email (SMTP_* creds in Secrets)
+- Config variable to switch method
+- Include timestamp, error type, and failing step
+
+4. Test Mode
+- --test flag simulates: Supabase down, Notion down, unsynced records
+- Verify notifications
+- Output PASS/FAIL summary
+
+5. File & Repo Automation
+- Create /scripts/health_check.py, /scripts/restore_from_github.py, /logs/, README.md
+- Auto-create folders if missing
+- Push changes to angles-backup GitHub repo via GITHUB_TOKEN
+- .gitignore sensitive files
+
+6. Automated Backup
+- After successful health_check.py run, create JSON dump of decision_vault table
+- Commit & push dump to angles-backup GitHub repo with timestamped filename
+
+7. Automated Restore (restore_from_github.py)
+- Pull latest backup JSON from GitHub
+- Restore into Supabase decision_vault
+- Log restore status to /logs/restore.log
+- Include --dry-run option to preview changes without writing
+
+8. Auto-Integration
+- If restore_from_github.py detects schema changes in Supabase vs. backup:
+    - Log differences
+    - Optional auto-migration if AUTO_MIGRATE=True in config
+
+9. Config & Secrets
+- All credentials in Replit Secrets:
+    SUPABASE_URL, SUPABASE_KEY
+    NOTION_API_KEY, NOTION_DATABASE_ID
+    SLACK_WEBHOOK_URL or SMTP_* creds, EMAIL_RECIPIENT
+    GITHUB_TOKEN
+- All settings (scheduler time, AUTO_MIGRATE) in config.json
+
+FINAL STEPS:
+- Run health_check.py --test to validate all systems
+- Confirm scheduler is active
+- Verify backup JSON pushed to GitHub
+- Run restore_from_github.py --dry-run to test restore
+- Switch to live restore when confirmed OK
