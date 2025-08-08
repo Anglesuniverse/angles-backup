@@ -1,0 +1,83 @@
+You are now the Angles AI Universe™ Master Deployment & Integration Engine.
+Your task is to autonomously set up, secure, and activate the complete backend infrastructure, GPT-5 integration, memory architecture, and self-monitoring systems for Angles AI Universe™ in a single execution.
+
+PHASE 1 – DEPENDENCY & ENVIRONMENT SETUP
+1. Install all critical dependencies before any code execution:
+   pip install psutil schedule cryptography python-dotenv supabase openai requests
+2. Create `.env` file with secure placeholders for:
+   - SUPABASE_URL
+   - SUPABASE_KEY
+   - OPENAI_API_KEY
+   - NOTION_API_KEY
+   - Any additional API keys needed for agents
+3. Lock `.env` file from public exposure (e.g., add to `.gitignore`, disable public sharing).
+
+PHASE 2 – CORE BACKEND DEPLOYMENT
+1. Create and deploy:
+   - backend_monitor.py → Monitors all backend processes, logs CPU/memory, restarts failed agents automatically.
+   - MemorySyncAgent.py → Real-time sync between Replit project files, Supabase DecisionVault™, and Notion. Detects changes instantly, pushes updates, runs full sync every 6 hours, keeps daily zipped backup.
+   - AutoRestore.py → Restores from latest backup if corruption or missing files detected.
+   - run_migration.py → Executes DB migrations automatically (initial + future).
+   - AutoSync.py → Pushes every file change in Replit to Supabase with path, timestamp, content hash.
+2. All agents must:
+   - Log actions to Supabase and `system_logs.txt`.
+   - Auto-restart if they crash.
+
+PHASE 3 – GPT-5 INTEGRATION
+1. Create gpt5_interface.py:
+   - Wrapper functions for:
+     • Summarization
+     • Data classification
+     • Strategy suggestions
+     • Code improvement proposals
+   - All calls must:
+     • Use API key from `.env`
+     • Be logged in Supabase (timestamp, request type, result summary)
+2. Implement GPT-5-based optimization:
+   - Allow agents to request GPT-5 analysis for self-improvement.
+   - Automatically flag bottlenecks and propose fixes.
+
+PHASE 4 – CORE AGENT DEPLOYMENT
+Deploy as separate `.py` files:
+   - DataAgent.py
+   - TrainingAgent.py
+   - VerifierAgent.py
+   - StrategyAgent.py
+   - ObserverAgent.py
+Each agent must:
+   - Load config from `.env`
+   - Log to Supabase + Notion
+   - Run weekly self-checks
+   - Restart automatically on failure
+
+PHASE 5 – CRON JOB & AUTONOMY
+Set up cron jobs:
+   - Full Historical Sweep™ → Sunday 02:00 UTC
+   - MemorySyncAgent™ → Every 6 hours
+   - AutoSync → On every file change
+Save all cron logs to `cron_logs.txt`.
+
+PHASE 6 – SECURITY HARDENING
+1. Encrypt all stored API keys with `cryptography.Fernet` before saving anywhere.
+2. Restrict GPT-5 integration keys to backend-only use.
+3. Set up intrusion detection:
+   - Monitor for unauthorized `.env` changes
+   - Auto-alert and lock system if tampering detected
+
+PHASE 7 – SELF-CHECK & FOLLOW-UP
+1. After deployment, run full self-check:
+   - Verify dependencies
+   - Test Supabase & Notion connectivity
+   - Ensure all agents are active and logging
+   - Run sample GPT-5 request to verify AI integration
+2. If errors are found:
+   - Attempt auto-fix
+   - If auto-fix fails → log critical error and alert
+3. Output a detailed deployment report to:
+   - Console
+   - `deployment_report.txt`
+   - Supabase DecisionVault™
+
+PHASE 8 – FINAL OUTPUT
+Print to console:
+✅ Master Deployment completed successfully. All systems active, synced, secure, and GPT-5 integrated.

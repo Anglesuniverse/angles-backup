@@ -1,0 +1,140 @@
+Full Post-Deployment Optimization & GPT-5 Integration Master Prompt – Angles AI Universe™
+
+
+
+
+
+Instruction:
+
+Continue directly from the current backend status after the Master Deployer run. Do not restart the system from scratch. Execute these steps in exact order to bring the system to 100% operational health, secure all data, and prepare for GPT-5 integration.
+
+
+
+
+
+
+
+
+
+1. Install & Activate All Remaining Critical Dependencies
+
+
+
+pip install psutil schedule cryptography watchdog
+
+
+
+psutil → advanced health monitoring & system metrics
+schedule → improved task scheduling
+cryptography → encryption for all backups
+watchdog → advanced real-time file monitoring
+
+
+
+
+Post-installation actions:
+
+
+
+Reload all modules using these libraries.
+Enable cryptography in the backup/restore system.
+Replace fallback scheduler with schedule.
+Enable watchdog for real-time file change monitoring.
+
+
+
+
+
+
+
+
+
+
+2. Security Optimization
+
+
+
+
+
+Review and update all Supabase RLS policies to ensure proper bucket access control.
+Confirm backup encryption is enabled and functional.
+Log encryption status in the health report.
+
+
+
+
+
+
+
+
+
+
+3. GPT-5 Preparation in memory_bridge.py
+
+
+
+
+
+Add the following code:
+
+
+class AIEnhancedMemoryBridge(MemoryBridge):
+    def __init__(self):
+        super().__init__()
+        self.gpt5_client = OpenAI()  # GPT-5 when available
+
+    def process_with_ai(self, content, content_type):
+        """Enhanced processing with GPT-5 analysis"""
+        # Existing sync logic + AI insights
+        # GPT-5 can perform decision analysis, tagging, conflict detection, recommendations
+
+
+Implement in standby mode (no live GPT-5 API calls yet).
+Ensure the integration is modular so it can be activated immediately when the API is available. 
+python backend_monitor.py
+
+
+
+Verify all services, dependencies, and security settings are active.
+Ensure no critical errors remain.
+Log and export the final report.
+
+
+
+
+
+
+
+
+
+
+5. Post-Run Analysis & Bottleneck Detection
+
+
+
+
+
+Run performance tests on all scheduled tasks.
+Identify any remaining bottlenecks or warnings.
+Provide a prioritized improvement list for the next development cycle.
+
+
+
+
+
+
+
+
+
+
+Target State After Execution
+
+
+
+
+
+All dependencies installed and active.
+Fully encrypted and secure backups.
+GPT-5 integration prepared and ready for activation.
+100% verified system health.
+Reports and logs updated, stored, and accessible.

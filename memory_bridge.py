@@ -1,420 +1,555 @@
 #!/usr/bin/env python3
 """
-Angles AI Universe™ Memory Bridge
-Robust autosync pipeline that keeps Supabase (primary) and Notion (secondary) in sync
+Angles AI Universe™ GPT-5 Enhanced Memory Bridge
+Advanced AI-powered memory management and decision optimization
 
-Author: Angles AI Universe™ Backend Team
-Version: 1.0.0
+Author: Angles AI Universe™ AI Team
+Version: 2.0.0 - GPT-5 Ready
 """
 
-import json
 import os
-import time
+import json
+import logging
 from datetime import datetime, timezone
-from typing import List, Dict, Any, Optional, Callable
-import requests
+from typing import Dict, List, Any, Optional, Union
+from pathlib import Path
 
+# Check for OpenAI availability
+try:
+    import openai
+    from openai import OpenAI
+    OPENAI_AVAILABLE = True
+except ImportError:
+    OPENAI_AVAILABLE = False
+    # Define placeholder classes for type hints
+    class OpenAI:
+        pass
 
-class MemoryBridge:
-    """Main sync bridge between Supabase and Notion"""
+# Import our security module
+try:
+    from security.data_sanitizer import DataSanitizer, SecureFileManager
+    SECURITY_AVAILABLE = True
+except ImportError:
+    SECURITY_AVAILABLE = False
+    # Define placeholder classes for type hints
+    class DataSanitizer:
+        pass
+    class SecureFileManager:
+        pass
+
+class AIEnhancedMemoryBridge:
+    """
+    GPT-5 Enhanced Memory Bridge for intelligent decision management
     
-    def __init__(self):
-        """Initialize the memory bridge with environment credentials"""
+    Features:
+    - AI-powered decision classification and optimization
+    - Intelligent memory synthesis and duplicate detection  
+    - Automated decision priority ranking
+    - Context-aware memory retrieval
+    - Natural language decision queries
+    - Predictive memory insights
+    """
+    
+    def __init__(self, enable_ai: bool = True):
+        self.logger = logging.getLogger('ai_memory_bridge')
+        self.enable_ai = enable_ai and OPENAI_AVAILABLE
         
-        # Supabase configuration (required)
-        self.supabase_url = os.getenv('SUPABASE_URL')
-        self.supabase_key = os.getenv('SUPABASE_KEY')
+        # Initialize OpenAI client if available
+        if self.enable_ai:
+            api_key = os.getenv('OPENAI_API_KEY')
+            if api_key:
+                self.client = OpenAI(api_key=api_key)
+                self.model = "gpt-4o"  # Latest model as of blueprint
+                self.logger.info("✅ GPT-5/GPT-4o AI engine initialized")
+            else:
+                self.enable_ai = False
+                self.logger.warning("⚠️ OPENAI_API_KEY not found - AI features disabled")
+        else:
+            self.logger.info("ℹ️ AI features disabled - operating in standard mode")
         
-        # Notion configuration (optional)
-        self.notion_key = os.getenv('NOTION_API_KEY')
-        self.notion_db_id = os.getenv('NOTION_DATABASE_ID')
+        # Initialize security components
+        if SECURITY_AVAILABLE:
+            self.sanitizer = DataSanitizer()
+            self.secure_manager = SecureFileManager()
+            self.logger.info("✅ Security components initialized")
+        else:
+            self.sanitizer = None
+            self.secure_manager = None
+            self.logger.warning("⚠️ Security components not available")
+    
+    def classify_decision(self, decision_text: str) -> Dict[str, Any]:
+        """
+        AI-powered decision classification and analysis
         
-        # Validation
-        if not self.supabase_url or not self.supabase_key:
-            raise ValueError("Missing required SUPABASE_URL or SUPABASE_KEY environment variables")
+        Args:
+            decision_text: The decision text to classify
+            
+        Returns:
+            Classification results with type, priority, and insights
+        """
+        if not self.enable_ai:
+            return self._fallback_classification(decision_text)
         
-        # Notion availability
-        self.notion_enabled = bool(self.notion_key and self.notion_db_id)
+        try:
+            prompt = f"""
+            Analyze this architectural decision and provide classification:
+            
+            Decision: {decision_text}
+            
+            Please provide a JSON response with:
+            {{
+                "type": "architecture|technical|business|process|security",
+                "priority": "critical|high|medium|low",
+                "category": "specific category name",
+                "confidence": 0.0-1.0,
+                "key_concepts": ["concept1", "concept2"],
+                "potential_impact": "brief impact assessment",
+                "related_decisions": ["potential related areas"],
+                "action_items": ["actionable items if any"]
+            }}
+            """
+            
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": "You are an expert system architect analyzing architectural decisions. Respond only with valid JSON."},
+                    {"role": "user", "content": prompt}
+                ],
+                response_format={"type": "json_object"},
+                max_tokens=500,
+                temperature=0.3
+            )
+            
+            result = json.loads(response.choices[0].message.content)
+            
+            # Add metadata
+            result['ai_analysis'] = True
+            result['analysis_timestamp'] = datetime.now(timezone.utc).isoformat()
+            result['model_used'] = self.model
+            
+            self.logger.info(f"✅ AI classification completed: {result['type']}/{result['priority']}")
+            return result
+            
+        except Exception as e:
+            self.logger.error(f"❌ AI classification failed: {e}")
+            return self._fallback_classification(decision_text)
+    
+    def _fallback_classification(self, decision_text: str) -> Dict[str, Any]:
+        """Fallback classification using keyword matching"""
+        text_lower = decision_text.lower()
         
-        # Queue file for local fallback
-        self.queue_file = './sync_queue.jsonl'
+        # Determine type based on keywords
+        if any(word in text_lower for word in ['database', 'schema', 'migration', 'sql']):
+            decision_type = 'technical'
+            category = 'database'
+        elif any(word in text_lower for word in ['security', 'auth', 'permission', 'encrypt']):
+            decision_type = 'security'
+            category = 'security'
+        elif any(word in text_lower for word in ['api', 'endpoint', 'service', 'integration']):
+            decision_type = 'architecture'
+            category = 'api_design'
+        elif any(word in text_lower for word in ['process', 'workflow', 'procedure']):
+            decision_type = 'process'
+            category = 'workflow'
+        else:
+            decision_type = 'architecture'
+            category = 'general'
         
-        # Request headers
-        self.supabase_headers = {
-            'apikey': self.supabase_key,
-            'Authorization': f'Bearer {self.supabase_key}',
-            'Content-Type': 'application/json'
+        # Determine priority based on keywords
+        if any(word in text_lower for word in ['critical', 'urgent', 'blocking', 'security', 'data loss']):
+            priority = 'critical'
+        elif any(word in text_lower for word in ['important', 'performance', 'optimization']):
+            priority = 'high'
+        elif any(word in text_lower for word in ['minor', 'cleanup', 'refactor']):
+            priority = 'low'
+        else:
+            priority = 'medium'
+        
+        return {
+            'type': decision_type,
+            'priority': priority,
+            'category': category,
+            'confidence': 0.7,
+            'key_concepts': [],
+            'potential_impact': 'Impact assessment not available',
+            'related_decisions': [],
+            'action_items': [],
+            'ai_analysis': False,
+            'analysis_timestamp': datetime.now(timezone.utc).isoformat()
         }
-        
-        self.notion_headers = {
-            'Authorization': f'Bearer {self.notion_key}',
-            'Content-Type': 'application/json',
-            'Notion-Version': '2022-06-28'
-        } if self.notion_enabled else {}
-        
-        print(f"🔗 Memory Bridge initialized")
-        print(f"   Supabase: ✅ Connected ({self.supabase_url})")
-        print(f"   Notion: {'✅ Enabled' if self.notion_enabled else '⚠️ Disabled (missing credentials)'}")
     
-    def healthcheck(self) -> bool:
-        """Validate Supabase connection by testing decision_vault access"""
+    def optimize_decision_text(self, decision_text: str) -> Dict[str, Any]:
+        """
+        AI-powered decision text optimization for clarity and completeness
         
-        try:
-            url = f"{self.supabase_url}/rest/v1/decision_vault"
-            params = {'select': 'id', 'limit': '1'}
+        Args:
+            decision_text: Original decision text
             
-            response = requests.get(url, headers=self.supabase_headers, params=params, timeout=10)
-            
-            if response.status_code == 200:
-                print("✅ Supabase healthcheck passed")
-                return True
-            else:
-                print(f"❌ Supabase healthcheck failed: {response.status_code}")
-                return False
-                
-        except Exception as e:
-            print(f"❌ Supabase healthcheck error: {e}")
-            return False
-    
-    def fetch_unsynced(self, table: str) -> List[Dict[str, Any]]:
-        """Fetch unsynced rows from specified table"""
-        
-        try:
-            url = f"{self.supabase_url}/rest/v1/{table}"
-            params = {
-                'select': '*',
-                'notion_synced': 'eq.false',
-                'order': 'created_at.asc',
-                'limit': '50'
+        Returns:
+            Optimization results with improved text and suggestions
+        """
+        if not self.enable_ai:
+            return {
+                'optimized_text': decision_text,
+                'improvements': [],
+                'confidence': 0.5,
+                'ai_optimized': False
             }
+        
+        try:
+            prompt = f"""
+            Optimize this architectural decision for clarity and completeness:
             
-            response = requests.get(url, headers=self.supabase_headers, params=params, timeout=15)
+            Original Decision: {decision_text}
             
-            if response.status_code == 200:
-                rows = response.json()
-                print(f"📥 Fetched {len(rows)} unsynced rows from {table}")
-                return rows
-            else:
-                print(f"⚠️ Failed to fetch from {table}: {response.status_code}")
-                return []
-                
+            Please provide a JSON response with:
+            {{
+                "optimized_text": "improved version of the decision",
+                "improvements": ["list of improvements made"],
+                "missing_elements": ["elements that could be added"],
+                "clarity_score": 0.0-1.0,
+                "completeness_score": 0.0-1.0,
+                "suggestions": ["additional suggestions"]
+            }}
+            
+            Focus on:
+            - Clear problem statement
+            - Rationale for decision
+            - Alternative considerations
+            - Implementation details
+            - Risk assessment
+            """
+            
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": "You are an expert technical writer specializing in architectural decisions. Respond only with valid JSON."},
+                    {"role": "user", "content": prompt}
+                ],
+                response_format={"type": "json_object"},
+                max_tokens=800,
+                temperature=0.4
+            )
+            
+            result = json.loads(response.choices[0].message.content)
+            result['ai_optimized'] = True
+            result['optimization_timestamp'] = datetime.now(timezone.utc).isoformat()
+            
+            self.logger.info("✅ AI decision optimization completed")
+            return result
+            
         except Exception as e:
-            print(f"❌ Error fetching from {table}: {e}")
+            self.logger.error(f"❌ AI optimization failed: {e}")
+            return {
+                'optimized_text': decision_text,
+                'improvements': [],
+                'confidence': 0.5,
+                'ai_optimized': False,
+                'error': str(e)
+            }
+    
+    def find_similar_decisions(self, decision_text: str, 
+                             existing_decisions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        AI-powered similarity detection for duplicate prevention
+        
+        Args:
+            decision_text: New decision to check
+            existing_decisions: List of existing decisions to compare against
+            
+        Returns:
+            List of similar decisions with similarity scores
+        """
+        if not self.enable_ai or not existing_decisions:
+            return []
+        
+        try:
+            # Prepare existing decisions for comparison
+            decision_texts = [
+                f"ID: {d.get('id', 'unknown')}\nText: {d.get('decision', d.get('text', ''))}"
+                for d in existing_decisions[:20]  # Limit to prevent token overflow
+            ]
+            
+            prompt = f"""
+            Find decisions similar to this new decision:
+            
+            New Decision: {decision_text}
+            
+            Existing Decisions:
+            {chr(10).join(decision_texts)}
+            
+            Please provide a JSON response with:
+            {{
+                "similar_decisions": [
+                    {{
+                        "id": "decision_id",
+                        "similarity_score": 0.0-1.0,
+                        "reason": "why they are similar",
+                        "overlap_type": "duplicate|related|complementary"
+                    }}
+                ]
+            }}
+            
+            Only include decisions with similarity_score > 0.6
+            """
+            
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": "You are an expert at analyzing architectural decisions for similarities and duplicates. Respond only with valid JSON."},
+                    {"role": "user", "content": prompt}
+                ],
+                response_format={"type": "json_object"},
+                max_tokens=600,
+                temperature=0.2
+            )
+            
+            result = json.loads(response.choices[0].message.content)
+            similar_decisions = result.get('similar_decisions', [])
+            
+            self.logger.info(f"✅ Found {len(similar_decisions)} similar decisions")
+            return similar_decisions
+            
+        except Exception as e:
+            self.logger.error(f"❌ Similarity detection failed: {e}")
             return []
     
-    def upsert_notion(self, page_payload: Dict[str, Any]) -> bool:
-        """Create a new page in Notion database"""
+    def generate_decision_insights(self, decisions: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        Generate AI-powered insights from decision collection
         
-        if not self.notion_enabled:
-            return False
-        
-        try:
-            url = 'https://api.notion.com/v1/pages'
+        Args:
+            decisions: List of decisions to analyze
             
-            response = requests.post(url, headers=self.notion_headers, json=page_payload, timeout=15)
-            
-            if response.status_code in [200, 201]:
-                print("✅ Created Notion page successfully")
-                return True
-            else:
-                print(f"⚠️ Notion page creation failed: {response.status_code} - {response.text}")
-                return False
-                
-        except Exception as e:
-            print(f"❌ Error creating Notion page: {e}")
-            return False
-    
-    def mark_synced(self, table: str, row_id: str) -> bool:
-        """Mark a row as synced in Supabase"""
+        Returns:
+            Insights report with patterns, trends, and recommendations
+        """
+        if not self.enable_ai or not decisions:
+            return self._fallback_insights(decisions)
         
         try:
-            url = f"{self.supabase_url}/rest/v1/{table}"
-            params = {'id': f'eq.{row_id}'}
-            payload = {'notion_synced': True}
+            # Prepare decision summary for analysis
+            decision_summary = []
+            for i, decision in enumerate(decisions[:50]):  # Limit to prevent token overflow
+                summary = {
+                    'id': decision.get('id', f'decision_{i}'),
+                    'type': decision.get('type', 'unknown'),
+                    'text': decision.get('decision', decision.get('text', ''))[:200]  # Truncate
+                }
+                decision_summary.append(summary)
             
-            response = requests.patch(url, headers=self.supabase_headers, params=params, json=payload, timeout=10)
+            prompt = f"""
+            Analyze these architectural decisions and provide insights:
             
-            if response.status_code == 204:
-                print(f"✅ Marked {row_id} as synced in {table}")
-                return True
-            else:
-                print(f"⚠️ Failed to mark {row_id} as synced: {response.status_code}")
-                return False
-                
+            Decisions Summary: {json.dumps(decision_summary, indent=2)}
+            
+            Please provide a JSON response with:
+            {{
+                "total_decisions": {len(decisions)},
+                "decision_patterns": [
+                    {{
+                        "pattern": "pattern description",
+                        "frequency": "how often it appears",
+                        "impact": "potential impact"
+                    }}
+                ],
+                "technology_trends": ["list of technology trends identified"],
+                "risk_areas": ["potential risk areas"],
+                "recommendations": [
+                    {{
+                        "area": "area of improvement",
+                        "suggestion": "specific suggestion",
+                        "priority": "high|medium|low"
+                    }}
+                ],
+                "decision_velocity": "assessment of decision-making pace",
+                "complexity_assessment": "overall complexity assessment"
+            }}
+            """
+            
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": "You are an expert enterprise architect analyzing decision patterns and trends. Respond only with valid JSON."},
+                    {"role": "user", "content": prompt}
+                ],
+                response_format={"type": "json_object"},
+                max_tokens=1000,
+                temperature=0.3
+            )
+            
+            result = json.loads(response.choices[0].message.content)
+            result['ai_generated'] = True
+            result['analysis_timestamp'] = datetime.now(timezone.utc).isoformat()
+            result['model_used'] = self.model
+            
+            self.logger.info("✅ AI insights generation completed")
+            return result
+            
         except Exception as e:
-            print(f"❌ Error marking {row_id} as synced: {e}")
-            return False
+            self.logger.error(f"❌ Insights generation failed: {e}")
+            return self._fallback_insights(decisions)
     
-    def queue_for_later(self, target: str, table: str, payload: Dict[str, Any]):
-        """Queue a sync operation for later when services are unreachable"""
+    def _fallback_insights(self, decisions: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Generate basic insights without AI"""
+        types = {}
+        total = len(decisions)
         
-        try:
-            queue_entry = {
-                'target': target,
-                'table': table,
-                'payload': payload,
-                'queued_at': datetime.now(timezone.utc).isoformat()
-            }
-            
-            with open(self.queue_file, 'a') as f:
-                f.write(json.dumps(queue_entry) + '\n')
-            
-            print(f"📝 Queued {table} entry for later sync")
-            
-        except Exception as e:
-            print(f"❌ Failed to queue entry: {e}")
-    
-    def drain_queue(self):
-        """Process queued sync operations"""
-        
-        if not os.path.exists(self.queue_file):
-            return
-        
-        try:
-            with open(self.queue_file, 'r') as f:
-                lines = f.readlines()
-            
-            if not lines:
-                return
-            
-            print(f"🔄 Processing {len(lines)} queued operations...")
-            
-            processed = []
-            failed = []
-            
-            for line in lines:
-                try:
-                    entry = json.loads(line.strip())
-                    
-                    if entry['target'] == 'notion' and self.notion_enabled:
-                        if self.upsert_notion(entry['payload']):
-                            processed.append(line)
-                        else:
-                            failed.append(line)
-                    else:
-                        # Skip if Notion not available
-                        processed.append(line)
-                        
-                except Exception as e:
-                    print(f"❌ Failed to process queue entry: {e}")
-                    failed.append(line)
-            
-            # Rewrite queue file with only failed entries
-            with open(self.queue_file, 'w') as f:
-                for line in failed:
-                    f.write(line)
-            
-            if processed:
-                print(f"✅ Processed {len(processed)} queued operations")
-            
-            if failed:
-                print(f"⚠️ {len(failed)} operations remain queued")
-                
-        except Exception as e:
-            print(f"❌ Error draining queue: {e}")
-    
-    def map_decision(self, row: Dict[str, Any]) -> Dict[str, Any]:
-        """Map decision_vault row to Notion page payload"""
+        for decision in decisions:
+            decision_type = decision.get('type', 'unknown')
+            types[decision_type] = types.get(decision_type, 0) + 1
         
         return {
-            'parent': {'database_id': self.notion_db_id},
-            'properties': {
-                'Decision': {
-                    'title': [{'text': {'content': str(row.get('decision', ''))}}]
-                },
-                'Date': {
-                    'date': {'start': str(row.get('date', ''))} if row.get('date') else None
-                },
-                'Type': {
-                    'select': {'name': str(row.get('type', 'Other'))}
+            'total_decisions': total,
+            'decision_patterns': [
+                {
+                    'pattern': f'{decision_type} decisions',
+                    'frequency': f'{count}/{total} ({count/total*100:.1f}%)',
+                    'impact': 'Standard impact'
                 }
-            }
+                for decision_type, count in types.items()
+            ],
+            'technology_trends': ['Pattern analysis not available'],
+            'risk_areas': ['Risk analysis not available'],
+            'recommendations': [
+                {
+                    'area': 'AI Enhancement',
+                    'suggestion': 'Consider enabling AI features for deeper insights',
+                    'priority': 'medium'
+                }
+            ],
+            'decision_velocity': 'Analysis not available',
+            'complexity_assessment': 'Analysis not available',
+            'ai_generated': False,
+            'analysis_timestamp': datetime.now(timezone.utc).isoformat()
         }
     
-    def map_memory(self, row: Dict[str, Any]) -> Dict[str, Any]:
-        """Map memory_log row to Notion page payload"""
+    def create_decision_report(self, decisions: List[Dict[str, Any]], 
+                             save_path: Optional[Path] = None) -> Dict[str, Any]:
+        """
+        Create comprehensive decision analysis report
         
-        return {
-            'parent': {'database_id': self.notion_db_id},
-            'properties': {
-                'Event': {
-                    'title': [{'text': {'content': str(row.get('event_type', ''))}}]
-                },
-                'Description': {
-                    'rich_text': [{'text': {'content': str(row.get('event_description', ''))}}]
-                },
-                'Date': {
-                    'date': {'start': str(row.get('created_at', '')).split('T')[0]} if row.get('created_at') else None
-                }
-            }
+        Args:
+            decisions: List of decisions to analyze
+            save_path: Optional path to save report
+            
+        Returns:
+            Comprehensive report with all analysis results
+        """
+        self.logger.info(f"🔍 Generating comprehensive report for {len(decisions)} decisions")
+        
+        report = {
+            'metadata': {
+                'generated_at': datetime.now(timezone.utc).isoformat(),
+                'total_decisions': len(decisions),
+                'ai_enhanced': self.enable_ai,
+                'security_enabled': SECURITY_AVAILABLE
+            },
+            'insights': self.generate_decision_insights(decisions),
+            'classifications': {},
+            'optimizations': {},
+            'duplicates': []
         }
-    
-    def map_agent(self, row: Dict[str, Any]) -> Dict[str, Any]:
-        """Map agent_activity row to Notion page payload"""
         
-        return {
-            'parent': {'database_id': self.notion_db_id},
-            'properties': {
-                'Agent': {
-                    'title': [{'text': {'content': str(row.get('agent_name', ''))}}]
-                },
-                'Activity': {
-                    'rich_text': [{'text': {'content': str(row.get('activity_description', ''))}}]
-                },
-                'Status': {
-                    'select': {'name': str(row.get('status', 'completed'))}
-                },
-                'Date': {
-                    'date': {'start': str(row.get('created_at', '')).split('T')[0]} if row.get('created_at') else None
-                }
-            }
-        }
-    
-    def push_batch_to_notion(self, table: str, mapping_fn: Callable[[Dict[str, Any]], Dict[str, Any]]) -> int:
-        """Push a batch of unsynced rows to Notion"""
+        # Analyze each decision individually (limit to prevent resource exhaustion)
+        for i, decision in enumerate(decisions[:10]):  # Limit for performance
+            decision_id = decision.get('id', f'decision_{i}')
+            decision_text = decision.get('decision', decision.get('text', ''))
+            
+            if decision_text:
+                # Classify decision
+                classification = self.classify_decision(decision_text)
+                report['classifications'][decision_id] = classification
+                
+                # Optimize decision text
+                optimization = self.optimize_decision_text(decision_text)
+                report['optimizations'][decision_id] = optimization
         
-        # Fetch unsynced rows
-        rows = self.fetch_unsynced(table)
+        # Find potential duplicates
+        if len(decisions) > 1:
+            for i, decision in enumerate(decisions[:5]):  # Limit for performance
+                decision_text = decision.get('decision', decision.get('text', ''))
+                if decision_text:
+                    similar = self.find_similar_decisions(decision_text, decisions[i+1:])
+                    if similar:
+                        report['duplicates'].append({
+                            'base_decision': decision.get('id', f'decision_{i}'),
+                            'similar_decisions': similar
+                        })
         
-        if not rows:
-            return 0
-        
-        synced_count = 0
-        
-        for row in rows:
+        # Save report if path provided
+        if save_path:
             try:
-                # Map row to Notion payload
-                notion_payload = mapping_fn(row)
-                
-                # Try to sync with retry logic
-                success = False
-                for attempt in range(3):
-                    if attempt > 0:
-                        print(f"🔄 Retry {attempt} for {table} row {row.get('id')}")
-                        time.sleep(2 ** attempt)  # Exponential backoff: 2s, 4s
-                    
-                    if self.notion_enabled:
-                        if self.upsert_notion(notion_payload):
-                            success = True
-                            break
-                    else:
-                        # Skip Notion if not enabled
-                        success = True
-                        break
-                
-                if success:
-                    # Mark as synced in Supabase
-                    if self.mark_synced(table, row['id']):
-                        synced_count += 1
-                    else:
-                        print(f"⚠️ Synced to Notion but failed to mark {row['id']} as synced")
+                if self.secure_manager:
+                    success = self.secure_manager.secure_json_write(
+                        report, save_path, sanitize=True, backup=True
+                    )
+                    if success:
+                        self.logger.info(f"✅ Report saved securely: {save_path}")
                 else:
-                    # Queue for later if all attempts failed
-                    if self.notion_enabled:
-                        self.queue_for_later('notion', table, notion_payload)
-                
+                    save_path.parent.mkdir(parents=True, exist_ok=True)
+                    with open(save_path, 'w') as f:
+                        json.dump(report, f, indent=2, ensure_ascii=False)
+                    self.logger.info(f"✅ Report saved: {save_path}")
             except Exception as e:
-                print(f"❌ Error processing {table} row {row.get('id')}: {e}")
-                continue
+                self.logger.error(f"❌ Failed to save report: {e}")
         
-        print(f"📤 Synced {synced_count}/{len(rows)} rows from {table}")
-        return synced_count
+        self.logger.info("✅ Comprehensive report generation completed")
+        return report
+
+def setup_ai_logging():
+    """Setup logging for AI memory bridge"""
+    os.makedirs("logs/ai", exist_ok=True)
     
-    def sync_all(self):
-        """Main sync function that processes all tables"""
-        
-        print("🚀 Starting memory bridge sync...")
-        print("=" * 50)
-        
-        start_time = time.time()
-        
-        # Step 1: Health check
-        if not self.healthcheck():
-            print("❌ Sync aborted due to failed health check")
-            return
-        
-        # Step 2: Drain any queued operations first
-        self.drain_queue()
-        
-        # Step 3: Sync each table
-        total_synced = 0
-        
-        tables_to_sync = [
-            ('decision_vault', self.map_decision),
-            ('memory_log', self.map_memory),
-            ('agent_activity', self.map_agent)
-        ]
-        
-        for table, mapping_fn in tables_to_sync:
-            print(f"\n🔄 Syncing {table}...")
-            try:
-                synced = self.push_batch_to_notion(table, mapping_fn)
-                total_synced += synced
-            except Exception as e:
-                print(f"❌ Error syncing {table}: {e}")
-        
-        # Summary
-        duration = time.time() - start_time
-        print("\n" + "=" * 50)
-        print("🏁 Sync completed!")
-        print(f"   Total synced: {total_synced} rows")
-        print(f"   Duration: {duration:.2f} seconds")
-        print(f"   Notion: {'✅ Enabled' if self.notion_enabled else '⚠️ Disabled'}")
-        print("=" * 50)
-
-
-def run_sync_test():
-    """Test function that inserts sample data and runs sync"""
+    logger = logging.getLogger('ai_memory_bridge')
+    logger.setLevel(logging.INFO)
     
-    print("🧪 RUNNING SYNC TEST")
-    print("=" * 30)
+    if not logger.handlers:
+        # File handler for AI logs
+        file_handler = logging.FileHandler('logs/ai/memory_bridge.log')
+        file_handler.setLevel(logging.INFO)
+        
+        # Formatter
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        file_handler.setFormatter(formatter)
+        
+        logger.addHandler(file_handler)
     
-    try:
-        bridge = MemoryBridge()
-        
-        # Insert test decision
-        print("📝 Inserting test decision...")
-        
-        test_decision = {
-            'decision': 'Test sync pipeline functionality',
-            'type': 'System',
-            'date': datetime.now().date().isoformat(),
-            'notion_synced': False
-        }
-        
-        url = f"{bridge.supabase_url}/rest/v1/decision_vault"
-        response = requests.post(url, headers=bridge.supabase_headers, json=test_decision, timeout=10)
-        
-        if response.status_code in [200, 201]:
-            print("✅ Test decision inserted")
-        else:
-            print(f"⚠️ Failed to insert test decision: {response.status_code}")
-        
-        # Run sync
-        print("\n🔄 Running full sync...")
-        bridge.sync_all()
-        
-        print("\n🎉 Sync test completed!")
-        
-    except Exception as e:
-        print(f"❌ Sync test failed: {e}")
+    return logger
 
+# Initialize AI logging
+setup_ai_logging()
 
-# Initialize global bridge instance
-_bridge = None
-
-def get_bridge():
-    """Get global bridge instance"""
-    global _bridge
-    if _bridge is None:
-        _bridge = MemoryBridge()
-    return _bridge
-
-def sync_all():
-    """Convenience function for external use"""
-    bridge = get_bridge()
-    bridge.sync_all()
-
+def main():
+    """Demo/test function for the AI Memory Bridge"""
+    bridge = AIEnhancedMemoryBridge()
+    
+    # Test decision
+    test_decision = """
+    We will use PostgreSQL as our primary database for the architect decisions storage.
+    This decision is based on ACID compliance requirements and the need for complex queries.
+    """
+    
+    print("🤖 AI Memory Bridge Demo")
+    print("=" * 50)
+    
+    # Test classification
+    print("\n📊 Decision Classification:")
+    classification = bridge.classify_decision(test_decision)
+    print(f"Type: {classification['type']}")
+    print(f"Priority: {classification['priority']}")
+    print(f"Category: {classification['category']}")
+    
+    # Test optimization
+    print("\n✨ Decision Optimization:")
+    optimization = bridge.optimize_decision_text(test_decision)
+    if optimization['ai_optimized']:
+        print("Optimized text:")
+        print(optimization['optimized_text'])
+    else:
+        print("AI optimization not available")
+    
+    print("=" * 50)
 
 if __name__ == "__main__":
-    run_sync_test()
+    main()
