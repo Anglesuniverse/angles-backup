@@ -1,15 +1,25 @@
 {
-  "export_timestamp": "2025-08-08T13:04:40.549960",
+  "export_timestamp": "2025-08-08T13:04:41.575692",
   "total_decisions": 7,
   "decisions": [
+    {
+      "id": "400f2ab6-ceff-4fd1-8b33-d6cf8dbb91a5",
+      "decision": "I approve technical autonomy for AI.",
+      "type": "strategy",
+      "date": "2025-08-07",
+      "active": true,
+      "synced_at": "2025-08-08T13:04:25.707242",
+      "export_timestamp": "2025-08-08T13:04:25.707248",
+      "comment": "Tags: decision, core"
+    },
     {
       "id": "53146f5b-d474-4a72-b3c9-ee3173945866",
       "decision": "Use PostgreSQL as primary database for better performance",
       "type": "technical",
       "date": "2025-08-07",
       "active": true,
-      "synced_at": "2025-08-08T13:04:28.377836",
-      "export_timestamp": "2025-08-08T13:04:28.377842",
+      "synced_at": "2025-08-08T13:04:27.090516",
+      "export_timestamp": "2025-08-08T13:04:27.090521",
       "comment": "Decision made after performance analysis"
     },
     {
@@ -18,8 +28,8 @@
       "type": "technical",
       "date": "2025-08-08",
       "active": true,
-      "synced_at": "2025-08-08T13:04:29.738968",
-      "export_timestamp": "2025-08-08T13:04:29.738974"
+      "synced_at": "2025-08-08T13:04:32.197534",
+      "export_timestamp": "2025-08-08T13:04:32.197541"
     },
     {
       "id": "8328256c-90ea-4dc3-96b2-a196c68e739a",
@@ -27,8 +37,8 @@
       "type": "security",
       "date": "2025-08-05",
       "active": true,
-      "synced_at": "2025-08-08T13:04:31.109654",
-      "export_timestamp": "2025-08-08T13:04:31.109660",
+      "synced_at": "2025-08-08T13:04:33.107174",
+      "export_timestamp": "2025-08-08T13:04:33.107181",
       "comment": "Security department requirement"
     },
     {
@@ -37,8 +47,8 @@
       "type": "technical",
       "date": "2025-08-07",
       "active": true,
-      "synced_at": "2025-08-08T13:04:32.120475",
-      "export_timestamp": "2025-08-08T13:04:32.120481",
+      "synced_at": "2025-08-08T13:04:35.584867",
+      "export_timestamp": "2025-08-08T13:04:35.584879",
       "comment": "Decision made after team discussion"
     },
     {
@@ -47,8 +57,8 @@
       "type": "technical",
       "date": "2025-08-07",
       "active": true,
-      "synced_at": "2025-08-08T13:04:35.464984",
-      "export_timestamp": "2025-08-08T13:04:35.464990",
+      "synced_at": "2025-08-08T13:04:36.557311",
+      "export_timestamp": "2025-08-08T13:04:36.557317",
       "comment": "Decision made after team discussion"
     },
     {
@@ -57,19 +67,9 @@
       "type": "process",
       "date": "2025-08-06",
       "active": true,
-      "synced_at": "2025-08-08T13:04:39.308090",
-      "export_timestamp": "2025-08-08T13:04:39.308095",
+      "synced_at": "2025-08-08T13:04:41.575473",
+      "export_timestamp": "2025-08-08T13:04:41.575478",
       "comment": "Improves code quality and knowledge sharing"
-    },
-    {
-      "id": "400f2ab6-ceff-4fd1-8b33-d6cf8dbb91a5",
-      "decision": "I approve technical autonomy for AI.",
-      "type": "strategy",
-      "date": "2025-08-07",
-      "active": true,
-      "synced_at": "2025-08-08T13:04:40.549919",
-      "export_timestamp": "2025-08-08T13:04:40.549926",
-      "comment": "Tags: decision, core"
     }
   ],
   "metadata": {
