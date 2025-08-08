@@ -1,281 +1,224 @@
-# Angles AI Universe™ Health Monitoring & Backup System
+# Angles AI Universe™ Backend System
+
+A comprehensive backend system for automated GPT assistant output processing, decision management, and memory synchronization with unified Supabase, Notion, and OpenAI integration.
 
 ## Overview
 
-Comprehensive automated health monitoring and backup system for Supabase-Notion sync infrastructure with GitHub backup integration, automated scheduling, and full restore capabilities.
+This system provides:
+- **Memory Sync Agent**: Automated repository scanning and database synchronization
+- **Historical Sweep**: AI-powered repository analysis and decision categorization  
+- **Backend Monitor**: Health checks and system monitoring
+- **Auto-sync**: File change detection and incremental updates
+- **Backup & Restore**: Automated backups with GitHub integration
+- **Cron Runner**: Scheduled task management and automation
 
-## Features
+## Environment Variables
 
-- 🔍 **Health Monitoring**: Automated checks for Supabase, Notion API, and sync status
-- 📦 **GitHub Backup**: Automated timestamped backups to GitHub repository
-- 🔄 **Restore System**: Full restore capabilities with dry-run and schema validation
-- 📧 **Notifications**: Slack webhook and email notifications for failures
-- ⏰ **Automated Scheduling**: Daily runs at 03:00 UTC via Replit workflows
-- 🧪 **Test Mode**: Comprehensive testing with simulated failures
-- 📊 **Detailed Logging**: Complete audit trail with structured logging
+Configure these environment variables in Replit Secrets:
+
+### Required
+- `SUPABASE_URL` - Your Supabase project URL
+- `SUPABASE_KEY` - Your Supabase anon/service role key
+
+### Optional (graceful degradation if missing)
+- `NOTION_API_KEY` - Notion integration token  
+- `NOTION_DATABASE_ID` - Target Notion database ID
+- `GITHUB_TOKEN` - GitHub personal access token
+- `GITHUB_REPO` - GitHub repository URL for backups
+- `OPENAI_API_KEY` - OpenAI API key for AI analysis
+- `OPENAI_MODEL` - OpenAI model to use (default: gpt-4o)
 
 ## Quick Start
 
-### 1. Setup Environment Secrets
+### 1. Database Setup
 
-Configure these secrets in your Replit environment:
-
-**Required:**
-- `SUPABASE_URL` - Your Supabase project URL
-- `SUPABASE_KEY` - Supabase anon or service role key
-- `GITHUB_TOKEN` - GitHub personal access token with repo access
-
-**Optional (for notifications):**
-- `SLACK_WEBHOOK_URL` - Slack webhook for error notifications
-- `NOTION_API_KEY` - Notion integration token (for sync monitoring)
-- `NOTION_DATABASE_ID` - Notion database ID
-
-**Email notifications (alternative to Slack):**
-- `SMTP_SERVER` - SMTP server hostname
-- `SMTP_PORT` - SMTP server port (usually 587)
-- `SMTP_USERNAME` - SMTP username
-- `SMTP_PASSWORD` - SMTP password
-- `EMAIL_RECIPIENT` - Email address for notifications
-
-### 2. Initial Setup
+Run the database migration to create required tables:
 
 ```bash
-# Run the automated setup
-python scripts/scheduler.py
-
-# Test the system
-python run_manual.py --health --test
-
-# Run a live health check
-python run_manual.py --health
-
-# Run health check and backup
-python run_manual.py --all
+python -m angles.run_migration
 ```
 
-### 3. Configure Automated Scheduling
+### 2. Initial Memory Sync
 
-Add a new workflow in Replit:
-- **Name**: `Health Monitor & Backup`
-- **Command**: `python run_all.py`
-- **Schedule**: Daily at 03:00 UTC
-
-## Usage
-
-### Manual Operations
+Scan and sync your repository files:
 
 ```bash
-# Health check only
-python run_manual.py --health
-
-# Health check in test mode (simulates failures)
-python run_manual.py --health --test
-
-# Backup only
-python run_manual.py --backup
-
-# Complete process (health check + backup)
-python run_manual.py --all
-
-# Restore (dry-run)
-python run_manual.py --restore
-
-# Live restore
-python run_manual.py --restore --live-restore
-
-# Restore specific backup
-python run_manual.py --restore --backup-file decision_vault_2025-08-07_15-30-00.json
+python -m angles.memory_sync_agent
 ```
 
-### Direct Script Usage
+### 3. Health Check
+
+Verify system status:
 
 ```bash
-# Health check with exit codes
-python scripts/health_check.py          # 0=OK, 1=Warnings, 2=Errors
-python scripts/health_check.py --test   # Test mode
-
-# Backup to GitHub
-python scripts/backup_to_github.py
-
-# Restore from GitHub
-python scripts/restore_from_github.py --dry-run
-python scripts/restore_from_github.py --live
-python scripts/restore_from_github.py --file backup.json --live
+python -m angles.backend_monitor
 ```
 
-## Configuration
+### 4. Historical Analysis
 
-### config.json
+Generate AI-powered repository analysis:
 
-```json
-{
-  "scheduler": {
-    "run_time": "03:00",
-    "timezone": "UTC"
-  },
-  "notifications": {
-    "method": "slack",
-    "email_enabled": false,
-    "slack_enabled": true
-  },
-  "backup": {
-    "repository": "angles-backup",
-    "auto_commit": true,
-    "retention_days": 30
-  },
-  "restore": {
-    "auto_migrate": false,
-    "dry_run_default": true
-  },
-  "health_check": {
-    "timeout_seconds": 30,
-    "max_unsynced_warning": 10,
-    "max_unsynced_error": 50
-  }
-}
+```bash
+python -m angles.historical_sweep
 ```
 
-## System Components
+### 5. Start Scheduler
 
-### Health Monitoring (`scripts/health_check.py`)
+Begin automated operations:
 
-- Tests Supabase connection and table access
-- Validates Notion API connectivity
-- Counts unsynced records in decision_vault
-- Configurable warning/error thresholds
-- Comprehensive logging and notifications
-
-**Exit Codes:**
-- `0` - All checks passed
-- `1` - Warnings detected (e.g., some unsynced records)
-- `2` - Errors detected (e.g., connection failures)
-
-### Backup System (`scripts/backup_to_github.py`)
-
-- Exports complete decision_vault table as JSON
-- Uploads to GitHub with timestamped filenames
-- Automatic cleanup of old backups (configurable retention)
-- Metadata tracking and verification
-
-### Restore System (`scripts/restore_from_github.py`)
-
-- Downloads latest or specific backup from GitHub
-- Schema compatibility checking
-- Diff analysis between current and backup data
-- Dry-run mode for safe preview
-- Selective restore (insert missing, update modified)
-
-### Automated Scheduling
-
-- **`run_all.py`** - Main automated runner
-- **`run_manual.py`** - Manual execution with options
-- **`scripts/scheduler.py`** - Setup and configuration tool
-
-## Backup File Structure
-
-```json
-{
-  "metadata": {
-    "timestamp": "2025-08-07T15:30:00.000Z",
-    "record_count": 42,
-    "backup_version": "1.0.0",
-    "source": "decision_vault",
-    "schema_version": "1.0"
-  },
-  "data": [
-    {
-      "id": "uuid-here",
-      "decision": "Implement automated health monitoring",
-      "type": "Architecture",
-      "date": "2025-08-07",
-      "created_at": "2025-08-07T12:00:00.000Z"
-    }
-  ]
-}
+```bash
+python -m angles.cron_runner
 ```
 
-## Logging
+## Components
 
-All operations are logged to:
-- `logs/health_check.log` - Health monitoring results
-- `logs/backup.log` - Backup operations
-- `logs/restore.log` - Restore operations
-- `logs/scheduler.log` - Scheduler setup and configuration
-- `logs/automated_runs.log` - Daily automated executions
+### Memory Sync Agent
+- Scans repository files (excludes .git, __pycache__, etc.)
+- Computes SHA256 checksums for change detection
+- Stores file snapshots in Supabase
+- Logs all changes to system_logs table
+- Writes summary to Notion (if configured)
 
-## Notifications
+### Auto-sync  
+- File watcher with polling-based change detection
+- Debounced updates to avoid spam
+- Incremental sync of modified files
+- Can run continuously or single-scan mode
 
-### Slack Integration
+### Historical Sweep
+- Creates categorized decision placeholders
+- Processes documentation files into decision entries
+- AI-powered repository structure analysis
+- Generates prioritized fix lists using OpenAI
+- Stores artifacts and creates Notion summaries
 
-Configure `SLACK_WEBHOOK_URL` secret and set notification method to "slack" in config.json.
+### Backend Monitor
+- Database connectivity checks
+- Memory sync activity monitoring  
+- System resource usage (CPU, memory, disk)
+- OpenAI API connectivity testing
+- Integration status reporting
+- Health recommendations
 
-Sample notification:
+### Backup & Restore
+- Creates compressed database exports
+- Includes configuration files and metadata
+- Pushes backups to GitHub (if configured)
+- Local backup retention management
+- Restoration utilities
+
+### Cron Runner
+- **Memory Sync**: Every 6 hours
+- **Historical Sweep**: Sundays at 02:00 UTC
+- **Backup**: Daily at 03:00 UTC  
+- **Health Monitor**: Every hour
+- Graceful shutdown handling
+- Job execution logging
+
+## Database Schema
+
+### Tables Created
+- `decision_vault` - Categorized decisions and content
+- `system_logs` - Application logs and events
+- `file_snapshots` - Repository file versions
+- `run_artifacts` - Generated reports and analysis
+
+### Indexes
+- Optimized for timestamp-based queries
+- Category and status filtering
+- Path-based file lookups
+
+## Usage Examples
+
+### Run Individual Components
+
+```bash
+# Memory sync with options
+python -m angles.memory_sync_agent
+
+# Auto-sync (continuous watching)
+python -m angles.autosync --continuous --interval 30
+
+# Create backup
+python -m angles.restore --backup
+
+# Run specific scheduled job
+python -m angles.cron_runner --run-now memory_sync
+
+# Health check with details
+python -m angles.backend_monitor
 ```
-🚨 Angles AI Universe™ Health Alert
 
-Status: ERRORS
-Timestamp: 2025-08-07 15:30:00 UTC
-Duration: 12.34 seconds
+### Configuration Check
 
-Errors (2):
-  • Supabase connection timeout
-  • 25 unsynced records detected (error threshold: 20)
-
-Please check the system and resolve issues.
+```bash
+python -c "from angles.config import print_config_status; print_config_status()"
 ```
-
-### Email Integration
-
-Configure SMTP settings and set notification method to "email" in config.json.
 
 ## Troubleshooting
 
-### Common Issues
-
-**Health check fails with connection timeout:**
-- Verify SUPABASE_URL and SUPABASE_KEY are correct
-- Check network connectivity
-- Increase timeout_seconds in config.json
-
-**Backup fails with GitHub API error:**
-- Verify GITHUB_TOKEN has repo access
-- Check repository name in config.json
-- Ensure repository exists and is accessible
-
-**Restore shows schema compatibility warnings:**
-- Set auto_migrate to true in config.json for automatic handling
-- Manually review schema differences
-- Use dry-run mode to preview changes
-
-**No notifications received:**
-- Verify webhook URL or SMTP credentials
-- Check notification method in config.json
-- Review logs for notification errors
-
-### Log Analysis
-
+### Missing Environment Variables
+Check configuration status:
 ```bash
-# Recent health check results
-tail -f logs/health_check.log
-
-# Backup status
-tail -f logs/backup.log
-
-# Automated run summary
-tail -f logs/automated_runs.log
-
-# All system logs
-tail -f logs/*.log
+python -m angles.backend_monitor
 ```
 
-## Security
+### Database Connection Issues
+Test migration with dry-run:
+```bash
+python -m angles.run_migration --dry-run
+```
 
-- All sensitive credentials stored in Replit Secrets
-- GitHub backups exclude sensitive environment variables
-- Backup files include checksums for integrity verification
-- Restore operations include validation and dry-run modes
-- Comprehensive audit logging for all operations
+### Memory Sync Problems
+Check recent logs in the system_logs table and verify file permissions.
 
-## License
+### Notion Integration Issues
+- Verify NOTION_API_KEY and NOTION_DATABASE_ID
+- Ensure Notion integration has database access
+- Check database schema supports required fields
 
-© 2025 Angles AI Universe™ Backend Team
+### GitHub Backup Failures
+- Verify GITHUB_TOKEN and GITHUB_REPO
+- Ensure token has repository write permissions
+- Check local git configuration
+
+## Security Notes
+
+- All secrets are managed via environment variables
+- Database operations use parameterized queries
+- GitHub backups exclude sensitive information
+- Logs sanitize secrets and API keys
+- File scanning respects .gitignore patterns
+
+## Development
+
+### Adding New Components
+1. Create module in `/angles/` directory
+2. Add health check to `backend_monitor.py`
+3. Include in `cron_runner.py` if scheduled
+4. Add tests and update documentation
+
+### Extending Database Schema
+1. Update `run_migration.py` with new tables/indexes
+2. Add corresponding methods to `supabase_client.py`
+3. Test with dry-run before deployment
+
+## Performance
+
+- File scanning uses efficient path filtering
+- Database operations include retry logic
+- Batch processing for large datasets
+- Connection pooling and timeouts
+- Resource monitoring and alerts
+
+## Support
+
+For issues:
+1. Check system logs in database
+2. Run health monitor for diagnostics
+3. Verify environment configuration
+4. Review component-specific logs
+
+---
+
+**Angles AI Universe™** - Intelligent backend automation for modern development workflows.

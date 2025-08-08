@@ -1,0 +1,362 @@
+Prompt for Replit AI (Angles AI Universe™ – Full Backend Deployment w/ Logging & Schedules)
+
+
+
+You are Replit AI acting as a build-and-run automation for the “Angles AI Universe™” backend.
+
+Perform an idempotent setup that can be safely re-run. Use Python. Do not invent secrets; read from environment variables only.
+
+
+
+
+
+0) Preconditions
+
+
+
+
+
+Assume these env vars already exist in Replit “Secrets”:
+SUPABASE_URL, SUPABASE_KEY
+NOTION_API_KEY (optional; if missing, skip Notion writes gracefully)
+NOTION_DATABASE_ID (optional; if missing, skip Notion writes gracefully)
+GITHUB_TOKEN and GITHUB_REPO (optional; if missing, skip GitHub backup gracefully)
+OPENAI_API_KEY (for GPT operations)
+OPENAI_MODEL (e.g., gpt-4.1, gpt-4o-mini, or newer; do not hardcode model name)
+
+If any are missing, print a clear warning but continue where possible.
+
+
+
+
+
+
+1) Dependencies
+
+
+
+
+
+Create/merge requirements.txt with (no duplicates):
+
+
+supabase
+notion-client
+openai>=1.0.0
+requests
+psutil
+schedule
+cryptography
+python-dotenv
+
+Install them.
+
+
+
+
+
+2) File/Folder Layout (create if missing)
+
+/angles/
+
+  __init__.py
+
+  config.py
+
+  supabase_client.py
+
+  notion_client_wrap.py
+
+  openai_bridge.py
+
+  memory_sync_agent.py
+
+  autosync.py
+
+  restore.py
+
+  historical_sweep.py
+
+  backend_monitor.py
+
+  run_migration.py
+
+  cron_runner.py
+
+  utils.py
+
+/logs/
+
+  .gitkeep
+
+/backups/
+
+  .gitkeep
+
+
+README.md
+
+
+
+
+
+3) Config & Clients
+
+
+
+
+
+angles/config.py
+
+
+
+Read env vars listed above.
+Provide helpers: has_notion(), has_github(), has_openai() etc.
+
+
+
+
+angles/supabase_client.py
+
+
+
+Create a thin wrapper for insert/update/select on tables:
+decision_vault (id, category, status, content, date_added, last_updated, tags, source, checksum)
+system_logs (ts, level, component, message, meta JSON)
+file_snapshots (path, checksum, content, last_updated)
+run_artifacts (ts, kind, ref, notes, blob optional)
+
+All writes must be upserts keyed on natural keys where sensible (e.g., path+checksum).
+
+
+
+
+angles/notion_client_wrap.py
+
+
+
+If has_notion() is false, functions no-op with info logs.
+Provide write_summary(title, text, tags:list); handle simple failures with retries.
+
+
+
+
+angles/openai_bridge.py
+
+
+
+Read OPENAI_API_KEY and OPENAI_MODEL from env.
+Expose analyze_text(prompt:str)->str that calls Chat Completions (or Responses) with safe defaults.
+If missing key, return a graceful message and log warning.
+
+
+
+
+
+
+4) Core Agents & Routines
+
+
+
+
+
+angles/memory_sync_agent.py
+
+
+
+Purpose: 2‑way sync between Replit files and Supabase tables:
+Scan repo (exclude .git, __pycache__, venv, node_modules, logs, backups)
+For each file: compute checksum (SHA256), if new/changed → store/ upsert into file_snapshots
+Also push a compact “change log” row into system_logs.
+
+If Notion is available, write a brief “MemorySync run complete” summary.
+
+
+
+
+angles/autosync.py
+
+
+
+File watcher (polling via psutil/mtime) that, on change, re‑runs the incremental sync.
+Debounce events; print what changed.
+
+
+
+
+angles/restore.py
+
+
+
+Functions to:
+Export DB snapshots and recent logs into /backups/backup-YYYYMMDD-HHMM.zip
+If GITHUB_TOKEN + GITHUB_REPO present: push /backups/*.zip to a backups/ folder in the repo (commit with timestamp message).
+
+If GitHub is missing, still create local zip.
+
+
+
+
+angles/historical_sweep.py
+
+
+
+“Full Historical Sweep™”:
+Create categorized entries in decision_vault for:
+core prompts, exec prompts, agent specs, decisions, rules, todos (just placeholders unless provided)
+
+Read any local docs in repo (e.g., /docs/, if exists) and push into file_snapshots + decision_vault as appropriate.
+Use openai_bridge.analyze_text() to produce a Prioritized Fix List from current logs + repo tree, and store it in run_artifacts + optional Notion summary.
+
+Must be idempotent: same content should not create duplicate rows (use checksum).
+
+
+
+
+angles/backend_monitor.py
+
+
+
+Health checks:
+Can reach Supabase?
+Can call OpenAI?
+MemorySync last run < 8 hours ago?
+
+Emit a status line + write to system_logs. If major issue, print remediation steps.
+
+
+
+
+angles/run_migration.py
+
+
+
+Create or migrate tables (idempotent).
+Tables (if not exist): decision_vault, system_logs, file_snapshots, run_artifacts.
+Add necessary indexes (e.g., file_snapshots(path), decision_vault(tags gin) if supported).
+Print exactly what changed.
+
+
+
+
+angles/cron_runner.py
+
+
+
+Schedule jobs with schedule:
+MemorySyncAgent: every 6 hours
+Historical Sweep: Sundays 02:00 UTC
+Backup/Restore (export): daily 03:00 UTC
+Backend monitor: every hour
+
+Long‑running loop with clear console logs; safe to stop/start.
+
+
+
+
+angles/utils.py
+
+
+
+Small helpers: timestamps, checksum, safe JSON dumps, retries (exponential backoff).
+
+
+
+
+
+
+5) README
+
+
+
+
+
+Update README.md with:
+
+
+
+What this project is, how env vars are used, how to run:
+python -m angles.run_migration
+python -m angles.memory_sync_agent
+python -m angles.backend_monitor
+python -m angles.cron_runner
+
+Troubleshooting (env vars missing, Supabase anon vs service role key, Notion optional).
+
+
+
+
+
+
+6) Run order (now)
+
+
+
+
+
+Run these, in order, capturing output to console and append to logs/install_and_boot.log:
+
+
+
+python -m angles.run_migration
+python -m angles.memory_sync_agent
+python -m angles.backend_monitor
+python -m angles.historical_sweep
+Use OpenAI (if key present) to generate a Prioritized Fix List and store it in run_artifacts.
+Also write a compact Notion summary (if available).
+
+Start the scheduler: python -m angles.cron_runner (keep running)
+
+
+
+
+
+
+7) Final Output Requirements
+
+
+
+
+
+After executing, print a single final block to console:
+
+✅ Angles AI Universe – Master Deployment Completed
+- Migrations: OK
+- MemorySyncAgent: Active (6h schedule)
+- Historical Sweep: Completed (Next: Sunday 02:00 UTC)
+- Backup/Restore: Daily at 03:00 UTC
+- Backend Monitor: Hourly
+- OpenAI Bridge: {DETECTED or SKIPPED}
+- Notion: {DETECTED or SKIPPED}
+- GitHub Backup: {DETECTED or SKIPPED}
+
+Next steps (from Prioritized Fix List):
+1) ...
+2) ...
+3) ...
+
+Also, insert a row in system_logs with level=INFO, component=master_deploy, message=Deployment complete, and a compact meta JSON containing timestamps + detected integrations.
+
+
+
+Constraints & Style
+
+
+
+Be concise in code; no unused imports.
+Prefer functions + small modules over monolithic files.
+All network calls should handle exceptions and log errors without crashing the whole process.
+
+
+
+
+Then proceed.
+
+
+
+
+
+
+
+When that finishes, I’ll give you a tiny “sanity test” prompt to verify one log row landed in Supabase + (if allowed) one summary landed in Notion.
+

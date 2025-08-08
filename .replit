@@ -2,7 +2,7 @@ modules = ["python-3.11"]
 
 [nix]
 channel = "stable-25_05"
-packages = ["libxcrypt"]
+packages = ["cargo", "libiconv", "libxcrypt", "openssl", "pkg-config", "rustc"]
 
 [workflows]
 runButton = "Project"
@@ -43,6 +43,10 @@ args = "Automated Test System"
 [[workflows.workflow.tasks]]
 task = "workflow.run"
 args = "Sync Health Dashboard"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Angles AI Universe Scheduler"
 
 [[workflows.workflow]]
 name = "Memory System Scheduler"
@@ -129,6 +133,17 @@ author = "agent"
 task = "shell.exec"
 args = "python tools/health_server.py --port 5000"
 waitForPort = 5000
+
+[[workflows.workflow]]
+name = "Angles AI Universe Scheduler"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python -m angles.cron_runner"
+
+[workflows.workflow.metadata]
+outputType = "console"
 
 [[ports]]
 localPort = 5000
