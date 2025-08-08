@@ -1,322 +1,291 @@
 {
-  "timestamp": "2025-08-08T10:09:00.018235+00:00",
-  "server_uptime": "5:56:59",
+  "timestamp": "2025-08-08T10:04:00.004924+00:00",
+  "server_uptime": "5:51:59",
   "sync_status": {
     "last_run": null,
     "status": "unknown",
     "statistics": {},
     "error_details": [],
-    "timestamp": "2025-08-08T10:04:00.004924+00:00",
-    "server_uptime": "5:51:59",
+    "timestamp": "2025-08-08T09:58:59.991143+00:00",
+    "server_uptime": "5:46:59",
     "sync_status": {
       "last_run": null,
       "status": "unknown",
       "statistics": {},
       "error_details": [],
-      "timestamp": "2025-08-08T09:58:59.991143+00:00",
-      "server_uptime": "5:46:59",
+      "timestamp": "2025-08-08T09:53:59.975831+00:00",
+      "server_uptime": "5:41:59",
       "sync_status": {
         "last_run": null,
         "status": "unknown",
         "statistics": {},
         "error_details": [],
-        "timestamp": "2025-08-08T09:53:59.975831+00:00",
-        "server_uptime": "5:41:59",
+        "timestamp": "2025-08-08T09:48:59.963450+00:00",
+        "server_uptime": "5:36:59",
         "sync_status": {
           "last_run": null,
           "status": "unknown",
           "statistics": {},
           "error_details": [],
-          "timestamp": "2025-08-08T09:48:59.963450+00:00",
-          "server_uptime": "5:36:59",
+          "timestamp": "2025-08-08T09:43:59.950904+00:00",
+          "server_uptime": "5:31:59",
           "sync_status": {
             "last_run": null,
             "status": "unknown",
             "statistics": {},
             "error_details": [],
-            "timestamp": "2025-08-08T09:43:59.950904+00:00",
-            "server_uptime": "5:31:59",
+            "timestamp": "2025-08-08T09:38:59.937287+00:00",
+            "server_uptime": "5:26:59",
             "sync_status": {
               "last_run": null,
               "status": "unknown",
               "statistics": {},
               "error_details": [],
-              "timestamp": "2025-08-08T09:38:59.937287+00:00",
-              "server_uptime": "5:26:59",
+              "timestamp": "2025-08-08T09:33:59.923727+00:00",
+              "server_uptime": "5:21:59",
               "sync_status": {
                 "last_run": null,
                 "status": "unknown",
                 "statistics": {},
                 "error_details": [],
-                "timestamp": "2025-08-08T09:33:59.923727+00:00",
-                "server_uptime": "5:21:59",
+                "timestamp": "2025-08-08T09:28:59.911289+00:00",
+                "server_uptime": "5:16:59",
                 "sync_status": {
                   "last_run": null,
                   "status": "unknown",
                   "statistics": {},
                   "error_details": [],
-                  "timestamp": "2025-08-08T09:28:59.911289+00:00",
-                  "server_uptime": "5:16:59",
+                  "timestamp": "2025-08-08T09:23:59.898017+00:00",
+                  "server_uptime": "5:11:59",
                   "sync_status": {
                     "last_run": null,
                     "status": "unknown",
                     "statistics": {},
                     "error_details": [],
-                    "timestamp": "2025-08-08T09:23:59.898017+00:00",
-                    "server_uptime": "5:11:59",
+                    "timestamp": "2025-08-08T09:18:59.888683+00:00",
+                    "server_uptime": "5:06:59",
                     "sync_status": {
                       "last_run": null,
                       "status": "unknown",
                       "statistics": {},
                       "error_details": [],
-                      "timestamp": "2025-08-08T09:18:59.888683+00:00",
-                      "server_uptime": "5:06:59",
+                      "timestamp": "2025-08-08T09:13:59.878804+00:00",
+                      "server_uptime": "5:01:59",
                       "sync_status": {
                         "last_run": null,
                         "status": "unknown",
                         "statistics": {},
                         "error_details": [],
-                        "timestamp": "2025-08-08T09:13:59.878804+00:00",
-                        "server_uptime": "5:01:59",
+                        "timestamp": "2025-08-08T09:08:59.870689+00:00",
+                        "server_uptime": "4:56:59",
                         "sync_status": {
                           "last_run": null,
                           "status": "unknown",
                           "statistics": {},
                           "error_details": [],
-                          "timestamp": "2025-08-08T09:08:59.870689+00:00",
-                          "server_uptime": "4:56:59",
+                          "timestamp": "2025-08-08T09:03:59.861543+00:00",
+                          "server_uptime": "4:51:59",
                           "sync_status": {
                             "last_run": null,
                             "status": "unknown",
                             "statistics": {},
                             "error_details": [],
-                            "timestamp": "2025-08-08T09:03:59.861543+00:00",
-                            "server_uptime": "4:51:59",
+                            "timestamp": "2025-08-08T08:58:59.852077+00:00",
+                            "server_uptime": "4:46:59",
                             "sync_status": {
                               "last_run": null,
                               "status": "unknown",
                               "statistics": {},
                               "error_details": [],
-                              "timestamp": "2025-08-08T08:58:59.852077+00:00",
-                              "server_uptime": "4:46:59",
+                              "timestamp": "2025-08-08T08:53:59.841353+00:00",
+                              "server_uptime": "4:41:59",
                               "sync_status": {
                                 "last_run": null,
                                 "status": "unknown",
                                 "statistics": {},
                                 "error_details": [],
-                                "timestamp": "2025-08-08T08:53:59.841353+00:00",
-                                "server_uptime": "4:41:59",
+                                "timestamp": "2025-08-08T08:48:59.832255+00:00",
+                                "server_uptime": "4:36:59",
                                 "sync_status": {
                                   "last_run": null,
                                   "status": "unknown",
                                   "statistics": {},
                                   "error_details": [],
-                                  "timestamp": "2025-08-08T08:48:59.832255+00:00",
-                                  "server_uptime": "4:36:59",
+                                  "timestamp": "2025-08-08T08:43:59.823965+00:00",
+                                  "server_uptime": "4:31:59",
                                   "sync_status": {
                                     "last_run": null,
                                     "status": "unknown",
                                     "statistics": {},
                                     "error_details": [],
-                                    "timestamp": "2025-08-08T08:43:59.823965+00:00",
-                                    "server_uptime": "4:31:59",
+                                    "timestamp": "2025-08-08T08:38:59.817350+00:00",
+                                    "server_uptime": "4:26:59",
                                     "sync_status": {
                                       "last_run": null,
                                       "status": "unknown",
                                       "statistics": {},
                                       "error_details": [],
-                                      "timestamp": "2025-08-08T08:38:59.817350+00:00",
-                                      "server_uptime": "4:26:59",
+                                      "timestamp": "2025-08-08T08:33:59.810223+00:00",
+                                      "server_uptime": "4:21:59",
                                       "sync_status": {
                                         "last_run": null,
                                         "status": "unknown",
                                         "statistics": {},
                                         "error_details": [],
-                                        "timestamp": "2025-08-08T08:33:59.810223+00:00",
-                                        "server_uptime": "4:21:59",
+                                        "timestamp": "2025-08-08T08:28:59.804006+00:00",
+                                        "server_uptime": "4:16:59",
                                         "sync_status": {
                                           "last_run": null,
                                           "status": "unknown",
                                           "statistics": {},
                                           "error_details": [],
-                                          "timestamp": "2025-08-08T08:28:59.804006+00:00",
-                                          "server_uptime": "4:16:59",
+                                          "timestamp": "2025-08-08T08:23:59.797828+00:00",
+                                          "server_uptime": "4:11:59",
                                           "sync_status": {
                                             "last_run": null,
                                             "status": "unknown",
                                             "statistics": {},
                                             "error_details": [],
-                                            "timestamp": "2025-08-08T08:23:59.797828+00:00",
-                                            "server_uptime": "4:11:59",
+                                            "timestamp": "2025-08-08T08:18:59.791700+00:00",
+                                            "server_uptime": "4:06:59",
                                             "sync_status": {
                                               "last_run": null,
                                               "status": "unknown",
                                               "statistics": {},
                                               "error_details": [],
-                                              "timestamp": "2025-08-08T08:18:59.791700+00:00",
-                                              "server_uptime": "4:06:59",
+                                              "timestamp": "2025-08-08T08:13:59.786306+00:00",
+                                              "server_uptime": "4:01:59",
                                               "sync_status": {
                                                 "last_run": null,
                                                 "status": "unknown",
                                                 "statistics": {},
                                                 "error_details": [],
-                                                "timestamp": "2025-08-08T08:13:59.786306+00:00",
-                                                "server_uptime": "4:01:59",
+                                                "timestamp": "2025-08-08T08:08:59.781313+00:00",
+                                                "server_uptime": "3:56:59",
                                                 "sync_status": {
                                                   "last_run": null,
                                                   "status": "unknown",
                                                   "statistics": {},
                                                   "error_details": [],
-                                                  "timestamp": "2025-08-08T08:08:59.781313+00:00",
-                                                  "server_uptime": "3:56:59",
+                                                  "timestamp": "2025-08-08T08:03:59.774951+00:00",
+                                                  "server_uptime": "3:51:59",
                                                   "sync_status": {
                                                     "last_run": null,
                                                     "status": "unknown",
                                                     "statistics": {},
                                                     "error_details": [],
-                                                    "timestamp": "2025-08-08T08:03:59.774951+00:00",
-                                                    "server_uptime": "3:51:59",
+                                                    "timestamp": "2025-08-08T07:58:59.766795+00:00",
+                                                    "server_uptime": "3:46:59",
                                                     "sync_status": {
                                                       "last_run": null,
                                                       "status": "unknown",
                                                       "statistics": {},
                                                       "error_details": [],
-                                                      "timestamp": "2025-08-08T07:58:59.766795+00:00",
-                                                      "server_uptime": "3:46:59",
+                                                      "timestamp": "2025-08-08T00:54:24.180695+00:00",
+                                                      "server_uptime": "1 day, 13:52:47",
                                                       "sync_status": {
                                                         "last_run": null,
                                                         "status": "unknown",
                                                         "statistics": {},
                                                         "error_details": [],
-                                                        "timestamp": "2025-08-08T00:54:24.180695+00:00",
-                                                        "server_uptime": "1 day, 13:52:47",
+                                                        "timestamp": "2025-08-08T00:49:24.176758+00:00",
+                                                        "server_uptime": "1 day, 13:47:47",
                                                         "sync_status": {
                                                           "last_run": null,
                                                           "status": "unknown",
                                                           "statistics": {},
                                                           "error_details": [],
-                                                          "timestamp": "2025-08-08T00:49:24.176758+00:00",
-                                                          "server_uptime": "1 day, 13:47:47",
+                                                          "timestamp": "2025-08-08T00:44:24.172006+00:00",
+                                                          "server_uptime": "1 day, 13:42:47",
                                                           "sync_status": {
                                                             "last_run": null,
                                                             "status": "unknown",
                                                             "statistics": {},
                                                             "error_details": [],
-                                                            "timestamp": "2025-08-08T00:44:24.172006+00:00",
-                                                            "server_uptime": "1 day, 13:42:47",
+                                                            "timestamp": "2025-08-08T00:39:24.164055+00:00",
+                                                            "server_uptime": "1 day, 13:37:47",
                                                             "sync_status": {
                                                               "last_run": null,
                                                               "status": "unknown",
                                                               "statistics": {},
                                                               "error_details": [],
-                                                              "timestamp": "2025-08-08T00:39:24.164055+00:00",
-                                                              "server_uptime": "1 day, 13:37:47",
+                                                              "timestamp": "2025-08-08T00:37:04.503338+00:00",
+                                                              "server_uptime": "1 day, 13:35:28",
                                                               "sync_status": {
                                                                 "last_run": null,
                                                                 "status": "unknown",
                                                                 "statistics": {},
                                                                 "error_details": [],
-                                                                "timestamp": "2025-08-08T00:37:04.503338+00:00",
-                                                                "server_uptime": "1 day, 13:35:28",
+                                                                "timestamp": "2025-08-08T00:33:23.683265+00:00",
+                                                                "server_uptime": "1 day, 13:31:47",
                                                                 "sync_status": {
                                                                   "last_run": null,
                                                                   "status": "unknown",
                                                                   "statistics": {},
                                                                   "error_details": [],
-                                                                  "timestamp": "2025-08-08T00:33:23.683265+00:00",
-                                                                  "server_uptime": "1 day, 13:31:47",
+                                                                  "timestamp": "2025-08-08T00:28:23.674735+00:00",
+                                                                  "server_uptime": "1 day, 13:26:47",
                                                                   "sync_status": {
                                                                     "last_run": null,
                                                                     "status": "unknown",
                                                                     "statistics": {},
                                                                     "error_details": [],
-                                                                    "timestamp": "2025-08-08T00:28:23.674735+00:00",
-                                                                    "server_uptime": "1 day, 13:26:47",
+                                                                    "timestamp": "2025-08-08T00:25:18.572900+00:00",
+                                                                    "server_uptime": "1 day, 13:23:42",
                                                                     "sync_status": {
                                                                       "last_run": null,
                                                                       "status": "unknown",
                                                                       "statistics": {},
                                                                       "error_details": [],
-                                                                      "timestamp": "2025-08-08T00:25:18.572900+00:00",
-                                                                      "server_uptime": "1 day, 13:23:42",
+                                                                      "timestamp": "2025-08-08T00:20:18.568494+00:00",
+                                                                      "server_uptime": "1 day, 13:18:42",
                                                                       "sync_status": {
                                                                         "last_run": null,
                                                                         "status": "unknown",
                                                                         "statistics": {},
                                                                         "error_details": [],
-                                                                        "timestamp": "2025-08-08T00:20:18.568494+00:00",
-                                                                        "server_uptime": "1 day, 13:18:42",
+                                                                        "timestamp": "2025-08-08T00:15:18.553434+00:00",
+                                                                        "server_uptime": "1 day, 13:13:42",
                                                                         "sync_status": {
                                                                           "last_run": null,
                                                                           "status": "unknown",
                                                                           "statistics": {},
                                                                           "error_details": [],
-                                                                          "timestamp": "2025-08-08T00:15:18.553434+00:00",
-                                                                          "server_uptime": "1 day, 13:13:42",
+                                                                          "timestamp": "2025-08-08T00:15:03.754170+00:00",
+                                                                          "server_uptime": "1 day, 13:13:27",
                                                                           "sync_status": {
                                                                             "last_run": null,
                                                                             "status": "unknown",
                                                                             "statistics": {},
                                                                             "error_details": [],
-                                                                            "timestamp": "2025-08-08T00:15:03.754170+00:00",
-                                                                            "server_uptime": "1 day, 13:13:27",
+                                                                            "timestamp": "2025-08-08T00:10:03.751013+00:00",
+                                                                            "server_uptime": "1 day, 13:08:27",
                                                                             "sync_status": {
                                                                               "last_run": null,
                                                                               "status": "unknown",
                                                                               "statistics": {},
                                                                               "error_details": [],
-                                                                              "timestamp": "2025-08-08T00:10:03.751013+00:00",
-                                                                              "server_uptime": "1 day, 13:08:27",
+                                                                              "timestamp": "2025-08-08T00:05:03.748226+00:00",
+                                                                              "server_uptime": "1 day, 13:03:27",
                                                                               "sync_status": {
                                                                                 "last_run": null,
                                                                                 "status": "unknown",
                                                                                 "statistics": {},
                                                                                 "error_details": [],
-                                                                                "timestamp": "2025-08-08T00:05:03.748226+00:00",
-                                                                                "server_uptime": "1 day, 13:03:27",
+                                                                                "timestamp": "2025-08-08T00:00:03.743498+00:00",
+                                                                                "server_uptime": "1 day, 12:58:27",
                                                                                 "sync_status": {
                                                                                   "last_run": null,
                                                                                   "status": "unknown",
                                                                                   "statistics": {},
                                                                                   "error_details": [],
-                                                                                  "timestamp": "2025-08-08T00:00:03.743498+00:00",
-                                                                                  "server_uptime": "1 day, 12:58:27",
+                                                                                  "timestamp": "2025-08-07T23:54:52.265732+00:00",
+                                                                                  "server_uptime": "14:58:36",
                                                                                   "sync_status": {
                                                                                     "last_run": null,
                                                                                     "status": "unknown",
                                                                                     "statistics": {},
-                                                                                    "error_details": [],
-                                                                                    "timestamp": "2025-08-07T23:54:52.265732+00:00",
-                                                                                    "server_uptime": "14:58:36",
-                                                                                    "sync_status": {
-                                                                                      "last_run": null,
-                                                                                      "status": "unknown",
-                                                                                      "statistics": {},
-                                                                                      "error_details": []
-                                                                                    },
-                                                                                    "scheduler_status": {
-                                                                                      "running": false,
-                                                                                      "last_health_check": null,
-                                                                                      "last_backup": null,
-                                                                                      "next_scheduled": {}
-                                                                                    },
-                                                                                    "backup_status": {
-                                                                                      "last_backup": null,
-                                                                                      "backup_count_today": 0,
-                                                                                      "last_backup_size": null,
-                                                                                      "backup_errors": []
-                                                                                    },
-                                                                                    "alert_status": {
-                                                                                      "alerts_today": 0,
-                                                                                      "critical_alerts": 0,
-                                                                                      "last_alert": null
-                                                                                    },
-                                                                                    "system_metrics": {
-                                                                                      "disk_usage": "0.2 MB",
-                                                                                      "log_file_count": 25,
-                                                                                      "active_workflows": 0
-                                                                                    },
-                                                                                    "health_score": 65
+                                                                                    "error_details": []
                                                                                   },
                                                                                   "scheduler_status": {
                                                                                     "running": false,
@@ -337,7 +306,7 @@
                                                                                   },
                                                                                   "system_metrics": {
                                                                                     "disk_usage": "0.2 MB",
-                                                                                    "log_file_count": 28,
+                                                                                    "log_file_count": 25,
                                                                                     "active_workflows": 0
                                                                                   },
                                                                                   "health_score": 65
@@ -361,7 +330,7 @@
                                                                                 },
                                                                                 "system_metrics": {
                                                                                   "disk_usage": "0.2 MB",
-                                                                                  "log_file_count": 29,
+                                                                                  "log_file_count": 28,
                                                                                   "active_workflows": 0
                                                                                 },
                                                                                 "health_score": 65
@@ -385,7 +354,7 @@
                                                                               },
                                                                               "system_metrics": {
                                                                                 "disk_usage": "0.2 MB",
-                                                                                "log_file_count": 30,
+                                                                                "log_file_count": 29,
                                                                                 "active_workflows": 0
                                                                               },
                                                                               "health_score": 65
@@ -409,7 +378,7 @@
                                                                             },
                                                                             "system_metrics": {
                                                                               "disk_usage": "0.2 MB",
-                                                                              "log_file_count": 31,
+                                                                              "log_file_count": 30,
                                                                               "active_workflows": 0
                                                                             },
                                                                             "health_score": 65
@@ -433,7 +402,7 @@
                                                                           },
                                                                           "system_metrics": {
                                                                             "disk_usage": "0.2 MB",
-                                                                            "log_file_count": 32,
+                                                                            "log_file_count": 31,
                                                                             "active_workflows": 0
                                                                           },
                                                                           "health_score": 65
@@ -457,7 +426,7 @@
                                                                         },
                                                                         "system_metrics": {
                                                                           "disk_usage": "0.2 MB",
-                                                                          "log_file_count": 37,
+                                                                          "log_file_count": 32,
                                                                           "active_workflows": 0
                                                                         },
                                                                         "health_score": 65
@@ -481,7 +450,7 @@
                                                                       },
                                                                       "system_metrics": {
                                                                         "disk_usage": "0.2 MB",
-                                                                        "log_file_count": 38,
+                                                                        "log_file_count": 37,
                                                                         "active_workflows": 0
                                                                       },
                                                                       "health_score": 65
@@ -504,8 +473,8 @@
                                                                       "last_alert": null
                                                                     },
                                                                     "system_metrics": {
-                                                                      "disk_usage": "0.3 MB",
-                                                                      "log_file_count": 39,
+                                                                      "disk_usage": "0.2 MB",
+                                                                      "log_file_count": 38,
                                                                       "active_workflows": 0
                                                                     },
                                                                     "health_score": 65
@@ -529,7 +498,7 @@
                                                                   },
                                                                   "system_metrics": {
                                                                     "disk_usage": "0.3 MB",
-                                                                    "log_file_count": 40,
+                                                                    "log_file_count": 39,
                                                                     "active_workflows": 0
                                                                   },
                                                                   "health_score": 65
@@ -547,26 +516,16 @@
                                                                   "backup_errors": []
                                                                 },
                                                                 "alert_status": {
-                                                                  "alerts_today": 2,
-                                                                  "critical_alerts": 2,
-                                                                  "last_alert": {
-                                                                    "timestamp": "2025-08-08T00:36:47.477276+00:00",
-                                                                    "title": "\u274c Quick Tests Failed",
-                                                                    "message": "Critical quick tests failed!\n\u2022 Tests failed: 2\n\u2022 Duration: 2.1s\n\u2022 Latest failure: file_permissions: Permission issues: memory_bridge.py not executable",
-                                                                    "severity": "critical",
-                                                                    "results": {
-                                                                      "github_url": "https://github.com/Anglesuniverse/angles-backup/issues/2",
-                                                                      "notion_url": "https://www.notion.so/Quick-Tests-Failed-249ea273e96081839292fcb277774320",
-                                                                      "timestamp": "2025-08-08T00:36:46.303309+00:00"
-                                                                    }
-                                                                  }
+                                                                  "alerts_today": 0,
+                                                                  "critical_alerts": 0,
+                                                                  "last_alert": null
                                                                 },
                                                                 "system_metrics": {
                                                                   "disk_usage": "0.3 MB",
-                                                                  "log_file_count": 43,
+                                                                  "log_file_count": 40,
                                                                   "active_workflows": 0
                                                                 },
-                                                                "health_score": 15
+                                                                "health_score": 65
                                                               },
                                                               "scheduler_status": {
                                                                 "running": false,
@@ -581,26 +540,26 @@
                                                                 "backup_errors": []
                                                               },
                                                               "alert_status": {
-                                                                "alerts_today": 5,
-                                                                "critical_alerts": 4,
+                                                                "alerts_today": 2,
+                                                                "critical_alerts": 2,
                                                                 "last_alert": {
-                                                                  "timestamp": "2025-08-08T00:39:18.706499+00:00",
-                                                                  "title": "\u2705 Quick Tests Passed",
-                                                                  "message": "All quick tests passed successfully!\n\u2022 Tests passed: 7\n\u2022 Duration: 2.2s",
-                                                                  "severity": "info",
+                                                                  "timestamp": "2025-08-08T00:36:47.477276+00:00",
+                                                                  "title": "\u274c Quick Tests Failed",
+                                                                  "message": "Critical quick tests failed!\n\u2022 Tests failed: 2\n\u2022 Duration: 2.1s\n\u2022 Latest failure: file_permissions: Permission issues: memory_bridge.py not executable",
+                                                                  "severity": "critical",
                                                                   "results": {
-                                                                    "github_url": "https://github.com/Anglesuniverse/angles-backup/issues/5",
-                                                                    "notion_url": "https://www.notion.so/Quick-Tests-Passed-249ea273e9608180a452f65d816d948a",
-                                                                    "timestamp": "2025-08-08T00:39:15.840877+00:00"
+                                                                    "github_url": "https://github.com/Anglesuniverse/angles-backup/issues/2",
+                                                                    "notion_url": "https://www.notion.so/Quick-Tests-Failed-249ea273e96081839292fcb277774320",
+                                                                    "timestamp": "2025-08-08T00:36:46.303309+00:00"
                                                                   }
                                                                 }
                                                               },
                                                               "system_metrics": {
                                                                 "disk_usage": "0.3 MB",
-                                                                "log_file_count": 44,
+                                                                "log_file_count": 43,
                                                                 "active_workflows": 0
                                                               },
-                                                              "health_score": 0
+                                                              "health_score": 15
                                                             },
                                                             "scheduler_status": {
                                                               "running": false,
@@ -630,8 +589,8 @@
                                                               }
                                                             },
                                                             "system_metrics": {
-                                                              "disk_usage": "0.4 MB",
-                                                              "log_file_count": 45,
+                                                              "disk_usage": "0.3 MB",
+                                                              "log_file_count": 44,
                                                               "active_workflows": 0
                                                             },
                                                             "health_score": 0
@@ -665,7 +624,7 @@
                                                           },
                                                           "system_metrics": {
                                                             "disk_usage": "0.4 MB",
-                                                            "log_file_count": 46,
+                                                            "log_file_count": 45,
                                                             "active_workflows": 0
                                                           },
                                                           "health_score": 0
@@ -699,7 +658,7 @@
                                                         },
                                                         "system_metrics": {
                                                           "disk_usage": "0.4 MB",
-                                                          "log_file_count": 47,
+                                                          "log_file_count": 46,
                                                           "active_workflows": 0
                                                         },
                                                         "health_score": 0
@@ -733,7 +692,7 @@
                                                       },
                                                       "system_metrics": {
                                                         "disk_usage": "0.4 MB",
-                                                        "log_file_count": 48,
+                                                        "log_file_count": 47,
                                                         "active_workflows": 0
                                                       },
                                                       "health_score": 0
@@ -766,8 +725,8 @@
                                                       }
                                                     },
                                                     "system_metrics": {
-                                                      "disk_usage": "0.5 MB",
-                                                      "log_file_count": 49,
+                                                      "disk_usage": "0.4 MB",
+                                                      "log_file_count": 48,
                                                       "active_workflows": 0
                                                     },
                                                     "health_score": 0
@@ -801,7 +760,7 @@
                                                   },
                                                   "system_metrics": {
                                                     "disk_usage": "0.5 MB",
-                                                    "log_file_count": 50,
+                                                    "log_file_count": 49,
                                                     "active_workflows": 0
                                                   },
                                                   "health_score": 0
@@ -835,7 +794,7 @@
                                                 },
                                                 "system_metrics": {
                                                   "disk_usage": "0.5 MB",
-                                                  "log_file_count": 51,
+                                                  "log_file_count": 50,
                                                   "active_workflows": 0
                                                 },
                                                 "health_score": 0
@@ -868,8 +827,8 @@
                                                 }
                                               },
                                               "system_metrics": {
-                                                "disk_usage": "0.6 MB",
-                                                "log_file_count": 52,
+                                                "disk_usage": "0.5 MB",
+                                                "log_file_count": 51,
                                                 "active_workflows": 0
                                               },
                                               "health_score": 0
@@ -903,7 +862,7 @@
                                             },
                                             "system_metrics": {
                                               "disk_usage": "0.6 MB",
-                                              "log_file_count": 53,
+                                              "log_file_count": 52,
                                               "active_workflows": 0
                                             },
                                             "health_score": 0
@@ -937,7 +896,7 @@
                                           },
                                           "system_metrics": {
                                             "disk_usage": "0.6 MB",
-                                            "log_file_count": 54,
+                                            "log_file_count": 53,
                                             "active_workflows": 0
                                           },
                                           "health_score": 0
@@ -970,8 +929,8 @@
                                           }
                                         },
                                         "system_metrics": {
-                                          "disk_usage": "0.7 MB",
-                                          "log_file_count": 55,
+                                          "disk_usage": "0.6 MB",
+                                          "log_file_count": 54,
                                           "active_workflows": 0
                                         },
                                         "health_score": 0
@@ -1005,7 +964,7 @@
                                       },
                                       "system_metrics": {
                                         "disk_usage": "0.7 MB",
-                                        "log_file_count": 56,
+                                        "log_file_count": 55,
                                         "active_workflows": 0
                                       },
                                       "health_score": 0
@@ -1038,8 +997,8 @@
                                       }
                                     },
                                     "system_metrics": {
-                                      "disk_usage": "0.8 MB",
-                                      "log_file_count": 57,
+                                      "disk_usage": "0.7 MB",
+                                      "log_file_count": 56,
                                       "active_workflows": 0
                                     },
                                     "health_score": 0
@@ -1073,7 +1032,7 @@
                                   },
                                   "system_metrics": {
                                     "disk_usage": "0.8 MB",
-                                    "log_file_count": 58,
+                                    "log_file_count": 57,
                                     "active_workflows": 0
                                   },
                                   "health_score": 0
@@ -1106,8 +1065,8 @@
                                   }
                                 },
                                 "system_metrics": {
-                                  "disk_usage": "0.9 MB",
-                                  "log_file_count": 59,
+                                  "disk_usage": "0.8 MB",
+                                  "log_file_count": 58,
                                   "active_workflows": 0
                                 },
                                 "health_score": 0
@@ -1141,7 +1100,7 @@
                               },
                               "system_metrics": {
                                 "disk_usage": "0.9 MB",
-                                "log_file_count": 60,
+                                "log_file_count": 59,
                                 "active_workflows": 0
                               },
                               "health_score": 0
@@ -1174,8 +1133,8 @@
                               }
                             },
                             "system_metrics": {
-                              "disk_usage": "1.0 MB",
-                              "log_file_count": 61,
+                              "disk_usage": "0.9 MB",
+                              "log_file_count": 60,
                               "active_workflows": 0
                             },
                             "health_score": 0
@@ -1209,7 +1168,7 @@
                           },
                           "system_metrics": {
                             "disk_usage": "1.0 MB",
-                            "log_file_count": 62,
+                            "log_file_count": 61,
                             "active_workflows": 0
                           },
                           "health_score": 0
@@ -1242,8 +1201,8 @@
                           }
                         },
                         "system_metrics": {
-                          "disk_usage": "1.1 MB",
-                          "log_file_count": 63,
+                          "disk_usage": "1.0 MB",
+                          "log_file_count": 62,
                           "active_workflows": 0
                         },
                         "health_score": 0
@@ -1276,8 +1235,8 @@
                         }
                       },
                       "system_metrics": {
-                        "disk_usage": "1.2 MB",
-                        "log_file_count": 64,
+                        "disk_usage": "1.1 MB",
+                        "log_file_count": 63,
                         "active_workflows": 0
                       },
                       "health_score": 0
@@ -1311,7 +1270,7 @@
                     },
                     "system_metrics": {
                       "disk_usage": "1.2 MB",
-                      "log_file_count": 65,
+                      "log_file_count": 64,
                       "active_workflows": 0
                     },
                     "health_score": 0
@@ -1344,8 +1303,8 @@
                     }
                   },
                   "system_metrics": {
-                    "disk_usage": "1.3 MB",
-                    "log_file_count": 66,
+                    "disk_usage": "1.2 MB",
+                    "log_file_count": 65,
                     "active_workflows": 0
                   },
                   "health_score": 0
@@ -1378,8 +1337,8 @@
                   }
                 },
                 "system_metrics": {
-                  "disk_usage": "1.4 MB",
-                  "log_file_count": 67,
+                  "disk_usage": "1.3 MB",
+                  "log_file_count": 66,
                   "active_workflows": 0
                 },
                 "health_score": 0
@@ -1412,8 +1371,8 @@
                 }
               },
               "system_metrics": {
-                "disk_usage": "1.5 MB",
-                "log_file_count": 68,
+                "disk_usage": "1.4 MB",
+                "log_file_count": 67,
                 "active_workflows": 0
               },
               "health_score": 0
@@ -1447,7 +1406,7 @@
             },
             "system_metrics": {
               "disk_usage": "1.5 MB",
-              "log_file_count": 69,
+              "log_file_count": 68,
               "active_workflows": 0
             },
             "health_score": 0
@@ -1465,23 +1424,23 @@
             "backup_errors": []
           },
           "alert_status": {
-            "alerts_today": 6,
+            "alerts_today": 5,
             "critical_alerts": 4,
             "last_alert": {
-              "timestamp": "2025-08-08T09:47:27.697893+00:00",
+              "timestamp": "2025-08-08T00:39:18.706499+00:00",
               "title": "\u2705 Quick Tests Passed",
-              "message": "All quick tests passed successfully!\n\u2022 Tests passed: 7\n\u2022 Duration: 3.5s",
+              "message": "All quick tests passed successfully!\n\u2022 Tests passed: 7\n\u2022 Duration: 2.2s",
               "severity": "info",
               "results": {
-                "github_url": "https://github.com/Anglesuniverse/angles-backup/issues/6",
-                "notion_url": "https://www.notion.so/Quick-Tests-Passed-249ea273e96081c0bf31c209662b002b",
-                "timestamp": "2025-08-08T09:47:26.484118+00:00"
+                "github_url": "https://github.com/Anglesuniverse/angles-backup/issues/5",
+                "notion_url": "https://www.notion.so/Quick-Tests-Passed-249ea273e9608180a452f65d816d948a",
+                "timestamp": "2025-08-08T00:39:15.840877+00:00"
               }
             }
           },
           "system_metrics": {
-            "disk_usage": "1.6 MB",
-            "log_file_count": 70,
+            "disk_usage": "1.5 MB",
+            "log_file_count": 69,
             "active_workflows": 0
           },
           "health_score": 0
@@ -1514,8 +1473,8 @@
           }
         },
         "system_metrics": {
-          "disk_usage": "1.7 MB",
-          "log_file_count": 71,
+          "disk_usage": "1.6 MB",
+          "log_file_count": 70,
           "active_workflows": 0
         },
         "health_score": 0
@@ -1548,8 +1507,8 @@
         }
       },
       "system_metrics": {
-        "disk_usage": "1.8 MB",
-        "log_file_count": 72,
+        "disk_usage": "1.7 MB",
+        "log_file_count": 71,
         "active_workflows": 0
       },
       "health_score": 0
@@ -1582,8 +1541,8 @@
       }
     },
     "system_metrics": {
-      "disk_usage": "1.9 MB",
-      "log_file_count": 73,
+      "disk_usage": "1.8 MB",
+      "log_file_count": 72,
       "active_workflows": 0
     },
     "health_score": 0
@@ -1616,8 +1575,8 @@
     }
   },
   "system_metrics": {
-    "disk_usage": "2.0 MB",
-    "log_file_count": 74,
+    "disk_usage": "1.9 MB",
+    "log_file_count": 73,
     "active_workflows": 0
   },
   "health_score": 0
