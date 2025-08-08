@@ -16,8 +16,11 @@ tail -100 logs/active/system_health.log
 ls -la export/
 cat logs/backup.log | tail -20
 
-# 4. Check Notion sync status
+# 4. Check Notion sync status (with AI analysis)
 python memory_sync.py --test
+
+# 5. Verify GPT-5 AI functionality
+python tests/test_gpt5_activation.py
 ```
 
 ### System Status Commands

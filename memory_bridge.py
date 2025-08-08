@@ -4,7 +4,7 @@ Angles AI Universe™ GPT-5 Enhanced Memory Bridge
 Advanced AI-powered memory management and decision optimization
 
 Author: Angles AI Universe™ AI Team
-Version: 2.0.0 - GPT-5 Ready
+Version: 3.0.0 - GPT-5 Integrated
 """
 
 import os
@@ -31,6 +31,13 @@ except ImportError:
     DataSanitizer = None
     SecureFileManager = None
 
+# Import our AI client
+try:
+    from tools.ai_client import get_client, get_model, analyze_decision_with_gpt5, test_gpt5_connection
+    AI_CLIENT_AVAILABLE = True
+except ImportError:
+    AI_CLIENT_AVAILABLE = False
+
 class AIEnhancedMemoryBridge:
     """
     GPT-5 Enhanced Memory Bridge for intelligent decision management
@@ -48,18 +55,19 @@ class AIEnhancedMemoryBridge:
         self.logger = logging.getLogger('ai_memory_bridge')
         self.enable_ai = enable_ai and OPENAI_AVAILABLE
         
-        # Initialize OpenAI client if available
-        if self.enable_ai and OpenAI:
-            api_key = os.getenv('OPENAI_API_KEY')
-            if api_key:
-                self.client = OpenAI(api_key=api_key)
-                self.model = "gpt-4o"  # Latest model as of blueprint
-                self.logger.info("✅ GPT-5/GPT-4o AI engine initialized")
+        # Initialize OpenAI client using AI client module
+        if self.enable_ai and AI_CLIENT_AVAILABLE:
+            self.client = get_client()
+            self.model = get_model()
+            if self.client:
+                self.logger.info(f"✅ GPT-5 AI engine initialized - Model: {self.model}")
             else:
                 self.enable_ai = False
                 self.logger.warning("⚠️ OPENAI_API_KEY not found - AI features disabled")
         else:
             self.logger.info("ℹ️ AI features disabled - operating in standard mode")
+            self.client = None
+            self.model = None
         
         # Initialize security components
         if SECURITY_AVAILABLE and DataSanitizer and SecureFileManager:

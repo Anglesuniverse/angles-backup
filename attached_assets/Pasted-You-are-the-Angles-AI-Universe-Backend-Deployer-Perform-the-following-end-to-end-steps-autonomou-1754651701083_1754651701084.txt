@@ -1,0 +1,363 @@
+You are the “Angles AI Universe™ Backend Deployer.” Perform the following end‑to‑end steps autonomously. Assume all secrets (SUPABASE_URL, SUPABASE_KEY, NOTION_TOKEN, NOTION_DATABASE_ID, GITHUB_TOKEN, OPENAI_API_KEY) already exist in Replit Secrets. Do not print secret values.
+
+
+
+
+
+0) Repo hygiene
+
+
+
+
+
+Create/ensure folders: tools/, agents/, logs/active/, tests/, export/.
+Ensure .gitignore contains: logs/, .env, __pycache__/, export/*.zip, export/*.json.
+Add/append requirements.txt with exact pins (create if missing):
+
+
+openai>=1.40.0
+
+psutil>=5.9.8
+
+schedule>=1.2.1
+
+cryptography>=42.0.7
+
+watchdog>=4.0.0
+
+pydantic>=2.7.0
+
+python-dotenv>=1.0.1
+
+requests>=2.32.3
+
+
+supabase>=2.7.0
+
+
+
+Install deps:
+run: pip install -r requirements.txt
+
+
+
+
+
+
+1) Upgrade codebase from GPT‑4o → GPT‑5
+
+
+
+
+
+Search the repo for any of: gpt-4o, gpt4o, GPT-4o, GPT4o. Replace with gpt-5 in:
+comments, constants, model names, docs.
+
+Create helper tools/ai_client.py (idempotent):
+
+
+import os
+
+from openai import OpenAI
+
+
+
+def get_client():
+
+    # OPENAI_API_KEY is provided via Replit Secrets
+
+    return OpenAI()
+
+
+
+
+DEFAULT_MODEL = "gpt-5"
+
+
+
+In memory_bridge.py (or equivalent core sync/AI module):
+Import from tools.ai_client: from tools.ai_client import get_client, DEFAULT_MODEL
+Add/replace an AI processing method that uses GPT‑5:
+
+import json
+
+from datetime import datetime
+
+
+
+class AIMemoryBridge:  # keep your existing class name; if different, extend it instead
+
+    # ... existing init and sync logic ...
+
+
+
+    def analyze_decision_with_gpt5(self, title:str, content:str, tags=None):
+
+        """
+
+        Runs GPT-5 analysis on a 'decision' item and returns a structured dict.
+
+        """
+
+        client = get_client()
+
+        prompt = f"""
+
+        You are an expert architecture/strategy analyst.
+
+        Analyze the following decision and return strict JSON with keys:
+
+        decision_type (one of: strategy, technical, architecture, process, security, ethical, product, other),
+
+        priority (P0/P1/P2),
+
+        summary,
+
+        risks (array of strings),
+
+        dependencies (array of strings),
+
+        conflicts (array of strings),
+
+        recommended_next_actions (array of strings),
+
+        confidence (0-1 float).
+
+        TITLE: {title}
+
+        TAGS: {tags or []}
+
+        CONTENT:
+
+        {content}
+
+        """
+
+
+
+        # Use Responses API
+
+        resp = client.responses.create(
+
+            model=DEFAULT_MODEL,
+
+            input=[{"role":"user","content":prompt}],
+
+            response_format={"type":"json_object"}
+
+        )
+
+        raw = resp.output[0].content[0].text  # OpenAI Python v1.x Responses format
+
+        try:
+
+            data = json.loads(raw)
+
+        except Exception:
+
+            data = {"decision_type":"other","priority":"P2","summary":"(parse error)","risks":[],"dependencies":[],"conflicts":[],"recommended_next_actions":[],"confidence":0.5}
+
+
+
+        data["model"] = DEFAULT_MODEL
+
+        data["analyzed_at"] = datetime.utcnow().isoformat() + "Z"
+
+
+        return data
+
+
+
+Where you persist decisions (Supabase DecisionVault + Notion logger), extend the payload to include:
+ai_summary, ai_decision_type, ai_priority, ai_confidence, ai_risks, ai_dependencies, ai_conflicts, ai_next_actions.
+If columns are missing, create a migration:
+create run_migration.py:
+
+
+from supabase import create_client
+
+import os
+
+url = os.environ["SUPABASE_URL"]; key = os.environ["SUPABASE_KEY"]
+
+sb = create_client(url, key)
+
+# Add columns if missing (idempotent)
+
+# PostgREST RPC for DDL not available; use REST exec if you already have a SQL handler.
+
+# Otherwise, store a flag and let existing migration path add columns.
+
+
+print("Migration placeholder executed (columns should already exist from prior steps).")
+
+
+
+(If you already have a SQL exec path, use it; otherwise we rely on your earlier migration that added AI columns.)
+
+
+
+
+
+
+2) Wire GPT‑5 into the sync path
+
+
+
+
+
+In the code path that processes a “new or unsynced decision”:
+After fetching the record’s title/message/content, call analyze_decision_with_gpt5(...).
+Save the structured result back to Supabase fields listed above.
+If Notion logging exists, map fields to Notion properties (e.g., AI Summary, Type, Priority, Confidence, etc.).
+
+Ensure retry logic on AI calls (3 tries with exponential backoff). Log failures to logs/active/ai_failures.log.
+
+
+
+
+
+
+3) Minimal verification script
+
+
+
+
+
+Create tests/test_gpt5_activation.py:
+
+
+import os, json, time
+
+from tools.ai_client import get_client, DEFAULT_MODEL
+
+
+
+def main():
+
+    client = get_client()
+
+    print("Checking model…", DEFAULT_MODEL)
+
+    # Quick JSON check
+
+    prompt = """
+
+    Return valid JSON with fields: decision_type, priority, summary, risks (array), recommended_next_actions (array), confidence (0-1).
+
+    Text: We will switch backend language to Python for faster iteration and broader library ecosystem. Risks include tech debt and migration bugs.
+
+    """
+
+    resp = client.responses.create(
+
+        model=DEFAULT_MODEL,
+
+        input=[{"role":"user","content":prompt}],
+
+        response_format={"type":"json_object"}
+
+    )
+
+    raw = resp.output[0].content[0].text
+
+    data = json.loads(raw)
+
+    assert "decision_type" in data and "summary" in data and "confidence" in data
+
+    print("✅ GPT-5 JSON OK:", json.dumps(data, indent=2))
+
+    return 0
+
+
+
+if __name__ == "__main__":
+
+
+    raise SystemExit(main())
+
+
+
+4) End‑to‑end exercise of the real pipeline
+
+
+
+
+
+Create tests/run_gpt5_pipeline_check.py that:
+Inserts a synthetic decision into Supabase (or picks the newest unsynced)
+Calls your sync flow so it’s analyzed by GPT‑5
+Verifies Supabase fields got populated (ai_summary etc.)
+Verifies a Notion page was created/updated
+Emits a human‑readable summary to console and writes full details to logs/active/gpt5_activation_report.log
+
+(If you already have helpers for Supabase/Notion, reuse them. Otherwise log a “verification‑by‑inspection” note and skip hard assertions.)
+
+
+
+
+
+
+5) Documentation + dashboards
+
+
+
+
+
+Update/create README_BACKEND.md and OPERATIONS.md with:
+How GPT‑5 is invoked (Responses API)
+Required env vars
+“How to run” commands (below)
+Troubleshooting (rate limits, timeouts, JSON parsing)
+
+If tools/health_server.py exists, add a simple “AI OK” check (model name + last success timestamp).
+
+
+
+
+
+
+6) Execute in this order and show live output
+
+
+
+
+
+pip install -r requirements.txt
+python run_migration.py
+python -m tests.test_gpt5_activation
+python -m tests.run_gpt5_pipeline_check
+
+
+
+
+
+
+If any step fails, FIX IN PLACE and re‑run until all pass.
+When done, print a final green summary with:
+✅ Dependencies installed
+✅ Codebase upgraded to GPT‑5
+✅ Unit activation test passed
+✅ Pipeline verification passed (Supabase + Notion updated)
+📊 Logs: logs/active/gpt5_activation_report.log
+🔗 Health dashboard URL (if running)
+
+
+
+
+
+
+
+7) Safety & rollback
+
+
+
+
+
+Commit changes to Git and push to the configured angles-backup repo.
+If something goes wrong, revert the last commit and restore prior state using the existing restore script.
+
+
+
+
+End of instructions. Output only the live execution log and a final SUCCESS/FAILURE summary.

@@ -2,7 +2,16 @@
 
 ## Overview
 
-This is a comprehensive backend system designed for automated GPT assistant output processing, decision management, and memory synchronization. The system features unified sync operations between Supabase (PostgreSQL) and Notion databases, providing redundancy, cross-platform accessibility, and intelligent automation.
+This is a comprehensive backend system designed for automated GPT assistant output processing, decision management, and memory synchronization with **integrated GPT-5 AI analysis**. The system features unified sync operations between Supabase (PostgreSQL) and Notion databases, providing redundancy, cross-platform accessibility, and intelligent AI-powered automation.
+
+### 🤖 GPT-5 Integration Features
+
+- **AI-Powered Decision Analysis**: Every decision is automatically analyzed by GPT-5 for type, priority, and impact assessment
+- **Intelligent Classification**: Automatic categorization into strategy, technical, architecture, process, security, ethical, product, or other types
+- **Priority Ranking**: P0/P1/P2 priority assignment based on AI analysis
+- **Impact Assessment**: Comprehensive evaluation of potential consequences and dependencies
+- **Smart Recommendations**: AI-generated actionable insights and next steps
+- **Enhanced Notion Sync**: Decisions are enriched with AI analysis before being synced to Notion
 
 ## System Architecture
 
@@ -13,27 +22,40 @@ This is a comprehensive backend system designed for automated GPT assistant outp
    - Creates `decision_vault` and `agent_activity` tables
    - Handles schema updates and column additions safely
 
-2. **Memory Sync** (`memory_sync.py`)
-   - Bidirectional Supabase ⇄ Notion synchronization
-   - Decision processing with CLI flags
+2. **🤖 AI-Enhanced Memory Sync** (`memory_sync.py`)
+   - Bidirectional Supabase ⇄ Notion synchronization with GPT-5 analysis
+   - Decision processing with CLI flags and AI enhancement
    - Export generation for backup purposes
+   - Real-time AI decision classification and enrichment
 
-3. **File Monitoring** (`autosync_files.py`)
+3. **🤖 GPT-5 AI Client** (`tools/ai_client.py`)
+   - Centralized OpenAI GPT-5 integration
+   - Decision analysis and classification engine
+   - Performance monitoring and fallback handling
+   - Comprehensive AI status reporting
+
+4. **🤖 AI-Enhanced Memory Bridge** (`memory_bridge.py`)
+   - GPT-5 powered decision intelligence
+   - Advanced classification algorithms
+   - Duplicate detection and similarity analysis
+   - Natural language insights generation
+
+5. **File Monitoring** (`autosync_files.py`)
    - Automated file change detection
    - SHA256 checksum validation
    - Decision vault integration for key files
 
-4. **Health Monitoring** (`backend_monitor.py`)
+6. **Health Monitoring** (`backend_monitor.py`)
    - Comprehensive system health checks
    - Performance metrics and alerts
    - Self-healing capabilities
 
-5. **Backup & Restore** (`restore_from_github.py`, `run_backup_now.py`)
+7. **Backup & Restore** (`restore_from_github.py`, `run_backup_now.py`)
    - GitHub backup with sanitization
    - Collision-safe restore operations
    - Automated backup scheduling
 
-6. **Unified Scheduler** (`scheduler.py`)
+8. **Unified Scheduler** (`scheduler.py`)
    - Automated task coordination
    - Built-in fallback scheduling
    - Comprehensive logging and monitoring
@@ -53,11 +75,17 @@ SUPABASE_KEY=your-supabase-anon-key
 NOTION_TOKEN=secret_your-notion-integration-token
 NOTION_DATABASE_ID=your-notion-database-id
 
+# 🤖 GPT-5 AI Integration
+OPENAI_API_KEY=sk-proj-your-openai-api-key
+
 # GitHub Backup
 GITHUB_TOKEN=ghp_your-github-personal-access-token
 REPO_URL=https://github.com/username/repository.git
 GIT_USERNAME=your-git-username
 GIT_EMAIL=your-git-email
+
+# Optional: AI Configuration
+USE_GPT4O_FALLBACK=false  # Set to true to use GPT-4o instead of GPT-5
 ```
 
 ### 2. Initial Deployment
@@ -71,6 +99,12 @@ python backend_monitor.py
 
 # Test memory sync
 python memory_sync.py --test
+
+# 🤖 Test GPT-5 integration
+python tests/test_gpt5_activation.py
+
+# 🤖 Test complete AI pipeline
+python tests/run_gpt5_pipeline_check.py
 
 # Run comprehensive verification
 python verify_deployment.py
@@ -276,6 +310,21 @@ For issues and support:
 4. Review this documentation
 
 ## Version History
+
+- **v3.0.0** - GPT-5 Integration Release (2025-08-08)
+  - 🤖 **GPT-5 AI integration** with comprehensive decision analysis
+  - **AI-enhanced memory sync** with real-time decision classification
+  - **Advanced decision intelligence** with priority ranking and impact assessment
+  - **Comprehensive AI testing suite** with activation and pipeline verification
+  - **Enhanced security** with AI data sanitization
+  - **Performance optimized** AI analysis pipeline
+  - **Fallback mechanisms** for high availability
+
+- **v2.0.0** - Security & Automation Enhancement
+  - Advanced security data sanitization
+  - Automated backup and recovery systems
+  - Comprehensive monitoring and alerting
+  - Configuration management with versioning
 
 - **v1.0.0** - Initial comprehensive backend deployment
   - Database migration system

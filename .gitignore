@@ -112,3 +112,13 @@ coverage.xml
 .mypy_cache/
 .dmypy.json
 dmypy.json
+
+# GPT-5 Integration Files
+ai_responses/
+*.ai.log
+gpt5_temp_*
+ai_analysis_cache/
+
+# Test Results
+test_results/
+verification_reports/

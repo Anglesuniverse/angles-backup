@@ -66,7 +66,7 @@ The Angles AI Universe™ backend system has been successfully enhanced through 
 
 **AI-Enhanced Features Delivered**:
 - ✅ **AIEnhancedMemoryBridge** (`memory_bridge.py`)
-  - GPT-4o/GPT-5 decision classification and analysis
+  - GPT-5 decision classification and analysis
   - Intelligent duplicate detection and similarity scoring  
   - AI-powered decision text optimization
   - Natural language insights generation

@@ -34,6 +34,14 @@ try:
 except ImportError:
     pass
 
+# Import AI enhancement capabilities
+try:
+    from memory_bridge import AIEnhancedMemoryBridge
+    AI_BRIDGE_AVAILABLE = True
+except ImportError:
+    AI_BRIDGE_AVAILABLE = False
+    AIEnhancedMemoryBridge = None
+
 def setup_logging():
     """Setup logging for memory sync"""
     os.makedirs("logs/active", exist_ok=True)
@@ -169,6 +177,18 @@ class MemorySync:
             'failed': 0,
             'skipped': 0
         }
+        
+        # Initialize AI bridge for GPT-5 analysis
+        if AI_BRIDGE_AVAILABLE:
+            try:
+                self.ai_bridge = AIEnhancedMemoryBridge(enable_ai=True)
+                self.logger.info("🤖 GPT-5 AI analysis enabled")
+            except Exception as e:
+                self.ai_bridge = None
+                self.logger.warning(f"⚠️ AI bridge initialization failed: {e}")
+        else:
+            self.ai_bridge = None
+            self.logger.info("ℹ️ AI analysis not available")
     
     def test_connections(self) -> bool:
         """Test all service connections"""
@@ -196,6 +216,52 @@ class MemorySync:
             self.logger.warning("⚠️ Notion: Not configured (missing NOTION_TOKEN or NOTION_DATABASE_ID)")
         
         return supabase_ok and (notion_ok if self.notion_client else True)
+    
+    def enhance_decision_with_ai(self, decision: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Enhance decision with GPT-5 AI analysis
+        
+        Args:
+            decision: Original decision data
+            
+        Returns:
+            Enhanced decision with AI analysis
+        """
+        if not self.ai_bridge:
+            # Return original decision if AI not available
+            return decision
+        
+        try:
+            decision_text = decision.get('decision', '')
+            if not decision_text:
+                return decision
+            
+            # Get AI classification and analysis
+            ai_analysis = self.ai_bridge.classify_decision(decision_text)
+            
+            # Create enhanced decision with AI insights
+            enhanced_decision = decision.copy()
+            enhanced_decision['ai_analysis'] = ai_analysis
+            enhanced_decision['ai_enhanced'] = True
+            enhanced_decision['ai_timestamp'] = datetime.now(timezone.utc).isoformat()
+            
+            self.logger.info(f"🤖 AI analysis: {ai_analysis.get('type', 'unknown')} | Priority: {ai_analysis.get('priority', 'medium')} | Confidence: {ai_analysis.get('confidence', 0.0):.2f}")
+            
+            return enhanced_decision
+            
+        except Exception as e:
+            self.logger.warning(f"⚠️ AI analysis failed: {e}")
+            # Return original decision on failure
+            enhanced_decision = decision.copy()
+            enhanced_decision['ai_analysis'] = {
+                'error': str(e),
+                'type': 'other',
+                'priority': 'medium',
+                'confidence': 0.0
+            }
+            enhanced_decision['ai_enhanced'] = False
+            enhanced_decision['ai_timestamp'] = datetime.now(timezone.utc).isoformat()
+            return enhanced_decision
     
     def get_unsynced_decisions(self, sync_all: bool = False, recent_only: bool = False) -> List[Dict[str, Any]]:
         """Get unsynced decisions from Supabase"""
@@ -301,10 +367,13 @@ class MemorySync:
                 self.sync_stats['skipped'] += 1
                 continue
             
+            # 🤖 GPT-5 Analysis Integration
+            enhanced_decision = self.enhance_decision_with_ai(decision)
+            
             # Sync to Notion
             notion_success = True
             if self.notion_client:
-                notion_success = self.sync_decision_to_notion(decision)
+                notion_success = self.sync_decision_to_notion(enhanced_decision)
             
             if notion_success:
                 # Mark as synced
