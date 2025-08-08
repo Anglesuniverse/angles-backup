@@ -1,25 +1,15 @@
 {
-  "export_timestamp": "2025-08-08T15:15:17.166850",
+  "export_timestamp": "2025-08-08T18:50:07.380940",
   "total_decisions": 7,
   "decisions": [
-    {
-      "id": "400f2ab6-ceff-4fd1-8b33-d6cf8dbb91a5",
-      "decision": "I approve technical autonomy for AI.",
-      "type": "strategy",
-      "date": "2025-08-07",
-      "active": true,
-      "synced_at": "2025-08-08T15:15:05.057636",
-      "export_timestamp": "2025-08-08T15:15:05.057643",
-      "comment": "Tags: decision, core"
-    },
     {
       "id": "3bc0adb1-c3d6-47f6-b6cc-2fbd2f66cdf4",
       "decision": "Implement Code Review for all pull requests",
       "type": "process",
       "date": "2025-08-06",
       "active": true,
-      "synced_at": "2025-08-08T15:15:06.440340",
-      "export_timestamp": "2025-08-08T15:15:06.440345",
+      "synced_at": "2025-08-08T18:50:01.219561",
+      "export_timestamp": "2025-08-08T18:50:01.219567",
       "comment": "Improves code quality and knowledge sharing"
     },
     {
@@ -28,9 +18,19 @@
       "type": "technical",
       "date": "2025-08-07",
       "active": true,
-      "synced_at": "2025-08-08T15:15:09.277175",
-      "export_timestamp": "2025-08-08T15:15:09.277180",
+      "synced_at": "2025-08-08T18:50:02.448234",
+      "export_timestamp": "2025-08-08T18:50:02.448265",
       "comment": "Decision made after performance analysis"
+    },
+    {
+      "id": "400f2ab6-ceff-4fd1-8b33-d6cf8dbb91a5",
+      "decision": "I approve technical autonomy for AI.",
+      "type": "strategy",
+      "date": "2025-08-07",
+      "active": true,
+      "synced_at": "2025-08-08T18:50:03.589365",
+      "export_timestamp": "2025-08-08T18:50:03.589371",
+      "comment": "Tags: decision, core"
     },
     {
       "id": "97b0f32c-d1e4-49e5-ada8-7218292580df",
@@ -38,8 +38,8 @@
       "type": "technical",
       "date": "2025-08-08",
       "active": true,
-      "synced_at": "2025-08-08T15:15:10.471859",
-      "export_timestamp": "2025-08-08T15:15:10.471866"
+      "synced_at": "2025-08-08T18:50:04.829696",
+      "export_timestamp": "2025-08-08T18:50:04.829702"
     },
     {
       "id": "8328256c-90ea-4dc3-96b2-a196c68e739a",
@@ -47,8 +47,8 @@
       "type": "security",
       "date": "2025-08-05",
       "active": true,
-      "synced_at": "2025-08-08T15:15:11.252189",
-      "export_timestamp": "2025-08-08T15:15:11.252194",
+      "synced_at": "2025-08-08T18:50:05.855080",
+      "export_timestamp": "2025-08-08T18:50:05.855086",
       "comment": "Security department requirement"
     },
     {
@@ -57,8 +57,8 @@
       "type": "technical",
       "date": "2025-08-07",
       "active": true,
-      "synced_at": "2025-08-08T15:15:16.197057",
-      "export_timestamp": "2025-08-08T15:15:16.197063",
+      "synced_at": "2025-08-08T18:50:06.729054",
+      "export_timestamp": "2025-08-08T18:50:06.729060",
       "comment": "Decision made after team discussion"
     },
     {
@@ -67,8 +67,8 @@
       "type": "technical",
       "date": "2025-08-07",
       "active": true,
-      "synced_at": "2025-08-08T15:15:17.166806",
-      "export_timestamp": "2025-08-08T15:15:17.166813",
+      "synced_at": "2025-08-08T18:50:07.380895",
+      "export_timestamp": "2025-08-08T18:50:07.380903",
       "comment": "Decision made after team discussion"
     }
   ],
