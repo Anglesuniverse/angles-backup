@@ -1,5 +1,5 @@
 {
-  "export_timestamp": "2025-08-08T10:32:19.003322",
+  "export_timestamp": "2025-08-08T10:54:40.898199",
   "total_decisions": 7,
   "decisions": [
     {
@@ -8,8 +8,8 @@
       "type": "technical",
       "date": "2025-08-07",
       "active": true,
-      "synced_at": "2025-08-08T10:32:11.849286",
-      "export_timestamp": "2025-08-08T10:32:11.849291",
+      "synced_at": "2025-08-08T10:54:33.723275",
+      "export_timestamp": "2025-08-08T10:54:33.723281",
       "comment": "Decision made after team discussion"
     },
     {
@@ -18,8 +18,8 @@
       "type": "technical",
       "date": "2025-08-07",
       "active": true,
-      "synced_at": "2025-08-08T10:32:13.022815",
-      "export_timestamp": "2025-08-08T10:32:13.022821",
+      "synced_at": "2025-08-08T10:54:34.932804",
+      "export_timestamp": "2025-08-08T10:54:34.932810",
       "comment": "Decision made after team discussion"
     },
     {
@@ -28,8 +28,8 @@
       "type": "process",
       "date": "2025-08-06",
       "active": true,
-      "synced_at": "2025-08-08T10:32:14.699953",
-      "export_timestamp": "2025-08-08T10:32:14.699958",
+      "synced_at": "2025-08-08T10:54:36.931327",
+      "export_timestamp": "2025-08-08T10:54:36.931333",
       "comment": "Improves code quality and knowledge sharing"
     },
     {
@@ -38,19 +38,9 @@
       "type": "security",
       "date": "2025-08-05",
       "active": true,
-      "synced_at": "2025-08-08T10:32:15.571987",
-      "export_timestamp": "2025-08-08T10:32:15.571994",
+      "synced_at": "2025-08-08T10:54:37.658092",
+      "export_timestamp": "2025-08-08T10:54:37.658111",
       "comment": "Security department requirement"
-    },
-    {
-      "id": "53146f5b-d474-4a72-b3c9-ee3173945866",
-      "decision": "Use PostgreSQL as primary database for better performance",
-      "type": "technical",
-      "date": "2025-08-07",
-      "active": true,
-      "synced_at": "2025-08-08T10:32:17.116652",
-      "export_timestamp": "2025-08-08T10:32:17.116657",
-      "comment": "Decision made after performance analysis"
     },
     {
       "id": "400f2ab6-ceff-4fd1-8b33-d6cf8dbb91a5",
@@ -58,9 +48,19 @@
       "type": "strategy",
       "date": "2025-08-07",
       "active": true,
-      "synced_at": "2025-08-08T10:32:18.326093",
-      "export_timestamp": "2025-08-08T10:32:18.326202",
+      "synced_at": "2025-08-08T10:54:38.756819",
+      "export_timestamp": "2025-08-08T10:54:38.756824",
       "comment": "Tags: decision, core"
+    },
+    {
+      "id": "53146f5b-d474-4a72-b3c9-ee3173945866",
+      "decision": "Use PostgreSQL as primary database for better performance",
+      "type": "technical",
+      "date": "2025-08-07",
+      "active": true,
+      "synced_at": "2025-08-08T10:54:39.997887",
+      "export_timestamp": "2025-08-08T10:54:39.997894",
+      "comment": "Decision made after performance analysis"
     },
     {
       "id": "97b0f32c-d1e4-49e5-ada8-7218292580df",
@@ -68,8 +68,8 @@
       "type": "technical",
       "date": "2025-08-08",
       "active": true,
-      "synced_at": "2025-08-08T10:32:19.003285",
-      "export_timestamp": "2025-08-08T10:32:19.003291"
+      "synced_at": "2025-08-08T10:54:40.898161",
+      "export_timestamp": "2025-08-08T10:54:40.898167"
     }
   ],
   "metadata": {
