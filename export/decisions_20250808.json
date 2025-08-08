@@ -1,0 +1,72 @@
+{
+  "export_timestamp": "2025-08-08T00:15:26.894034",
+  "total_decisions": 6,
+  "decisions": [
+    {
+      "id": "3bc0adb1-c3d6-47f6-b6cc-2fbd2f66cdf4",
+      "decision": "Implement Code Review for all pull requests",
+      "type": "process",
+      "date": "2025-08-06",
+      "active": true,
+      "synced_at": "2025-08-08T00:15:17.834740",
+      "export_timestamp": "2025-08-08T00:15:17.834746",
+      "comment": "Improves code quality and knowledge sharing"
+    },
+    {
+      "id": "53146f5b-d474-4a72-b3c9-ee3173945866",
+      "decision": "Use PostgreSQL as primary database for better performance",
+      "type": "technical",
+      "date": "2025-08-07",
+      "active": true,
+      "synced_at": "2025-08-08T00:15:19.199553",
+      "export_timestamp": "2025-08-08T00:15:19.199594",
+      "comment": "Decision made after performance analysis"
+    },
+    {
+      "id": "8328256c-90ea-4dc3-96b2-a196c68e739a",
+      "decision": "Use HTTPS for all communication",
+      "type": "security",
+      "date": "2025-08-05",
+      "active": true,
+      "synced_at": "2025-08-08T00:15:20.566282",
+      "export_timestamp": "2025-08-08T00:15:20.566288",
+      "comment": "Security department requirement"
+    },
+    {
+      "id": "400f2ab6-ceff-4fd1-8b33-d6cf8dbb91a5",
+      "decision": "I approve technical autonomy for AI.",
+      "type": "strategy",
+      "date": "2025-08-07",
+      "active": true,
+      "synced_at": "2025-08-08T00:15:21.967045",
+      "export_timestamp": "2025-08-08T00:15:21.967051",
+      "comment": "Tags: decision, core"
+    },
+    {
+      "id": "8eb1b848-d434-4f41-a3d7-954c1a548cd4",
+      "decision": "Use Python as main backend language",
+      "type": "technical",
+      "date": "2025-08-07",
+      "active": true,
+      "synced_at": "2025-08-08T00:15:25.678745",
+      "export_timestamp": "2025-08-08T00:15:25.678751",
+      "comment": "Decision made after team discussion"
+    },
+    {
+      "id": "9bdb43d6-3112-4b79-a89e-5ab1830220f2",
+      "decision": "Use Python as main backend language",
+      "type": "technical",
+      "date": "2025-08-07",
+      "active": true,
+      "synced_at": "2025-08-08T00:15:26.893995",
+      "export_timestamp": "2025-08-08T00:15:26.894001",
+      "comment": "Decision made after team discussion"
+    }
+  ],
+  "metadata": {
+    "export_version": "2.0.0",
+    "source": "memory_sync_agent",
+    "sanitized": true,
+    "contains_secrets": false
+  }
+}
