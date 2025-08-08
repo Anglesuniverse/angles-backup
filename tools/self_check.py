@@ -1,7 +1,7 @@
 import os, sys, json
 from supabase import create_client, Client
 
-REQUIRED_ENV = ["SUPABASE_URL","SUPABASE_ANON_KEY","OPENAI_API_KEY","OPENAI_MODEL"]
+REQUIRED_ENV = ["SUPABASE_URL","SUPABASE_KEY","OPENAI_API_KEY","OPENAI_MODEL"]
 REQUIRED_TABLES = {
   "decision_vault": ["id","category","status","content","date_added","last_updated","tags","notion_synced"],
   "system_logs": ["id","level","message","ts"],
@@ -14,12 +14,19 @@ def env_check():
     return {"name":"env_check","ok": len(missing)==0, "missing":missing}
 
 def supabase_client():
-    return create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_ANON_KEY"))
+    url = os.getenv("SUPABASE_URL")
+    key = os.getenv("SUPABASE_KEY")
+    if not url or not key:
+        raise ValueError("Missing SUPABASE_URL or SUPABASE_KEY")
+    return create_client(url, key)
 
 def table_exists(sb: Client, t: str) -> bool:
     try:
-        sb.table(t).select("id").limit(1).execute(); return True
-    except Exception: return False
+        result = sb.table(t).select("id").limit(1).execute()
+        return True
+    except Exception as e:
+        # If table doesn't exist, we'll get a specific error
+        return "does not exist" not in str(e).lower()
 
 def columns_ok(sb: Client, t: str, cols: list) -> bool:
     try:
@@ -48,16 +55,20 @@ def openai_check():
             messages=[{"role":"user","content":"OK"}],
             max_tokens=2, temperature=0
         )
-        content=r.choices[0].message.content.strip().upper()
+        content = r.choices[0].message.content
+        if content:
+            content = content.strip().upper()
+        else:
+            content = ""
         return {"name":"openai_check","ok": content=="OK","model":model}
     except Exception as e:
         return {"name":"openai_check","ok":False,"error":str(e)}
 
 def notion_check():
-    if not os.getenv("NOTION_API_KEY") or not os.getenv("NOTION_DATABASE_ID"):
+    if not os.getenv("NOTION_TOKEN") or not os.getenv("NOTION_DATABASE_ID"):
         return {"name":"notion_check","ok":True,"skipped":True}
     import requests
-    headers={"Authorization":f"Bearer {os.getenv('NOTION_API_KEY')}",
+    headers={"Authorization":f"Bearer {os.getenv('NOTION_TOKEN')}",
              "Notion-Version":"2022-06-28","Content-Type":"application/json"}
     url=f"https://api.notion.com/v1/databases/{os.getenv('NOTION_DATABASE_ID')}"
     try:

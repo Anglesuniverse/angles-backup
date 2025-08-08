@@ -1,0 +1,415 @@
+FULL BACKEND DEPLOYMENT (GPT‑5 ONLY) — SINGLE RUN PROMPT
+
+
+
+You are the Replit AI for the “Angles AI Universe™” backend.
+
+In one autonomous pass, create/overwrite the files below and wire the whole system. Use Replit Secrets (do not write .env). If something already exists, update it in place safely.
+
+
+
+
+
+0) Dependencies & project config
+
+
+
+
+
+Create/overwrite requirements.txt with:
+
+
+openai
+
+notion-client
+
+supabase
+
+psutil
+
+schedule
+
+cryptography
+
+
+requests
+
+
+
+Create/overwrite .replit:
+
+
+run = "python scripts/run_scheduler.py"
+
+
+
+Create/overwrite replit.nix with Python 3.11 and pip enabled (use Replit default + ensure pip works).
+
+
+
+
+
+
+1) Config – always read from Replit Secrets
+
+
+
+
+
+Create core/config.py:
+
+
+import os
+
+class Config:
+    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")          # already added by user
+    NOTION_TOKEN = os.getenv("NOTION_TOKEN")              # Notion internal integration token
+    NOTION_VERIFY_DB = os.getenv("NOTION_VERIFY_DB")      # Notion DB ID for verification logs
+    SUPABASE_URL = os.getenv("SUPABASE_URL")
+    SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+    BACKUP_FOLDER = os.getenv("BACKUP_FOLDER", "daily_backups")
+    DEFAULT_MODEL = os.getenv("DEFAULT_MODEL", "gpt-5")
+    COST_MAX_USD_DAY = float(os.getenv("COST_MAX_USD_DAY", "2.50"))  # daily cap
+    CRON_TZ = os.getenv("CRON_TZ", "UTC")
+
+cfg = Config()
+
+
+2) Shared clients
+
+
+
+
+
+Create core/clients.py:
+
+
+from core.config import cfg
+from notion_client import Client as NotionClient
+from supabase import create_client, Client
+import openai
+
+openai.api_key = cfg.OPENAI_API_KEY
+notion = NotionClient(auth=cfg.NOTION_TOKEN) if cfg.NOTION_TOKEN else None
+supabase: Client = create_client(cfg.SUPABASE_URL, cfg.SUPABASE_KEY) if cfg.SUPABASE_URL and cfg.SUPABASE_KEY else None
+
+def ok_clients():
+    return {
+        "openai": bool(cfg.OPENAI_API_KEY),
+        "notion": bool(notion and cfg.NOTION_TOKEN),
+        "supabase": bool(supabase)
+    }
+
+
+3) Decision engine (GPT‑5 only) + cost guardrails
+
+
+
+
+
+Create services/decision_engine.py:
+
+
+from core.config import cfg
+from core.clients import openai
+import time
+
+_cost_counter_usd = 0.0
+
+def _estimate_cost(prompt_tokens:int, completion_tokens:int)->float:
+    # Simple placeholder; Replit AI can refine if you add real prices.
+    # Keep conservative estimate so we never exceed caps.
+    return 0.002 * (prompt_tokens + completion_tokens)
+
+def gpt5_decide(messages):
+    global _cost_counter_usd
+    if _cost_counter_usd >= cfg.COST_MAX_USD_DAY:
+        return "⚠️ Cost cap reached for today. Skipping external calls."
+
+    resp = openai.chat.completions.create(
+        model=cfg.DEFAULT_MODEL,
+        messages=messages
+    )
+    txt = resp.choices[0].message.content
+    usage = getattr(resp, "usage", None)
+    if usage:
+        est = _estimate_cost(usage.prompt_tokens, usage.completion_tokens)
+        _cost_counter_usd += est
+    else:
+        _cost_counter_usd += 0.01
+    time.sleep(0.3)  # be polite, avoid burst costs
+    return txt
+
+
+4) Prompt/result logger (Supabase)
+
+
+
+
+
+Create services/logger.py:
+
+
+from core.clients import supabase
+from datetime import datetime
+
+def log_prompt_result(prompt:str, result:str, tag:str="general"):
+    if not supabase:
+        return
+    supabase.table("prompt_logs").insert({
+        "prompt": prompt,
+        "result": result,
+        "tag": tag,
+        "created_at": datetime.utcnow().isoformat()
+    }).execute()
+
+
+5) MemorySyncAgent™ (Supabase <-> Files <-> Notion)
+
+
+
+
+
+Create services/memory_sync.py:
+
+
+import os, json, glob
+from datetime import datetime
+from core.config import cfg
+from core.clients import supabase, notion
+
+def sync_to_supabase():
+    if not supabase: return "Supabase not configured."
+    # Example: sync local /data/*.json into supabase.decision_vault
+    for p in glob.glob("data/*.json"):
+        with open(p, "r", encoding="utf-8") as f:
+            content = json.load(f)
+        supabase.table("decision_vault").upsert({
+            "source_path": p,
+            "content": content,
+            "last_updated": datetime.utcnow().isoformat()
+        }, on_conflict="source_path").execute()
+    return "Synced local data/*.json to Supabase."
+
+def sync_verification_to_notion(summary:str):
+    if not (notion and cfg.NOTION_VERIFY_DB): return "Notion not configured."
+    notion.pages.create(**{
+        "parent": {"database_id": cfg.NOTION_VERIFY_DB},
+        "properties": {
+            "Name": {"title": [{"text": {"content": "Post-Deployment Verification"}}]},
+            "Date": {"date": {"start": datetime.utcnow().isoformat()}},
+            "Status": {"select": {"name": "OK" if "✅" in summary else "Check"}},
+        },
+        "children": [
+            {"object":"block","type":"paragraph","paragraph":{"rich_text":[{"type":"text","text":{"content": summary[:1900]}}]}}
+        ]
+    })
+    return "Verification pushed to Notion."
+
+def run_full_sync():
+    a = sync_to_supabase()
+    return a
+
+
+6) Backups & restore
+
+
+
+
+
+Create services/backup.py:
+
+
+import os, shutil, datetime
+from core.config import cfg
+
+def run_backup():
+    os.makedirs(cfg.BACKUP_FOLDER, exist_ok=True)
+    stamp = datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    dst = os.path.join(cfg.BACKUP_FOLDER, f"snapshot_{stamp}")
+    os.makedirs(dst, exist_ok=True)
+    for folder in ["core","services","scripts","data"]:
+        if os.path.isdir(folder):
+            shutil.copytree(folder, os.path.join(dst, folder), dirs_exist_ok=True)
+    return f"Backup saved to {dst}"
+
+def latest_backup_path():
+    if not os.path.isdir(cfg.BACKUP_FOLDER):
+        return None
+    items = sorted(os.listdir(cfg.BACKUP_FOLDER))
+    return os.path.join(cfg.BACKUP_FOLDER, items[-1]) if items else None
+
+def restore_latest():
+    # You can implement fine-grained restore. For now, just report where.
+    return f"Restore point: {latest_backup_path() or 'None'}"
+
+
+7) Self-heal & system check
+
+
+
+
+
+Create services/self_heal.py:
+
+
+from core.clients import ok_clients
+from services.backup import run_backup
+
+def self_test():
+    ok = ok_clients()
+    issues = [k for k,v in ok.items() if not v]
+    return {"ok": ok, "issues": issues}
+
+def auto_fix(issues:list):
+    # Placeholder – prints guidance; Replit AI can propose concrete fixes.
+    notes = []
+    for i in issues:
+        if i=="openai": notes.append("Add OPENAI_API_KEY in Replit Secrets.")
+        if i=="notion": notes.append("Add NOTION_TOKEN and NOTION_VERIFY_DB.")
+        if i=="supabase": notes.append("Add SUPABASE_URL and SUPABASE_KEY.")
+    if not issues:
+        notes.append("No issues. Running backup.")
+        notes.append(run_backup())
+    return notes
+
+
+8) Post-deployment verifier (writes to Notion & Supabase log)
+
+
+
+
+
+Create scripts/post_deploy_verify.py:
+
+
+from services.decision_engine import gpt5_decide
+from services.logger import log_prompt_result
+from services.memory_sync import sync_verification_to_notion
+
+PROMPT = "Verify all Angles AI Universe™ backend services (MemorySyncAgent, logging, backup, scheduler). Report any issues."
+
+def run():
+    result = gpt5_decide([{"role":"user","content":PROMPT}])
+    log_prompt_result(PROMPT, result, tag="post_deploy_verify")
+    try:
+        note = sync_verification_to_notion(result)
+        print("Notion:", note)
+    except Exception as e:
+        print("Notion push failed:", e)
+    print("Verification result:")
+    print(result)
+
+if __name__ == "__main__":
+    run()
+
+
+9) Scheduler (keeps everything alive)
+
+
+
+
+
+Create scripts/run_scheduler.py:
+
+
+import time, schedule
+from services.memory_sync import run_full_sync
+from services.backup import run_backup
+from services.self_heal import self_test, auto_fix
+from scripts.post_deploy_verify import run as run_verify
+
+print("✅ Scheduler starting...")
+
+# First boot sequence
+print("🔍 Post-deployment verification...")
+run_verify()
+
+def job_sync():
+    print("🔄 MemorySyncAgent: start")
+    print(run_full_sync())
+    print("🔄 MemorySyncAgent: done")
+
+def job_backup():
+    print("💾 Daily backup: start")
+    print(run_backup())
+    print("💾 Daily backup: done")
+
+def job_self_test():
+    print("🧪 Self-test: start")
+    r = self_test()
+    print("Result:", r)
+    notes = auto_fix(r["issues"])
+    print("Auto-fix notes:", notes)
+
+# Schedules
+schedule.every(6).hours.do(job_sync)
+schedule.every().day.at("02:00").do(job_backup)
+schedule.every().sunday.at("03:00").do(job_self_test)
+
+print("⏱ Scheduler armed. Looping...")
+while True:
+    schedule.run_pending()
+    time.sleep(60)
+
+
+10) Health endpoint (optional, for future)
+
+
+
+
+
+Create routes/health.py:
+
+
+def health():
+    return {"status":"ok","detail":"Angles AI Universe backend alive"}
+
+
+11) README
+
+
+
+
+
+Create/overwrite README.md with a concise overview:
+
+
+
+What it is
+Secrets required: OPENAI_API_KEY, NOTION_TOKEN, NOTION_VERIFY_DB, SUPABASE_URL, SUPABASE_KEY
+How to run (Replit auto-runs scripts/run_scheduler.py)
+How to check logs (Replit console)
+Cost guardrails + where to change COST_MAX_USD_DAY
+
+
+
+
+
+
+12) Finalize
+
+
+
+
+
+Ensure data/ folder exists (empty) for local JSON drops.
+Install dependencies (pip install -r requirements.txt) if needed.
+Start the project (Replit will run .replit command).
+After first boot, confirm console shows:
+“🔍 Post-deployment verification…”
+A verification summary
+No missing-secret errors
+
+
+
+
+
+
+
+At the very end, output this exact text to the console:
+
+
+
+✅ Master Deployment completed successfully. All systems active and autonomous. Verification logged to Notion (if configured).
+

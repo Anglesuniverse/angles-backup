@@ -336,27 +336,27 @@ DASHBOARD_TEMPLATE = """
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
-        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .header { text-align: center; margin-bottom: 30px; }
-        .status { padding: 15px; border-radius: 5px; margin: 10px 0; text-align: center; font-weight: bold; }
-        .status.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .status.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        .status.unknown { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
-        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0; }
-        .stat-card { background: #f8f9fa; padding: 15px; border-radius: 5px; text-align: center; }
-        .stat-value { font-size: 24px; font-weight: bold; color: #007bff; }
-        .stat-label { font-size: 14px; color: #666; margin-top: 5px; }
-        .refresh { text-align: center; margin: 20px 0; }
-        .btn { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; text-decoration: none; display: inline-block; }
-        .btn:hover { background: #0056b3; }
-        .error-details { background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 10px 0; }
-        .timestamp { color: #666; font-size: 14px; }
+        body {{ font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }}
+        .container {{ max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }}
+        .header {{ text-align: center; margin-bottom: 30px; }}
+        .status {{ padding: 15px; border-radius: 5px; margin: 10px 0; text-align: center; font-weight: bold; }}
+        .status.success {{ background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }}
+        .status.error {{ background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }}
+        .status.unknown {{ background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }}
+        .stats {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0; }}
+        .stat-card {{ background: #f8f9fa; padding: 15px; border-radius: 5px; text-align: center; }}
+        .stat-value {{ font-size: 24px; font-weight: bold; color: #007bff; }}
+        .stat-label {{ font-size: 14px; color: #666; margin-top: 5px; }}
+        .refresh {{ text-align: center; margin: 20px 0; }}
+        .btn {{ background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; text-decoration: none; display: inline-block; }}
+        .btn:hover {{ background: #0056b3; }}
+        .error-details {{ background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 10px 0; }}
+        .timestamp {{ color: #666; font-size: 14px; }}
     </style>
     <script>
-        function refreshData() {
+        function refreshData() {{
             location.reload();
-        }
+        }}
         
         // Auto-refresh every 30 seconds
         setInterval(refreshData, 30000);
@@ -367,14 +367,14 @@ DASHBOARD_TEMPLATE = """
         <div class="header">
             <h1>🔄 Sync Health Dashboard</h1>
             <p>Angles AI Universe™ - Supabase ↔ Notion Bidirectional Sync</p>
-            <p class="timestamp">Last Updated: <span id="timestamp">{{ current_time }}</span></p>
+            <p class="timestamp">Last Updated: <span id="timestamp">{current_time}</span></p>
         </div>
         
-        <div class="status {{ status_class }}">
-            {{ status_text }}
+        <div class="status {status_class}">
+            {status_text}
         </div>
         
-        {% if last_run %}
+        <div>
         <div class="stats">
             <div class="stat-card">
                 <div class="stat-value">{stats_supabase_records}</div>
