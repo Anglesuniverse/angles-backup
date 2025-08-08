@@ -1,35 +1,15 @@
 {
-  "export_timestamp": "2025-08-08T00:37:15.971267",
+  "export_timestamp": "2025-08-08T00:37:16.466490",
   "total_decisions": 6,
   "decisions": [
-    {
-      "id": "8328256c-90ea-4dc3-96b2-a196c68e739a",
-      "decision": "Use HTTPS for all communication",
-      "type": "security",
-      "date": "2025-08-05",
-      "active": true,
-      "synced_at": "2025-08-08T00:37:06.757887",
-      "export_timestamp": "2025-08-08T00:37:06.757893",
-      "comment": "Security department requirement"
-    },
-    {
-      "id": "400f2ab6-ceff-4fd1-8b33-d6cf8dbb91a5",
-      "decision": "I approve technical autonomy for AI.",
-      "type": "strategy",
-      "date": "2025-08-07",
-      "active": true,
-      "synced_at": "2025-08-08T00:37:07.750697",
-      "export_timestamp": "2025-08-08T00:37:07.750704",
-      "comment": "Tags: decision, core"
-    },
     {
       "id": "8eb1b848-d434-4f41-a3d7-954c1a548cd4",
       "decision": "Use Python as main backend language",
       "type": "technical",
       "date": "2025-08-07",
       "active": true,
-      "synced_at": "2025-08-08T00:37:08.729070",
-      "export_timestamp": "2025-08-08T00:37:08.729076",
+      "synced_at": "2025-08-08T00:37:09.826563",
+      "export_timestamp": "2025-08-08T00:37:09.826570",
       "comment": "Decision made after team discussion"
     },
     {
@@ -38,8 +18,8 @@
       "type": "technical",
       "date": "2025-08-07",
       "active": true,
-      "synced_at": "2025-08-08T00:37:09.851332",
-      "export_timestamp": "2025-08-08T00:37:09.851339",
+      "synced_at": "2025-08-08T00:37:10.524575",
+      "export_timestamp": "2025-08-08T00:37:10.524582",
       "comment": "Decision made after team discussion"
     },
     {
@@ -48,8 +28,8 @@
       "type": "process",
       "date": "2025-08-06",
       "active": true,
-      "synced_at": "2025-08-08T00:37:14.375207",
-      "export_timestamp": "2025-08-08T00:37:14.375222",
+      "synced_at": "2025-08-08T00:37:13.119860",
+      "export_timestamp": "2025-08-08T00:37:13.119904",
       "comment": "Improves code quality and knowledge sharing"
     },
     {
@@ -58,9 +38,29 @@
       "type": "technical",
       "date": "2025-08-07",
       "active": true,
-      "synced_at": "2025-08-08T00:37:15.971231",
-      "export_timestamp": "2025-08-08T00:37:15.971237",
+      "synced_at": "2025-08-08T00:37:14.386211",
+      "export_timestamp": "2025-08-08T00:37:14.386217",
       "comment": "Decision made after performance analysis"
+    },
+    {
+      "id": "8328256c-90ea-4dc3-96b2-a196c68e739a",
+      "decision": "Use HTTPS for all communication",
+      "type": "security",
+      "date": "2025-08-05",
+      "active": true,
+      "synced_at": "2025-08-08T00:37:15.567603",
+      "export_timestamp": "2025-08-08T00:37:15.567610",
+      "comment": "Security department requirement"
+    },
+    {
+      "id": "400f2ab6-ceff-4fd1-8b33-d6cf8dbb91a5",
+      "decision": "I approve technical autonomy for AI.",
+      "type": "strategy",
+      "date": "2025-08-07",
+      "active": true,
+      "synced_at": "2025-08-08T00:37:16.466458",
+      "export_timestamp": "2025-08-08T00:37:16.466464",
+      "comment": "Tags: decision, core"
     }
   ],
   "metadata": {
