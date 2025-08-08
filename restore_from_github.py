@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Angles AI Universe™ GitHub Restore System
-Pulls latest backup from GitHub and restores Supabase database structure and data
+Angles AI Universe™ Restore from GitHub
+Safe restore with collision handling
 
 Author: Angles AI Universe™ Backend Team
 Version: 1.0.0
@@ -10,385 +10,336 @@ Version: 1.0.0
 import os
 import sys
 import json
-import requests
 import logging
-import subprocess
+import argparse
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Any
+from pathlib import Path
+from typing import Dict, List, Any, Optional
 
-class GitHubRestoreSystem:
-    """Complete restoration system from GitHub backups"""
+try:
+    import requests
+except ImportError:
+    print("❌ Missing required dependency: requests")
+    sys.exit(1)
+
+try:
+    from utils.git_helpers import GitHelpers
+except ImportError:
+    print("❌ utils.git_helpers not available")
+    sys.exit(1)
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
+def setup_logging():
+    """Setup logging for restore runner"""
+    os.makedirs("logs/active", exist_ok=True)
     
-    def __init__(self):
-        """Initialize restore system"""
-        self.setup_logging()
-        self.load_environment()
-        self.restore_summary = {
-            'timestamp': datetime.now(timezone.utc).isoformat(),
-            'status': 'unknown',
-            'operations': [],
-            'errors': [],
-            'restored_records': 0
-        }
-        
-        self.logger.info("🔄 Angles AI Universe™ GitHub Restore System Initialized")
+    logger = logging.getLogger('restore_runner')
+    logger.setLevel(logging.INFO)
     
-    def setup_logging(self):
-        """Setup logging to restore.log"""
-        os.makedirs("logs/active", exist_ok=True)
-        
-        # Configure logger
-        self.logger = logging.getLogger('github_restore')
-        self.logger.setLevel(logging.INFO)
-        
-        # Remove existing handlers
-        for handler in self.logger.handlers[:]:
-            self.logger.removeHandler(handler)
-        
-        # File handler for restore.log
-        log_file = "logs/active/restore.log"
-        file_handler = logging.FileHandler(log_file)
-        file_handler.setLevel(logging.INFO)
-        
-        # Console handler
-        console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.INFO)
-        
-        # Formatter with timestamp
-        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-        file_handler.setFormatter(formatter)
-        console_handler.setFormatter(formatter)
-        
-        # Add handlers
-        self.logger.addHandler(file_handler)
-        self.logger.addHandler(console_handler)
+    # Remove existing handlers
+    for handler in logger.handlers[:]:
+        logger.removeHandler(handler)
     
-    def load_environment(self):
-        """Load required environment variables"""
-        self.env = {
-            'supabase_url': os.getenv('SUPABASE_URL'),
-            'supabase_key': os.getenv('SUPABASE_KEY'),
-            'github_token': os.getenv('GITHUB_TOKEN'),
-            'github_username': os.getenv('GITHUB_USERNAME', 'angles-ai'),
-            'github_repo': 'angles-backup'
-        }
-        
-        # Validate required environment variables
-        required = ['supabase_url', 'supabase_key', 'github_token']
-        missing = [key for key in required if not self.env[key]]
-        
-        if missing:
-            raise ValueError(f"Missing required environment variables: {', '.join(missing)}")
-        
-        self.logger.info("📋 Environment variables loaded successfully")
+    # File handler
+    file_handler = logging.FileHandler('logs/active/restore_runner.log')
+    file_handler.setLevel(logging.INFO)
     
-    def pull_latest_backup(self) -> Optional[str]:
-        """Pull latest backup repository and return backup directory path"""
-        self.logger.info("📥 Pulling latest backup from GitHub...")
-        
-        try:
-            # Create temporary directory for backup
-            backup_dir = "/tmp/angles-backup"
-            
-            # Remove existing backup if present
-            if os.path.exists(backup_dir):
-                subprocess.run(['rm', '-rf', backup_dir], check=True)
-            
-            # Clone repository
-            repo_url = f"https://{self.env['github_token']}@github.com/{self.env['github_username']}/{self.env['github_repo']}.git"
-            
-            result = subprocess.run([
-                'git', 'clone', repo_url, backup_dir
-            ], capture_output=True, text=True, timeout=60)
-            
-            if result.returncode != 0:
-                raise Exception(f"Git clone failed: {result.stderr}")
-            
-            self.logger.info(f"✅ Repository cloned to {backup_dir}")
-            self.restore_summary['operations'].append("Repository cloned successfully")
-            
-            return backup_dir
-            
-        except subprocess.TimeoutExpired:
-            self.logger.error("❌ Git clone timed out")
-            return None
-        except Exception as e:
-            self.logger.error(f"❌ Failed to pull backup: {str(e)}")
-            self.restore_summary['errors'].append(f"Repository pull failed: {str(e)}")
-            return None
+    # Console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)
     
-    def find_latest_backup_files(self, backup_dir: str) -> List[str]:
-        """Find the latest backup files in the repository"""
-        self.logger.info("🔍 Scanning for backup files...")
-        
-        try:
-            backup_files = []
-            
-            # Look for backup files in common locations
-            search_paths = [
-                os.path.join(backup_dir, "backups"),
-                os.path.join(backup_dir, "exports"),
-                backup_dir
-            ]
-            
-            for search_path in search_paths:
-                if not os.path.exists(search_path):
-                    continue
-                
-                for file in os.listdir(search_path):
-                    if file.endswith('.json') and 'decision_vault' in file:
-                        full_path = os.path.join(search_path, file)
-                        backup_files.append(full_path)
-            
-            # Sort by modification time (newest first)
-            backup_files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
-            
-            self.logger.info(f"📄 Found {len(backup_files)} backup files")
-            for i, file in enumerate(backup_files[:3]):  # Show first 3
-                self.logger.info(f"   {i+1}. {os.path.basename(file)}")
-            
-            return backup_files
-            
-        except Exception as e:
-            self.logger.error(f"❌ Failed to scan backup files: {str(e)}")
-            return []
+    # Formatter
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    file_handler.setFormatter(formatter)
+    console_handler.setFormatter(formatter)
     
-    def load_backup_data(self, backup_file: str) -> Optional[Dict]:
-        """Load and validate backup data from file"""
-        self.logger.info(f"📖 Loading backup data from {os.path.basename(backup_file)}")
-        
-        try:
-            with open(backup_file, 'r') as f:
-                backup_data = json.load(f)
-            
-            # Validate backup structure
-            if 'data' not in backup_data:
-                raise Exception("Invalid backup format: missing 'data' field")
-            
-            if 'metadata' not in backup_data:
-                self.logger.warning("⚠️ Backup missing metadata - proceeding with data only")
-                backup_data['metadata'] = {}
-            
-            record_count = len(backup_data['data'])
-            backup_timestamp = backup_data.get('metadata', {}).get('timestamp', 'unknown')
-            
-            self.logger.info(f"✅ Backup loaded: {record_count} records from {backup_timestamp}")
-            self.restore_summary['operations'].append(f"Loaded backup with {record_count} records")
-            
-            return backup_data
-            
-        except Exception as e:
-            self.logger.error(f"❌ Failed to load backup data: {str(e)}")
-            self.restore_summary['errors'].append(f"Backup load failed: {str(e)}")
-            return None
+    # Add handlers
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
     
-    def get_current_supabase_data(self) -> List[Dict]:
-        """Fetch current data from Supabase decision_vault table"""
-        self.logger.info("📥 Fetching current Supabase data...")
+    return logger
+
+class RestoreRunner:
+    """GitHub restore with collision-safe upserts"""
+    
+    def __init__(self, dry_run: bool = False):
+        self.logger = setup_logging()
+        self.dry_run = dry_run
         
-        try:
-            headers = {
-                'apikey': self.env['supabase_key'],
-                'Authorization': f"Bearer {self.env['supabase_key']}",
+        # Configuration
+        self.repo_url = os.getenv('REPO_URL')
+        self.github_token = os.getenv('GITHUB_TOKEN')
+        self.supabase_url = os.getenv('SUPABASE_URL')
+        self.supabase_key = os.getenv('SUPABASE_KEY')
+        
+        # Paths
+        self.safe_export_dir = Path('export/safe')
+        
+        # Git helper
+        self.git_helper = GitHelpers()
+        
+        # Supabase headers
+        if self.supabase_url and self.supabase_key:
+            self.supabase_headers = {
+                'apikey': self.supabase_key,
+                'Authorization': f'Bearer {self.supabase_key}',
                 'Content-Type': 'application/json'
             }
-            
-            url = f"{self.env['supabase_url']}/rest/v1/decision_vault"
-            params = {'select': '*', 'order': 'created_at.asc'}
-            
-            response = requests.get(url, headers=headers, params=params, timeout=30)
-            
-            if response.status_code == 200:
-                current_data = response.json()
-                self.logger.info(f"✅ Fetched {len(current_data)} current records")
-                return current_data
-            else:
-                raise Exception(f"Supabase query failed: HTTP {response.status_code}")
-                
-        except Exception as e:
-            self.logger.error(f"❌ Failed to fetch current data: {str(e)}")
-            return []
-    
-    def analyze_data_differences(self, current_data: List[Dict], backup_data: List[Dict]) -> Dict:
-        """Analyze differences between current and backup data"""
-        self.logger.info("🔍 Analyzing data differences...")
+            self.supabase_enabled = True
+        else:
+            self.supabase_enabled = False
         
-        # Create ID sets for comparison
-        current_ids = {record.get('id') for record in current_data}
-        backup_ids = {record.get('id') for record in backup_data}
-        
-        # Find missing records
-        missing_ids = backup_ids - current_ids
-        extra_ids = current_ids - backup_ids
-        
-        # Create lookup dictionaries
-        backup_dict = {record.get('id'): record for record in backup_data}
-        current_dict = {record.get('id'): record for record in current_data}
-        
-        # Records to restore
-        records_to_restore = [backup_dict[rid] for rid in missing_ids if rid in backup_dict]
-        
-        analysis = {
-            'current_count': len(current_data),
-            'backup_count': len(backup_data),
-            'missing_count': len(missing_ids),
-            'extra_count': len(extra_ids),
-            'records_to_restore': records_to_restore
+        self.restore_stats = {
+            'files_pulled': 0,
+            'decisions_processed': 0,
+            'decisions_restored': 0,
+            'decisions_skipped': 0,
+            'decisions_failed': 0
         }
-        
-        self.logger.info(f"📊 Analysis complete:")
-        self.logger.info(f"   Current records: {analysis['current_count']}")
-        self.logger.info(f"   Backup records: {analysis['backup_count']}")
-        self.logger.info(f"   Missing from current: {analysis['missing_count']}")
-        self.logger.info(f"   Extra in current: {analysis['extra_count']}")
-        
-        return analysis
     
-    def restore_missing_records(self, records_to_restore: List[Dict]) -> bool:
-        """Restore missing records to Supabase"""
-        if not records_to_restore:
-            self.logger.info("✅ No missing records to restore")
-            return True
+    def pull_latest_from_github(self) -> bool:
+        """Pull latest changes from GitHub"""
+        self.logger.info("⬇️ Pulling latest changes from GitHub...")
         
-        self.logger.info(f"🔄 Restoring {len(records_to_restore)} missing records...")
-        
-        try:
-            headers = {
-                'apikey': self.env['supabase_key'],
-                'Authorization': f"Bearer {self.env['supabase_key']}",
-                'Content-Type': 'application/json'
-            }
-            
-            url = f"{self.env['supabase_url']}/rest/v1/decision_vault"
-            restored_count = 0
-            
-            for record in records_to_restore:
-                try:
-                    # Clean record data (remove system fields)
-                    clean_record = {
-                        k: v for k, v in record.items() 
-                        if k not in ['created_at', 'updated_at'] and v is not None
-                    }
-                    
-                    response = requests.post(url, headers=headers, json=clean_record, timeout=15)
-                    
-                    if response.status_code in [200, 201]:
-                        restored_count += 1
-                        decision_preview = clean_record.get('decision', '')[:50] + "..." if len(clean_record.get('decision', '')) > 50 else clean_record.get('decision', '')
-                        self.logger.info(f"✅ Restored: {decision_preview}")
-                    else:
-                        self.logger.error(f"❌ Failed to restore record {record.get('id')}: HTTP {response.status_code}")
-                        self.restore_summary['errors'].append(f"Record restore failed: {response.status_code}")
-                        
-                except Exception as e:
-                    self.logger.error(f"❌ Error restoring record: {str(e)}")
-                    continue
-            
-            self.restore_summary['restored_records'] = restored_count
-            self.restore_summary['operations'].append(f"Restored {restored_count} missing records")
-            
-            self.logger.info(f"✅ Restoration complete: {restored_count}/{len(records_to_restore)} records restored")
-            return restored_count == len(records_to_restore)
-            
-        except Exception as e:
-            self.logger.error(f"❌ Restoration failed: {str(e)}")
-            self.restore_summary['errors'].append(f"Restoration process failed: {str(e)}")
+        if not self.repo_url or not self.github_token:
+            self.logger.error("❌ GitHub not configured (missing REPO_URL or GITHUB_TOKEN)")
             return False
-    
-    def run_full_restore(self) -> bool:
-        """Run complete restore process"""
-        self.logger.info("🚀 Starting GitHub Backup Restore Process")
-        self.logger.info("=" * 70)
-        
-        start_time = datetime.now(timezone.utc)
         
         try:
-            # Step 1: Pull latest backup
-            backup_dir = self.pull_latest_backup()
-            if not backup_dir:
-                self.restore_summary['status'] = 'failed'
+            # Setup git repository
+            if not self.git_helper.init_repo_if_needed():
                 return False
             
-            # Step 2: Find backup files
-            backup_files = self.find_latest_backup_files(backup_dir)
-            if not backup_files:
-                self.logger.error("❌ No backup files found")
-                self.restore_summary['status'] = 'failed'
-                return False
+            # Pull latest changes
+            result = self.git_helper.safe_pull_with_rebase()
             
-            # Step 3: Load latest backup
-            backup_data = self.load_backup_data(backup_files[0])
-            if not backup_data:
-                self.restore_summary['status'] = 'failed'
-                return False
-            
-            # Step 4: Get current data
-            current_data = self.get_current_supabase_data()
-            
-            # Step 5: Analyze differences
-            analysis = self.analyze_data_differences(current_data, backup_data['data'])
-            
-            # Step 6: Restore missing records
-            restore_success = self.restore_missing_records(analysis['records_to_restore'])
-            
-            # Calculate duration
-            duration = (datetime.now(timezone.utc) - start_time).total_seconds()
-            self.restore_summary['duration_seconds'] = duration
-            
-            # Determine final status
-            if restore_success:
-                self.restore_summary['status'] = 'success'
-                self.logger.info("=" * 70)
-                self.logger.info("🎉 GitHub Restore Process Completed Successfully")
-                self.logger.info(f"   Duration: {duration:.2f} seconds")
-                self.logger.info(f"   Records restored: {self.restore_summary['restored_records']}")
+            if result:
+                self.logger.info("✅ Successfully pulled latest changes")
                 return True
             else:
-                self.restore_summary['status'] = 'partial'
-                self.logger.warning("⚠️ Restore completed with some failures")
+                self.logger.error("❌ Failed to pull changes from GitHub")
+                return False
+        
+        except Exception as e:
+            self.logger.error(f"❌ Error pulling from GitHub: {e}")
+            return False
+    
+    def load_decision_file(self, file_path: Path) -> Optional[List[Dict[str, Any]]]:
+        """Load decisions from JSON file"""
+        try:
+            with open(file_path, 'r') as f:
+                data = json.load(f)
+            
+            # Handle different JSON structures
+            if isinstance(data, list):
+                return data
+            elif isinstance(data, dict):
+                # Look for decisions in various possible keys
+                for key in ['decisions', 'data', 'items', 'records']:
+                    if key in data and isinstance(data[key], list):
+                        return data[key]
+                
+                # If it's a single decision object, wrap in list
+                if 'decision' in data or 'id' in data:
+                    return [data]
+            
+            self.logger.warning(f"⚠️ Unrecognized JSON structure in {file_path}")
+            return None
+            
+        except Exception as e:
+            self.logger.error(f"❌ Error loading {file_path}: {e}")
+            return None
+    
+    def decision_exists(self, decision_text: str, decision_date: str) -> Optional[str]:
+        """Check if decision already exists in Supabase"""
+        if not self.supabase_enabled:
+            return None
+        
+        try:
+            # Query for existing decision with same text and date
+            query_params = [
+                f"decision=eq.{decision_text}",
+                f"date=eq.{decision_date}",
+                "select=id"
+            ]
+            query_string = "&".join(query_params)
+            
+            response = requests.get(
+                f"{self.supabase_url}/rest/v1/decision_vault?{query_string}",
+                headers=self.supabase_headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                results = response.json()
+                if results:
+                    return results[0]['id']
+            
+            return None
+            
+        except Exception as e:
+            self.logger.error(f"❌ Error checking decision existence: {e}")
+            return None
+    
+    def upsert_decision(self, decision_data: Dict[str, Any]) -> bool:
+        """Upsert decision to Supabase with collision handling"""
+        if not self.supabase_enabled:
+            self.logger.warning("⚠️ Supabase not configured, skipping decision restore")
+            return False
+        
+        if self.dry_run:
+            self.logger.info(f"🔍 [DRY RUN] Would restore: {decision_data.get('decision', 'Unknown decision')[:50]}...")
+            return True
+        
+        try:
+            decision_text = decision_data.get('decision', '')
+            decision_date = decision_data.get('date', datetime.now().date().isoformat())
+            
+            # Check if decision already exists
+            existing_id = self.decision_exists(decision_text, decision_date)
+            
+            if existing_id:
+                self.logger.info(f"   ⏭️ Decision already exists, skipping: {decision_text[:50]}...")
+                self.restore_stats['decisions_skipped'] += 1
+                return True
+            
+            # Prepare decision data for insert
+            insert_data = {
+                'decision': decision_text,
+                'date': decision_date,
+                'type': decision_data.get('type', 'other'),
+                'active': decision_data.get('active', True),
+                'comment': decision_data.get('comment', ''),
+                'synced': False  # Mark as unsynced so it gets processed by memory sync
+            }
+            
+            # Insert new decision
+            response = requests.post(
+                f"{self.supabase_url}/rest/v1/decision_vault",
+                headers=self.supabase_headers,
+                json=insert_data,
+                timeout=10
+            )
+            
+            if response.status_code in [200, 201]:
+                self.logger.info(f"   ✅ Restored: {decision_text[:50]}...")
+                self.restore_stats['decisions_restored'] += 1
+                return True
+            else:
+                self.logger.error(f"   ❌ Failed to restore decision: HTTP {response.status_code}")
+                self.logger.error(f"      Response: {response.text}")
+                self.restore_stats['decisions_failed'] += 1
                 return False
                 
         except Exception as e:
-            self.restore_summary['status'] = 'failed'
-            self.restore_summary['errors'].append(f"Process failed: {str(e)}")
-            self.logger.error(f"💥 Restore process failed: {str(e)}")
+            self.logger.error(f"❌ Error upserting decision: {e}")
+            self.restore_stats['decisions_failed'] += 1
             return False
-        
-        finally:
-            # Write restore summary
-            self.write_restore_summary()
     
-    def write_restore_summary(self):
-        """Write restore summary to JSON file"""
-        try:
-            summary_file = f"logs/active/restore_summary_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-            with open(summary_file, 'w') as f:
-                json.dump(self.restore_summary, f, indent=2, default=str)
+    def restore_decisions_from_files(self) -> bool:
+        """Restore decisions from exported JSON files"""
+        self.logger.info("📋 Restoring decisions from exported files...")
+        
+        if not self.safe_export_dir.exists():
+            self.logger.warning("⚠️ No safe export directory found")
+            return True
+        
+        json_files = list(self.safe_export_dir.glob('*.json'))
+        
+        if not json_files:
+            self.logger.info("ℹ️ No JSON files found to restore")
+            return True
+        
+        self.logger.info(f"📁 Found {len(json_files)} JSON files to process")
+        
+        for json_file in json_files:
+            self.logger.info(f"📄 Processing {json_file.name}...")
             
-            self.logger.info(f"📄 Restore summary saved: {summary_file}")
+            decisions = self.load_decision_file(json_file)
             
-        except Exception as e:
-            self.logger.error(f"❌ Failed to write restore summary: {str(e)}")
-
-def main():
-    """Main entry point for restore system"""
-    try:
-        restore_system = GitHubRestoreSystem()
-        success = restore_system.run_full_restore()
+            if decisions is None:
+                continue
+            
+            if not decisions:
+                self.logger.info(f"   ℹ️ No decisions found in {json_file.name}")
+                continue
+            
+            self.logger.info(f"   📝 Found {len(decisions)} decisions in {json_file.name}")
+            
+            for i, decision in enumerate(decisions, 1):
+                self.restore_stats['decisions_processed'] += 1
+                
+                # Skip if not a valid decision
+                if not isinstance(decision, dict) or 'decision' not in decision:
+                    self.logger.warning(f"   ⚠️ Invalid decision format at index {i}")
+                    continue
+                
+                self.logger.info(f"   📝 Processing {i}/{len(decisions)}: {decision['decision'][:50]}...")
+                self.upsert_decision(decision)
+            
+            self.restore_stats['files_pulled'] += 1
+        
+        return True
+    
+    def run_restore(self, restore_decisions: bool = False) -> bool:
+        """Run complete restore process"""
+        self.logger.info("🚀 Starting Angles AI Universe™ Restore")
+        self.logger.info(f"📍 Mode: {'DRY RUN' if self.dry_run else 'EXECUTE'}")
+        self.logger.info("=" * 60)
+        
+        success = True
+        
+        # Step 1: Pull latest from GitHub
+        if not self.pull_latest_from_github():
+            success = False
+        
+        # Step 2: Restore decisions if requested
+        if restore_decisions and success:
+            if not self.restore_decisions_from_files():
+                success = False
+        elif restore_decisions:
+            self.logger.warning("⚠️ Skipping decision restore due to previous failures")
+        
+        # Print summary
+        self.logger.info("=" * 60)
+        self.logger.info("📊 RESTORE SUMMARY")
+        self.logger.info("=" * 60)
+        
+        if restore_decisions:
+            self.logger.info(f"📁 Files processed: {self.restore_stats['files_pulled']}")
+            self.logger.info(f"📝 Decisions processed: {self.restore_stats['decisions_processed']}")
+            self.logger.info(f"✅ Decisions restored: {self.restore_stats['decisions_restored']}")
+            self.logger.info(f"⏭️ Decisions skipped (existing): {self.restore_stats['decisions_skipped']}")
+            self.logger.info(f"❌ Decisions failed: {self.restore_stats['decisions_failed']}")
         
         if success:
-            print("\n🎉 Restore completed successfully!")
-            sys.exit(0)
+            self.logger.info("✅ RESTORE COMPLETED SUCCESSFULLY")
         else:
-            print("\n⚠️ Restore completed with issues - check logs for details")
-            sys.exit(1)
-            
-    except KeyboardInterrupt:
-        print("\n🛑 Restore interrupted by user")
-        sys.exit(1)
+            self.logger.error("❌ RESTORE COMPLETED WITH ERRORS")
+        
+        return success
+
+def main():
+    """Main entry point"""
+    parser = argparse.ArgumentParser(description='Restore from GitHub')
+    parser.add_argument('--restore-decisions', action='store_true', help='Restore decisions to Supabase')
+    parser.add_argument('--dry-run', action='store_true', help='Show what would be done without executing')
+    
+    args = parser.parse_args()
+    
+    try:
+        restore_runner = RestoreRunner(dry_run=args.dry_run)
+        success = restore_runner.run_restore(restore_decisions=args.restore_decisions)
+        sys.exit(0 if success else 1)
+        
     except Exception as e:
-        print(f"💥 Restore failed with exception: {str(e)}")
-        sys.exit(2)
+        print(f"💥 Restore runner failed: {e}")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

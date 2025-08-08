@@ -1,0 +1,155 @@
+{
+  "timestamp": "2025-08-08T10:36:55.408833+00:00",
+  "overall_status": "critical",
+  "checks": {
+    "environment": {
+      "status": "ok",
+      "variables": {
+        "SUPABASE_URL": {
+          "status": "ok",
+          "value": "https://ggpqmzoxyuzxgnrvaqbk.supabase.co",
+          "description": "Supabase database URL"
+        },
+        "SUPABASE_KEY": {
+          "status": "ok",
+          "value": "eyJhbGci...wPD4",
+          "description": "Supabase API key"
+        },
+        "NOTION_TOKEN": {
+          "status": "ok",
+          "value": "ntn_6285...cewv",
+          "description": "Notion integration token (or NOTION_API_KEY)"
+        },
+        "NOTION_DATABASE_ID": {
+          "status": "ok",
+          "value": "246ea273-e960-8091-9e49-d3e947dab148",
+          "description": "Notion database ID"
+        },
+        "GITHUB_TOKEN": {
+          "status": "ok",
+          "value": "github_p...Pi7N",
+          "description": "GitHub personal access token"
+        },
+        "REPO_URL": {
+          "status": "ok",
+          "value": "https://github.com/Anglesuniverse/angles-backup.git",
+          "description": "GitHub repository URL"
+        },
+        "GIT_USERNAME": {
+          "status": "ok",
+          "value": "Anglesuniverse",
+          "description": "Git username"
+        },
+        "GIT_EMAIL": {
+          "status": "ok",
+          "value": "fru-b@hotmail.com",
+          "description": "Git email"
+        },
+        "OPENAI_API_KEY": {
+          "status": "optional",
+          "value": null,
+          "description": "OpenAI API key (optional)"
+        }
+      },
+      "missing_critical": [],
+      "summary": "8/9 configured"
+    },
+    "dependencies": {
+      "status": "critical",
+      "packages": {
+        "requests": {
+          "status": "ok",
+          "type": "required"
+        },
+        "python-dotenv": {
+          "status": "missing",
+          "type": "required"
+        },
+        "supabase": {
+          "status": "ok",
+          "type": "required"
+        },
+        "pydantic": {
+          "status": "ok",
+          "type": "required"
+        },
+        "notion-client": {
+          "status": "ok",
+          "type": "required"
+        },
+        "psutil": {
+          "status": "missing",
+          "type": "recommended"
+        },
+        "schedule": {
+          "status": "missing",
+          "type": "recommended"
+        },
+        "httpx": {
+          "status": "ok",
+          "type": "recommended"
+        },
+        "watchdog": {
+          "status": "missing",
+          "type": "recommended"
+        },
+        "typing-extensions": {
+          "status": "ok",
+          "type": "recommended"
+        }
+      },
+      "missing_required": [
+        "python-dotenv"
+      ],
+      "missing_recommended": [
+        "psutil",
+        "schedule",
+        "watchdog"
+      ],
+      "summary": "6/10 available"
+    },
+    "system_metrics": {
+      "status": "warning",
+      "error": "psutil not available",
+      "summary": "System metrics unavailable"
+    },
+    "services": {
+      "status": "ok",
+      "services": {
+        "migration": {
+          "status": "ok",
+          "description": "Database migration",
+          "message": "Service check passed"
+        },
+        "memory_sync": {
+          "status": "ok",
+          "description": "Memory sync to Notion",
+          "message": "Service check passed"
+        },
+        "autosync": {
+          "status": "ok",
+          "description": "File change detection",
+          "message": "Service check passed"
+        }
+      },
+      "failed_services": [],
+      "summary": "3/3 services OK"
+    },
+    "github": {
+      "status": "ok",
+      "repo_url": "https://github.com/Anglesuniverse/angles-backup.git",
+      "summary": "GitHub connectivity OK"
+    }
+  },
+  "critical_failures": [
+    "dependencies: 6/10 available"
+  ],
+  "warnings": [
+    "system_metrics: System metrics unavailable"
+  ],
+  "recommendations": [
+    "Install missing required packages: python-dotenv",
+    "Install recommended packages for full functionality: psutil, schedule, watchdog",
+    "System resources high - monitor usage and consider optimization"
+  ]
+}
