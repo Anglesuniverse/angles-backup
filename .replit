@@ -48,6 +48,10 @@ args = "Sync Health Dashboard"
 task = "workflow.run"
 args = "Angles AI Universe Scheduler"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Self-Healing Backend"
+
 [[workflows.workflow]]
 name = "Memory System Scheduler"
 author = "agent"
@@ -141,6 +145,17 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python -m angles.cron_runner"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[workflows.workflow]]
+name = "Self-Healing Backend"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python run_self_healing.py"
 
 [workflows.workflow.metadata]
 outputType = "console"

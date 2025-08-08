@@ -1,0 +1,302 @@
+ou are Replit AI acting as Lead Backend Engineer for Angles AI Universe™.
+Create a robust, self-healing backend with:
+self-check → auto-fix → re-check → start services → post-run verify.
+Minimize OpenAI cost by default; allow upscale via env.
+
+## 0) Dependencies
+Install (via pip or Poetry):
+  openai, supabase, requests, psutil, schedule, cryptography, python-dotenv, tenacity
+
+## 1) Project structure (create/overwrite files)
+
+.env.template
+----------------
+SUPABASE_URL=
+SUPABASE_ANON_KEY=
+NOTION_API_KEY=
+NOTION_DATABASE_ID=
+OPENAI_API_KEY=
+# Default cost-safe model; can be changed to gpt-5 if needed:
+OPENAI_MODEL=gpt-4o-mini
+SYNC_INTERVAL_MINUTES=30
+LOG_LEVEL=INFO
+GITHUB_TOKEN=
+GITHUB_REPO=                 # e.g. username/angles-backup
+BACKUP_BRANCH=main
+BACKUP_DIR=backups
+VERIFY_SAMPLE_SIZE=5         # files to sample in post-verify
+MAX_AUTOFIX_ATTEMPTS=3
+
+replit.nix (append packages if needed)
+--------------------------------------
+{ pkgs }: {
+  deps = [
+    pkgs.python311Full
+    pkgs.git
+  ];
+}
+
+tools/self_check.py
+-------------------
+import os, sys, json
+from supabase import create_client, Client
+
+REQUIRED_ENV = ["SUPABASE_URL","SUPABASE_ANON_KEY","OPENAI_API_KEY","OPENAI_MODEL"]
+REQUIRED_TABLES = {
+  "decision_vault": ["id","category","status","content","date_added","last_updated","tags","notion_synced"],
+  "system_logs": ["id","level","message","ts"],
+  "file_snapshots": ["id","file_path","content","ts"],
+  "run_artifacts": ["id","artifact_name","artifact_type","ts"]
+}
+
+def env_check():
+    missing = [k for k in REQUIRED_ENV if not os.getenv(k)]
+    return {"name":"env_check","ok": len(missing)==0, "missing":missing}
+
+def supabase_client():
+    return create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_ANON_KEY"))
+
+def table_exists(sb: Client, t: str) -> bool:
+    try:
+        sb.table(t).select("id").limit(1).execute(); return True
+    except Exception: return False
+
+def columns_ok(sb: Client, t: str, cols: list) -> bool:
+    try:
+        res = sb.table(t).select("*").limit(1).execute()
+        if res.data:
+            have=set(res.data[0].keys()); return all(c in have for c in cols)
+        return True
+    except Exception: return False
+
+def supabase_schema_check():
+    sb = supabase_client()
+    res={}
+    for t,cols in REQUIRED_TABLES.items():
+        ex = table_exists(sb,t)
+        res[t]={"exists":ex,"columns_ok": (columns_ok(sb,t,cols) if ex else False)}
+    ok = all(v["exists"] and v["columns_ok"] for v in res.values())
+    return {"name":"supabase_schema","ok":ok,"details":res}
+
+def openai_check():
+    try:
+        import openai
+        openai.api_key = os.getenv("OPENAI_API_KEY")
+        model=os.getenv("OPENAI_MODEL","gpt-4o-mini")
+        r=openai.chat.completions.create(
+            model=model,
+            messages=[{"role":"user","content":"OK"}],
+            max_tokens=2, temperature=0
+        )
+        content=r.choices[0].message.content.strip().upper()
+        return {"name":"openai_check","ok": content=="OK","model":model}
+    except Exception as e:
+        return {"name":"openai_check","ok":False,"error":str(e)}
+
+def notion_check():
+    if not os.getenv("NOTION_API_KEY") or not os.getenv("NOTION_DATABASE_ID"):
+        return {"name":"notion_check","ok":True,"skipped":True}
+    import requests
+    headers={"Authorization":f"Bearer {os.getenv('NOTION_API_KEY')}",
+             "Notion-Version":"2022-06-28","Content-Type":"application/json"}
+    url=f"https://emea01.safelinks.protection.outlook.com/?url=https%3A%2F%2Fapi.notion.com%2Fv1%2Fdatabases%2F&data=05%7C02%7C%7C4ca845d5af2f458fcdb608ddd680fcdb%7C84df9e7fe9f640afb435aaaaaaaaaaaa%7C1%7C0%7C638902571660055730%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=5M3Y6GHg53ju9Gt9Ieg2a0QNbwPZ7TPCHvFHTy6s3Q0%3D&reserved=0{os.getenv('NOTION_DATABASE_ID')}"
+    try:
+        r=requests.get(url, headers=headers, timeout=10)
+        return {"name":"notion_check","ok":r.status_code==200,"status":r.status_code}
+    except Exception as e:
+        return {"name":"notion_check","ok":False,"error":str(e)}
+
+def run_self_check():
+    checks=[env_check(), supabase_schema_check(), openai_check(), notion_check()]
+    all_ok=all(c.get("ok") for c in checks)
+    print(json.dumps({"all_ok":all_ok,"checks":checks}, indent=2))
+    return all_ok
+
+if __name__=="__main__":
+    sys.exit(0 if run_self_check() else 1)
+
+tools/autofix.py
+----------------
+import os, subprocess, textwrap
+
+REQUIRED_PACKAGES=["openai","supabase","requests","psutil","schedule","cryptography","python-dotenv","tenacity"]
+
+SCHEMA_SQL = """
+-- Angles AI Universe™ base schema
+create extension if not exists pgcrypto;
+create table if not exists decision_vault(
+  id uuid default gen_random_uuid() primary key,
+  category text, status text, content text,
+  date_added timestamptz default now(),
+  last_updated timestamptz default now(),
+  tags text[], notion_synced boolean default false
+);
+create table if not exists system_logs(
+  id uuid default gen_random_uuid() primary key,
+  level text, message text, ts timestamptz default now()
+);
+create table if not exists file_snapshots(
+  id uuid default gen_random_uuid() primary key,
+  file_path text, content text, ts timestamptz default now()
+);
+create table if not exists run_artifacts(
+  id uuid default gen_random_uuid() primary key,
+  artifact_name text, artifact_type text, ts timestamptz default now()
+);
+"""
+
+def ensure_packages():
+    for p in REQUIRED_PACKAGES:
+        try: __import__(p.replace("-","_"))
+        except Exception: subprocess.run(["pip","install",p], check=False)
+
+def write_schema_file():
+    os.makedirs("migrations", exist_ok=True)
+    with open("migrations/ensure_schema.sql","w",encoding="utf-8") as f:
+        f.write(SCHEMA_SQL)
+    print("⚠ Schema written to migrations/ensure_schema.sql — run it once in Supabase SQL Editor if tables are missing.")
+
+if __name__=="__main__":
+    ensure_packages()
+    write_schema_file()
+
+memory/memory_sync.py
+---------------------
+import os, glob, time
+from datetime import datetime
+import schedule
+from supabase import create_client
+
+LOG_LEVEL=os.getenv("LOG_LEVEL","INFO")
+INTERVAL=int(os.getenv("SYNC_INTERVAL_MINUTES","30"))
+sb=create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_ANON_KEY"))
+
+def log(level,msg):
+    if LOG_LEVEL in ("INFO","DEBUG") or level=="ERROR":
+        print(f"[{datetime.utcnow().isoformat()}Z] {level} | {msg}")
+
+def snapshot_files():
+    for path in glob.glob("**/*.py", recursive=True):
+        try:
+            with open(path,"r",encoding="utf-8") as f: content=f.read()
+            sb.table("file_snapshots").insert({"file_path":path,"content":content}).execute()
+        except Exception as e:
+            log("ERROR", f"snapshot failed {path}: {e}")
+
+def run_once():
+    log("INFO","MemorySync tick"); snapshot_files()
+
+if __name__=="__main__":
+    run_once()
+    schedule.every(INTERVAL).minutes.do(run_once)
+    log("INFO", f"MemorySync scheduled every {INTERVAL} minutes")
+    while True:
+        schedule.run_pending(); time.sleep(1)
+
+tools/notion_sync.py (optional)
+-------------------------------
+import os, requests
+from supabase import create_client
+API=os.getenv("NOTION_API_KEY"); DB=os.getenv("NOTION_DATABASE_ID")
+if not (API and DB):
+    print("Notion sync skipped (no API/DB)."); raise SystemExit(0)
+
+H={"Authorization":f"Bearer {API}","Notion-Version":"2022-06-28","Content-Type":"application/json"}
+sb=create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_ANON_KEY"))
+
+def push(dec):
+    data={"parent":{"database_id":DB},
+          "properties":{
+            "message":{"title":[{"text":{"content":dec['content'][:2000]}}]},
+            "date":{"date":{"start": dec.get("date_added","")}},
+            "tag":{"multi_select":[{"name":t} for t in (dec.get("tags") or [])]}
+          }}
+    r=requests.post("https://emea01.safelinks.protection.outlook.com/?url=https%3A%2F%2Fapi.notion.com%2Fv1%2Fpages&data=05%7C02%7C%7C4ca845d5af2f458fcdb608ddd680fcdb%7C84df9e7fe9f640afb435aaaaaaaaaaaa%7C1%7C0%7C638902571660085040%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=%2Bq6t8G9VogqdWVK1gy2EmPTURCo%2FT%2BN0skaZEmkn3kA%3D&reserved=0", headers=H, json=data)
+    return r.status_code==200
+
+def sync():
+    rows=sb.table("decision_vault").select("*").eq("notion_synced",False).limit(50).execute().data
+    for d in rows:
+        if push(d):
+            sb.table("decision_vault").update({"notion_synced":True}).eq("id",d["id"]).execute()
+            print(f"✅ Notion synced: {d['id']}")
+
+if __name__=="__main__":
+    sync()
+
+tools/github_backup.py (optional)
+---------------------------------
+import os, subprocess, datetime, shutil
+TOK=os.getenv("GITHUB_TOKEN"); REPO=os.getenv("GITHUB_REPO")
+BR=os.getenv("BACKUP_BRANCH","main"); OUT=os.getenv("BACKUP_DIR","backups")
+if not (TOK and REPO):
+    print("GitHub backup skipped (no token/repo)."); raise SystemExit(0)
+ts=datetime.datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+os.makedirs(OUT, exist_ok=True)
+shutil.make_archive(f"{OUT}/snapshot_{ts}", "zip", ".")
+subprocess.run(["git","init"], check=False)
+subprocess.run(["git","remote","remove","origin"], check=False)
+subprocess.run(["git","remote","add","origin", f"https://{TOK}:x-oauth-basic@github.com/{REPO}.git"], check=False)
+subprocess.run(["git","checkout","-B", BR], check=False)
+subprocess.run(["git","add", "."], check=False)
+subprocess.run(["git","commit","-m", f"backup {ts}"], check=False)
+subprocess.run(["git","push","-u","origin", BR, "--force"], check=False)
+print("✅ Pushed backup to GitHub.")
+
+scripts/run_all.py
+------------------
+import os, subprocess, sys, json, random
+MAX_TRIES=int(os.getenv("MAX_AUTOFIX_ATTEMPTS","3"))
+
+def run(cmd):
+    print(f"→ {cmd}")
+    return subprocess.run(cmd, shell=True).returncode
+
+def self_check():  return run("python tools/self_check.py")
+def autofix():     return run("python tools/autofix.py")
+def memsync_bg():  return subprocess.Popen([sys.executable,"memory/memory_sync.py"])
+def notion_sync(): return run("python tools/notion_sync.py")
+def gh_backup():   return run("python tools/github_backup.py")
+
+def loop_until_green():
+    tries=0
+    while tries<MAX_TRIES:
+        if self_check()==0:
+            print("✅ All checks green."); return True
+        print("⚠ Self-check failed → AutoFix…"); autofix(); tries+=1
+    return False
+
+def post_run_verify():
+    # lightweight verification: try MemorySync once, optional Notion, optional GitHub
+    rc = run("python memory/memory_sync.py & sleep 1; pkill -f memory_sync.py || true")
+    print("MemSync test rc:", rc)
+    if os.getenv("NOTION_API_KEY") and os.getenv("NOTION_DATABASE_ID"):
+        notion_sync()
+    if os.getenv("GITHUB_TOKEN") and os.getenv("GITHUB_REPO"):
+        gh_backup()
+    print("✅ Post-run verify complete.")
+
+if __name__=="__main__":
+    ok = loop_until_green()
+    if not ok:
+        print("❌ Still failing. Open Supabase → SQL Editor → run migrations/ensure_schema.sql, then re-run: python scripts/run_all.py")
+        sys.exit(1)
+    memsync_bg()
+    post_run_verify()
+    print("🚀 Backend services running. Cost-safe model in use. Set OPENAI_MODEL=gpt-5 to upscale when needed.")
+
+## 2) Commands to run (in order)
+- Ensure Replit Secrets/Environment contains the keys from .env.template.
+- Run:
+  python scripts/run_all.py
+
+## 3) Success criteria
+- Self-check passes or auto-fix guides you to run migrations/ensure_schema.sql once in Supabase.
+- MemorySync starts and writes file_snapshots rows in Supabase.
+- Optional Notion sync marks decision_vault.notion_synced=true for pushed rows.
+- Optional GitHub backup pushes a zip snapshot.
+- Post-run verify prints completion message.
+
+## 4) Safety / Cost guard
+- Default OPENAI_MODEL=gpt-4o-mini (cheap). Change to gpt-5 only when needed via env.
+- All failures print actionable next steps.

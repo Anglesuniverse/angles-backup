@@ -1,0 +1,16 @@
+import os, subprocess, datetime, shutil
+TOK=os.getenv("GITHUB_TOKEN"); REPO=os.getenv("GITHUB_REPO")
+BR=os.getenv("BACKUP_BRANCH","main"); OUT=os.getenv("BACKUP_DIR","backups")
+if not (TOK and REPO):
+    print("GitHub backup skipped (no token/repo)."); raise SystemExit(0)
+ts=datetime.datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+os.makedirs(OUT, exist_ok=True)
+shutil.make_archive(f"{OUT}/snapshot_{ts}", "zip", ".")
+subprocess.run(["git","init"], check=False)
+subprocess.run(["git","remote","remove","origin"], check=False)
+subprocess.run(["git","remote","add","origin", f"https://{TOK}:x-oauth-basic@github.com/{REPO}.git"], check=False)
+subprocess.run(["git","checkout","-B", BR], check=False)
+subprocess.run(["git","add", "."], check=False)
+subprocess.run(["git","commit","-m", f"backup {ts}"], check=False)
+subprocess.run(["git","push","-u","origin", BR, "--force"], check=False)
+print("✅ Pushed backup to GitHub.")
