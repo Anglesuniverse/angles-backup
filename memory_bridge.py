@@ -16,14 +16,11 @@ from pathlib import Path
 
 # Check for OpenAI availability
 try:
-    import openai
     from openai import OpenAI
     OPENAI_AVAILABLE = True
 except ImportError:
     OPENAI_AVAILABLE = False
-    # Define placeholder classes for type hints
-    class OpenAI:
-        pass
+    OpenAI = None
 
 # Import our security module
 try:
@@ -31,11 +28,8 @@ try:
     SECURITY_AVAILABLE = True
 except ImportError:
     SECURITY_AVAILABLE = False
-    # Define placeholder classes for type hints
-    class DataSanitizer:
-        pass
-    class SecureFileManager:
-        pass
+    DataSanitizer = None
+    SecureFileManager = None
 
 class AIEnhancedMemoryBridge:
     """
@@ -55,7 +49,7 @@ class AIEnhancedMemoryBridge:
         self.enable_ai = enable_ai and OPENAI_AVAILABLE
         
         # Initialize OpenAI client if available
-        if self.enable_ai:
+        if self.enable_ai and OpenAI:
             api_key = os.getenv('OPENAI_API_KEY')
             if api_key:
                 self.client = OpenAI(api_key=api_key)
@@ -68,7 +62,7 @@ class AIEnhancedMemoryBridge:
             self.logger.info("ℹ️ AI features disabled - operating in standard mode")
         
         # Initialize security components
-        if SECURITY_AVAILABLE:
+        if SECURITY_AVAILABLE and DataSanitizer and SecureFileManager:
             self.sanitizer = DataSanitizer()
             self.secure_manager = SecureFileManager()
             self.logger.info("✅ Security components initialized")
