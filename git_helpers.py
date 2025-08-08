@@ -198,14 +198,10 @@ class GitHelper:
                         
                         # Look for common secret patterns
                         secret_indicators = [
-                            r'api[_-]?key\s*[=:]\s*["\'][^"\'
-]{10,}["\']',
-                            r'secret\s*[=:]\s*["\'][^"\'
-]{10,}["\']',
-                            r'token\s*[=:]\s*["\'][^"\'
-]{10,}["\']',
-                            r'password\s*[=:]\s*["\'][^"\'
-]{3,}["\']'
+                            r'api[_-]?key\s*[=:]\s*["\'][^"\']{10,}["\']',
+                            r'secret\s*[=:]\s*["\'][^"\']{10,}["\']',
+                            r'token\s*[=:]\s*["\'][^"\'][{10,}["\']',
+                            r'password\s*[=:]\s*["\'][^"\'][{3,}["\']'
                         ]
                         
                         for pattern in secret_indicators:

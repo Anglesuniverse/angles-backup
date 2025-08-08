@@ -65,6 +65,27 @@ backups/*.json
 exports/*.json
 *.backup
 
+# Audit system files (keep logs but exclude sensitive reports)
+export/audit/*.json
+export/audit/*.md
+export/perf/*.json
+export/perf/*.md
+logs/audit/*.log
+logs/perf/*.log
+!logs/audit/.gitkeep
+!logs/perf/.gitkeep
+!export/audit/.gitkeep
+!export/perf/.gitkeep
+
+# Performance data (CSV files can get large)
+logs/perf/*.csv
+
+# Temporary audit files
+audit_temp_*
+perf_temp_*
+panic_kit_*
+restore_verify_*
+
 # Node modules (if any)
 node_modules/
 

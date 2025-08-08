@@ -42,7 +42,10 @@ class OpsScheduler:
             'daily_health': None,
             'daily_backup': None,
             'weekly_summary': None,
-            'hourly_maintenance': None
+            'hourly_maintenance': None,
+            'monthly_audit': None,
+            'weekly_restore_verify': None,
+            'daily_perf_benchmark': None
         }
         
         # Task execution stats
@@ -50,7 +53,10 @@ class OpsScheduler:
             'health_checks': {'total': 0, 'passed': 0, 'failed': 0},
             'backups': {'total': 0, 'successful': 0, 'failed': 0},
             'summaries': {'total': 0, 'successful': 0, 'failed': 0},
-            'maintenance': {'total': 0, 'successful': 0, 'failed': 0}
+            'maintenance': {'total': 0, 'successful': 0, 'failed': 0},
+            'audits': {'total': 0, 'successful': 0, 'failed': 0},
+            'restore_verification': {'total': 0, 'successful': 0, 'failed': 0},
+            'performance_benchmarks': {'total': 0, 'successful': 0, 'failed': 0}
         }
         
         self.logger.info("🎆 Angles AI Universe™ Operations Scheduler Initialized")
@@ -94,6 +100,9 @@ class OpsScheduler:
         self.logger.info("   💾 Daily 02:10 UTC: Backup Operations")
         self.logger.info("   📄 Weekly Sun 02:30 UTC: Weekly Summary Generation")
         self.logger.info("   🔍 Every 60 min: Config Monitor + Schema Guard")
+        self.logger.info("   🏥 Monthly 1st 03:30 UTC: Deep Audit (Data Integrity)")
+        self.logger.info("   🔧 Weekly Sun 03:50 UTC: Restore Verification (Dry-run)")
+        self.logger.info("   ⚡ Daily 04:10 UTC: Performance Benchmark")
         self.logger.info("="*70)
     
     def run_command_safe(self, command: List[str], timeout: int = 300, 
@@ -309,6 +318,102 @@ class OpsScheduler:
         
         return success
     
+    def monthly_audit_operations(self) -> bool:
+        """Monthly deep audit operations on 1st at 03:30 UTC"""
+        self.logger.info("🏥 Starting Monthly Deep Audit Operations")
+        
+        success = True
+        self.execution_stats['audits']['total'] += 1
+        
+        audit_result = self.run_command_safe(
+            [sys.executable, 'audit/monthly_audit.py', '--run'],
+            timeout=600,
+            task_name="Monthly Deep Audit"
+        )
+        
+        if audit_result['success']:
+            self.execution_stats['audits']['successful'] += 1
+            self.logger.info("✅ Monthly deep audit completed successfully")
+        else:
+            self.execution_stats['audits']['failed'] += 1
+            success = False
+            self.logger.error("❌ Monthly deep audit failed")
+            
+            # Send audit failure alert
+            if self.alert_manager:
+                self.alert_manager.send_alert(
+                    title="Monthly Deep Audit Failed",
+                    message=f"Monthly deep audit failed: {audit_result['stderr']}",
+                    severity="critical",
+                    tags=['monthly-audit', 'failed', 'data-integrity']
+                )
+        
+        return success
+    
+    def weekly_restore_verification(self) -> bool:
+        """Weekly restore verification on Sunday at 03:50 UTC"""
+        self.logger.info("🔧 Starting Weekly Restore Verification")
+        
+        success = True
+        self.execution_stats['restore_verification']['total'] += 1
+        
+        verify_result = self.run_command_safe(
+            [sys.executable, 'audit/verify_restore.py', '--run'],
+            timeout=900,
+            task_name="Restore Verification"
+        )
+        
+        if verify_result['success']:
+            self.execution_stats['restore_verification']['successful'] += 1
+            self.logger.info("✅ Restore verification completed successfully")
+        else:
+            self.execution_stats['restore_verification']['failed'] += 1
+            success = False
+            self.logger.error("❌ Restore verification failed")
+            
+            # Send verification failure alert
+            if self.alert_manager:
+                self.alert_manager.send_alert(
+                    title="Restore Verification Failed",
+                    message=f"Weekly restore verification failed: {verify_result['stderr']}",
+                    severity="warning",
+                    tags=['restore-verification', 'failed', 'backup-integrity']
+                )
+        
+        return success
+    
+    def daily_performance_benchmark(self) -> bool:
+        """Daily performance benchmark at 04:10 UTC"""
+        self.logger.info("⚡ Starting Daily Performance Benchmark")
+        
+        success = True
+        self.execution_stats['performance_benchmarks']['total'] += 1
+        
+        benchmark_result = self.run_command_safe(
+            [sys.executable, 'perf/perf_benchmark.py', '--run'],
+            timeout=300,
+            task_name="Performance Benchmark"
+        )
+        
+        if benchmark_result['success']:
+            self.execution_stats['performance_benchmarks']['successful'] += 1
+            self.logger.info("✅ Performance benchmark completed successfully")
+        else:
+            self.execution_stats['performance_benchmarks']['failed'] += 1
+            success = False
+            self.logger.error("❌ Performance benchmark failed")
+            
+            # Send benchmark failure alert
+            if self.alert_manager:
+                self.alert_manager.send_alert(
+                    title="Performance Benchmark Failed",
+                    message=f"Daily performance benchmark failed: {benchmark_result['stderr']}",
+                    severity="warning",
+                    tags=['performance-benchmark', 'failed']
+                )
+        
+        return success
+    
     def should_run_daily_health(self) -> bool:
         """Check if daily health check should run (03:00 UTC)"""
         now = datetime.now(timezone.utc)
@@ -350,6 +455,39 @@ class OpsScheduler:
         # Run every hour at minute 0
         if now.minute == 0:
             if self.last_runs['hourly_maintenance'] != current_hour:
+                return True
+        return False
+    
+    def should_run_monthly_audit(self) -> bool:
+        """Check if monthly audit should run (1st of month 03:30 UTC)"""
+        now = datetime.now(timezone.utc)
+        current_date = now.date()
+        
+        # Run on 1st of month at 03:30 UTC
+        if now.day == 1 and now.hour == 3 and now.minute == 30:
+            if self.last_runs['monthly_audit'] != current_date:
+                return True
+        return False
+    
+    def should_run_weekly_restore_verify(self) -> bool:
+        """Check if weekly restore verification should run (Sunday 03:50 UTC)"""
+        now = datetime.now(timezone.utc)
+        current_date = now.date()
+        
+        # Run on Sunday (weekday 6) at 03:50 UTC
+        if now.weekday() == 6 and now.hour == 3 and now.minute == 50:
+            if self.last_runs['weekly_restore_verify'] != current_date:
+                return True
+        return False
+    
+    def should_run_daily_perf_benchmark(self) -> bool:
+        """Check if daily performance benchmark should run (04:10 UTC)"""
+        now = datetime.now(timezone.utc)
+        current_date = now.date()
+        
+        # Run at 04:10 UTC
+        if now.hour == 4 and now.minute == 10:
+            if self.last_runs['daily_perf_benchmark'] != current_date:
                 return True
         return False
     
@@ -451,6 +589,24 @@ class OpsScheduler:
                     success = self.hourly_maintenance_tasks()
                     self.last_runs['hourly_maintenance'] = now.replace(minute=0, second=0, microsecond=0)
                 
+                # Monthly deep audit (1st of month 03:30 UTC)
+                elif self.should_run_monthly_audit():
+                    self.logger.info("⏰ Time for monthly deep audit")
+                    success = self.monthly_audit_operations()
+                    self.last_runs['monthly_audit'] = now.date()
+                
+                # Weekly restore verification (Sunday 03:50 UTC)
+                elif self.should_run_weekly_restore_verify():
+                    self.logger.info("⏰ Time for weekly restore verification")
+                    success = self.weekly_restore_verification()
+                    self.last_runs['weekly_restore_verify'] = now.date()
+                
+                # Daily performance benchmark (04:10 UTC)
+                elif self.should_run_daily_perf_benchmark():
+                    self.logger.info("⏰ Time for daily performance benchmark")
+                    success = self.daily_performance_benchmark()
+                    self.last_runs['daily_perf_benchmark'] = now.date()
+                
                 # Log execution statistics
                 self.log_execution_stats()
                 
@@ -490,7 +646,10 @@ class OpsScheduler:
                 'daily_health': '03:00 UTC',
                 'daily_backup': '02:10 UTC', 
                 'weekly_summary': 'Sunday 02:30 UTC',
-                'hourly_maintenance': 'Every hour at :00'
+                'hourly_maintenance': 'Every hour at :00',
+                'monthly_audit': '1st of month 03:30 UTC',
+                'weekly_restore_verify': 'Sunday 03:50 UTC',
+                'daily_perf_benchmark': '04:10 UTC'
             },
             'overall_health': 'healthy'  # Could be calculated based on recent failures
         }

@@ -1,0 +1,103 @@
+# === Angles AI Universe™ Memory System: FULL BUILD + BACKUP + RESTORE + TEST + SELF-HEAL + AUTO-OPTIMIZE + FUTURE PROOF ===
+You are the backend lead for Angles AI Universe™.
+Goal: Build, connect, test, monitor, self-heal, and future-proof the entire Supabase–Notion–GitHub memory system in ONE run.
+
+────────────────────────────────────────────
+## 1. CORE SETUP
+- Build and verify scripts:
+  * memory_bridge.py → Supabase → Notion sync.
+  * github_backup.py → Export Supabase → Push to angles-backup GitHub repo.
+  * github_restore.py → Restore Supabase + Notion from GitHub backups.
+  * health_check.py → Run deep health checks.
+  * quick_test.py → Fast validation test.
+- Create folders:
+  /logs/, /docs/tests/, /backups/, /diagnostics/, /selfheal/
+- Validate Replit secrets: SUPABASE_URL, SUPABASE_KEY, NOTION_API_KEY, NOTION_DATABASE_ID, GITHUB_TOKEN, GITHUB_REPO, ALERT_WEBHOOK_URL.
+- Scripts must be plug-and-play with these secrets.
+
+────────────────────────────────────────────
+## 2. DATA SAFETY & BACKUP PROTOCOL
+- SHA256 checksum for all backups/restores.
+- Drift detection (compare restored vs original).
+- Keep backups in /backups/{YYYY-MM-DD}/, push to GitHub.
+- Keep last 7 local backups, auto-delete older.
+- Compress backups before pushing.
+
+────────────────────────────────────────────
+## 3. AUTO-SYNC & SCHEDULER
+- Hourly Supabase → Notion sync.
+- Daily GitHub backup at 03:00 UTC.
+- Nightly Quick Test at 02:00 UTC.
+- Weekly Extended Master Test on Sunday 01:00 UTC.
+- Scheduler must auto-restart if stopped.
+
+────────────────────────────────────────────
+## 4. QUICK END-TO-END TEST
+- Insert dummy decision → sync → verify in Notion → backup → verify in GitHub → restore → verify integrity.
+- Remove dummy decision.
+- Append results to /docs/tests/TEST_HISTORY.md.
+
+────────────────────────────────────────────
+## 5. EXTENDED MASTER TEST
+- Insert 3 dummy decisions.
+- Run sync, backup, restore, verify SHA256.
+- Purge dummy data.
+- Log detailed results in /docs/tests/MASTER_HISTORY.md.
+
+────────────────────────────────────────────
+## 6. ALERTS & BADGES
+- On fail: log to /logs/incidents/{timestamp}.log + send webhook.
+- Update GitHub README.md with system health badge.
+- Commit + push badge update.
+
+────────────────────────────────────────────
+## 7. AUTO-RETRY & SELF-HEAL
+- Retry failed steps 3x (5s, 15s, 45s delays).
+- If still failing:
+  * Run diagnostics to /diagnostics/{timestamp}.log.
+  * Try auto-fix (reset secrets, restart script, clear cache).
+  * If fixed → log to /selfheal/{timestamp}.log.
+  * If not fixed → send webhook alert.
+
+────────────────────────────────────────────
+## 8. OPTIMIZATION LAYER
+- Log run performance times.
+- Auto-archive logs >30 days old.
+- Hot reload scripts without scheduler downtime.
+- Tag each backup in GitHub with version number.
+
+────────────────────────────────────────────
+## 9. DOCUMENTATION
+- Auto-generate /docs/SYSTEM_OVERVIEW.md:
+  * Architecture diagram (Supabase ↔ Notion ↔ GitHub).
+  * Script explanations + schedule.
+  * Self-heal process.
+  * Last 5 test results.
+- Update /docs/CHANGELOG.md with build date + changes.
+
+────────────────────────────────────────────
+## 10. FUTURE QUICKTEST MODE
+- Build quick_test.py:
+  * Insert dummy decision → sync → verify → remove.
+  * Run in <30s, output PASS/FAIL.
+- Schedule quick_test.py daily at 02:00 UTC and on manual trigger.
+
+────────────────────────────────────────────
+## 11. FULL EXECUTION MODE
+1. Build all scripts and folders.
+2. Configure schedules.
+3. Run Quick Test.
+4. Run Extended Master Test.
+5. Apply badges + push updates.
+6. Output final status: “✅ Memory System Operational – All checks passed” or FAIL reason.
+7. Append all logs and reports to docs.
+
+────────────────────────────────────────────
+## 12. FINAL FUTURE-PROOF STEPS
+- Enable GitHub restore automation on failure.
+- Enable auto-detection of Supabase schema changes and adapt scripts.
+- Prepare migration hooks for future backend (Next.js/Node-based API).
+- Maintain compatibility with current Replit environment + external API expansion.
+
+MODE: Execute all above in one run without asking for confirmation.
+────────────────────────────────────────────
