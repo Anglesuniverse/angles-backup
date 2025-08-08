@@ -1,0 +1,70 @@
+You are the backend maintainer for Angles AI Universe™.
+
+Resolve the post‑run review + schema guard issues end‑to‑end.
+
+
+
+Goals
+
+
+
+Locate and show the latest post‑run report (it should be under /logs/).
+If missing, regenerate a post‑run review now and save to /logs/post_run_review.txt.
+Add a lightweight schema validator tool and run it against Supabase + Notion mappings.
+Auto‑fix safe mismatches, summarize anything that needs my approval.
+Re‑run a health check and print a concise status table.
+
+
+
+
+Do this step‑by‑step
+
+
+
+A. Find report
+ls -l logs and print the file name.
+cat logs/post_run_review.txt (or whatever file exists).
+
+B. Regenerate (if file is missing)
+Run the built‑in post‑run routine you created; save as logs/post_run_review.txt.
+
+C. Create schema guard
+Add tools/schema_guard.py with:
+CLI: python tools/schema_guard.py --check and --autofix.
+Checks:
+Table: decision_vault has columns: id uuid pk, category text, status text, content text, date_added timestamptz, last_updated timestamptz, tags text[], notion_page_id text, synced boolean default false, synced_at timestamptz.
+(Adjust to the schema you already use; don’t break existing data.)
+Presence of helpful indexes (idx_decision_date, idx_agent_name) if applicable.
+
+For Supabase: use existing env creds; for Notion just verify property names used by the sync (don’t write).
+On --autofix: add missing nullable columns, add indexes, never drop or alter types without printing a warning.
+
+
+D. Run checks
+python tools/schema_guard.py --check
+If mismatches found: python tools/schema_guard.py --autofix
+Re‑check and print a short diff summary.
+
+E. Re‑run health
+Run the same health monitor you use and print a compact “traffic‑light” table.
+Save a new report to logs/post_run_review.txt.
+If OpenAI API quota is still limiting AI features, note it but keep everything else green.
+
+F. Housekeeping
+Update README_BACKEND.md with:
+“Viewing latest report” (cat logs/post_run_review.txt)
+“Schema guard usage” commands and safety notes.
+
+Commit changes: add tools/schema_guard.py, updated README, and the new log (skip logs if repo ignores them).
+
+
+
+
+
+Deliverables to print here
+
+
+
+Path + first 30 lines of logs/post_run_review.txt.
+Result of schema_guard --check (before/after).
+Final health status table + next recommended action (one line).

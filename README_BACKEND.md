@@ -60,6 +60,39 @@ This is a comprehensive backend system designed for automated GPT assistant outp
    - Built-in fallback scheduling
    - Comprehensive logging and monitoring
 
+9. **🛡️ Schema Guard** (`tools/schema_guard.py`)
+   - Database schema validation and auto-fixing
+   - Performance index optimization
+   - Production readiness verification
+
+## System Health & Monitoring
+
+### Viewing Latest Report
+```bash
+# View comprehensive system status
+cat logs/post_run_review.txt
+
+# Real-time health dashboard
+curl http://localhost:5000/health | python -m json.tool
+```
+
+### Schema Guard Usage
+```bash
+# Check database schema compliance
+python tools/schema_guard.py --check
+
+# Auto-fix safe schema issues (adds columns, indexes)
+python tools/schema_guard.py --autofix
+
+# JSON output for automation
+python tools/schema_guard.py --check --json
+```
+
+**Safety Notes:**
+- Schema Guard only adds missing columns/indexes (never drops)
+- Type mismatches require manual review to prevent data loss
+- All changes are logged and can be rolled back via Supabase
+
 ## Quick Start
 
 ### 1. Environment Setup
