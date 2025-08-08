@@ -1,65 +1,15 @@
 {
-  "export_timestamp": "2025-08-08T19:22:30.801336",
+  "export_timestamp": "2025-08-08T19:22:39.383397",
   "total_decisions": 7,
   "decisions": [
-    {
-      "id": "8328256c-90ea-4dc3-96b2-a196c68e739a",
-      "decision": "Use HTTPS for all communication",
-      "type": "security",
-      "date": "2025-08-05",
-      "active": true,
-      "synced_at": "2025-08-08T19:22:23.920869",
-      "export_timestamp": "2025-08-08T19:22:23.920875",
-      "comment": "Security department requirement"
-    },
-    {
-      "id": "8eb1b848-d434-4f41-a3d7-954c1a548cd4",
-      "decision": "Use Python as main backend language",
-      "type": "technical",
-      "date": "2025-08-07",
-      "active": true,
-      "synced_at": "2025-08-08T19:22:25.255503",
-      "export_timestamp": "2025-08-08T19:22:25.255508",
-      "comment": "Decision made after team discussion"
-    },
-    {
-      "id": "9bdb43d6-3112-4b79-a89e-5ab1830220f2",
-      "decision": "Use Python as main backend language",
-      "type": "technical",
-      "date": "2025-08-07",
-      "active": true,
-      "synced_at": "2025-08-08T19:22:26.587272",
-      "export_timestamp": "2025-08-08T19:22:26.587277",
-      "comment": "Decision made after team discussion"
-    },
-    {
-      "id": "3bc0adb1-c3d6-47f6-b6cc-2fbd2f66cdf4",
-      "decision": "Implement Code Review for all pull requests",
-      "type": "process",
-      "date": "2025-08-06",
-      "active": true,
-      "synced_at": "2025-08-08T19:22:27.748161",
-      "export_timestamp": "2025-08-08T19:22:27.748166",
-      "comment": "Improves code quality and knowledge sharing"
-    },
-    {
-      "id": "53146f5b-d474-4a72-b3c9-ee3173945866",
-      "decision": "Use PostgreSQL as primary database for better performance",
-      "type": "technical",
-      "date": "2025-08-07",
-      "active": true,
-      "synced_at": "2025-08-08T19:22:28.473822",
-      "export_timestamp": "2025-08-08T19:22:28.473828",
-      "comment": "Decision made after performance analysis"
-    },
     {
       "id": "400f2ab6-ceff-4fd1-8b33-d6cf8dbb91a5",
       "decision": "I approve technical autonomy for AI.",
       "type": "strategy",
       "date": "2025-08-07",
       "active": true,
-      "synced_at": "2025-08-08T19:22:29.795876",
-      "export_timestamp": "2025-08-08T19:22:29.795881",
+      "synced_at": "2025-08-08T19:22:30.451631",
+      "export_timestamp": "2025-08-08T19:22:30.451637",
       "comment": "Tags: decision, core"
     },
     {
@@ -68,8 +18,58 @@
       "type": "technical",
       "date": "2025-08-08",
       "active": true,
-      "synced_at": "2025-08-08T19:22:30.801280",
-      "export_timestamp": "2025-08-08T19:22:30.801284"
+      "synced_at": "2025-08-08T19:22:31.653290",
+      "export_timestamp": "2025-08-08T19:22:31.653296"
+    },
+    {
+      "id": "8328256c-90ea-4dc3-96b2-a196c68e739a",
+      "decision": "Use HTTPS for all communication",
+      "type": "security",
+      "date": "2025-08-05",
+      "active": true,
+      "synced_at": "2025-08-08T19:22:33.172393",
+      "export_timestamp": "2025-08-08T19:22:33.172399",
+      "comment": "Security department requirement"
+    },
+    {
+      "id": "8eb1b848-d434-4f41-a3d7-954c1a548cd4",
+      "decision": "Use Python as main backend language",
+      "type": "technical",
+      "date": "2025-08-07",
+      "active": true,
+      "synced_at": "2025-08-08T19:22:34.123143",
+      "export_timestamp": "2025-08-08T19:22:34.123149",
+      "comment": "Decision made after team discussion"
+    },
+    {
+      "id": "9bdb43d6-3112-4b79-a89e-5ab1830220f2",
+      "decision": "Use Python as main backend language",
+      "type": "technical",
+      "date": "2025-08-07",
+      "active": true,
+      "synced_at": "2025-08-08T19:22:36.249030",
+      "export_timestamp": "2025-08-08T19:22:36.249035",
+      "comment": "Decision made after team discussion"
+    },
+    {
+      "id": "3bc0adb1-c3d6-47f6-b6cc-2fbd2f66cdf4",
+      "decision": "Implement Code Review for all pull requests",
+      "type": "process",
+      "date": "2025-08-06",
+      "active": true,
+      "synced_at": "2025-08-08T19:22:38.404886",
+      "export_timestamp": "2025-08-08T19:22:38.404890",
+      "comment": "Improves code quality and knowledge sharing"
+    },
+    {
+      "id": "53146f5b-d474-4a72-b3c9-ee3173945866",
+      "decision": "Use PostgreSQL as primary database for better performance",
+      "type": "technical",
+      "date": "2025-08-07",
+      "active": true,
+      "synced_at": "2025-08-08T19:22:39.383357",
+      "export_timestamp": "2025-08-08T19:22:39.383362",
+      "comment": "Decision made after performance analysis"
     }
   ],
   "metadata": {
