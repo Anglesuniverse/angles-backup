@@ -1,54 +1,15 @@
 {
-  "export_timestamp": "2025-08-08T18:50:12.126250",
+  "export_timestamp": "2025-08-08T18:57:04.876212",
   "total_decisions": 7,
   "decisions": [
-    {
-      "id": "3bc0adb1-c3d6-47f6-b6cc-2fbd2f66cdf4",
-      "decision": "Implement Code Review for all pull requests",
-      "type": "process",
-      "date": "2025-08-06",
-      "active": true,
-      "synced_at": "2025-08-08T18:50:01.092420",
-      "export_timestamp": "2025-08-08T18:50:01.092429",
-      "comment": "Improves code quality and knowledge sharing"
-    },
-    {
-      "id": "53146f5b-d474-4a72-b3c9-ee3173945866",
-      "decision": "Use PostgreSQL as primary database for better performance",
-      "type": "technical",
-      "date": "2025-08-07",
-      "active": true,
-      "synced_at": "2025-08-08T18:50:02.611588",
-      "export_timestamp": "2025-08-08T18:50:02.611594",
-      "comment": "Decision made after performance analysis"
-    },
-    {
-      "id": "400f2ab6-ceff-4fd1-8b33-d6cf8dbb91a5",
-      "decision": "I approve technical autonomy for AI.",
-      "type": "strategy",
-      "date": "2025-08-07",
-      "active": true,
-      "synced_at": "2025-08-08T18:50:05.660460",
-      "export_timestamp": "2025-08-08T18:50:05.660467",
-      "comment": "Tags: decision, core"
-    },
-    {
-      "id": "97b0f32c-d1e4-49e5-ada8-7218292580df",
-      "decision": "quicktest_quicktest_20250808_003751",
-      "type": "technical",
-      "date": "2025-08-08",
-      "active": true,
-      "synced_at": "2025-08-08T18:50:06.863232",
-      "export_timestamp": "2025-08-08T18:50:06.863239"
-    },
     {
       "id": "8328256c-90ea-4dc3-96b2-a196c68e739a",
       "decision": "Use HTTPS for all communication",
       "type": "security",
       "date": "2025-08-05",
       "active": true,
-      "synced_at": "2025-08-08T18:50:07.791060",
-      "export_timestamp": "2025-08-08T18:50:07.791117",
+      "synced_at": "2025-08-08T18:56:59.978051",
+      "export_timestamp": "2025-08-08T18:56:59.978057",
       "comment": "Security department requirement"
     },
     {
@@ -57,8 +18,8 @@
       "type": "technical",
       "date": "2025-08-07",
       "active": true,
-      "synced_at": "2025-08-08T18:50:10.893767",
-      "export_timestamp": "2025-08-08T18:50:10.893773",
+      "synced_at": "2025-08-08T18:57:00.994402",
+      "export_timestamp": "2025-08-08T18:57:00.994408",
       "comment": "Decision made after team discussion"
     },
     {
@@ -67,9 +28,48 @@
       "type": "technical",
       "date": "2025-08-07",
       "active": true,
-      "synced_at": "2025-08-08T18:50:12.126209",
-      "export_timestamp": "2025-08-08T18:50:12.126215",
+      "synced_at": "2025-08-08T18:57:01.874182",
+      "export_timestamp": "2025-08-08T18:57:01.874188",
       "comment": "Decision made after team discussion"
+    },
+    {
+      "id": "3bc0adb1-c3d6-47f6-b6cc-2fbd2f66cdf4",
+      "decision": "Implement Code Review for all pull requests",
+      "type": "process",
+      "date": "2025-08-06",
+      "active": true,
+      "synced_at": "2025-08-08T18:57:02.585064",
+      "export_timestamp": "2025-08-08T18:57:02.585071",
+      "comment": "Improves code quality and knowledge sharing"
+    },
+    {
+      "id": "53146f5b-d474-4a72-b3c9-ee3173945866",
+      "decision": "Use PostgreSQL as primary database for better performance",
+      "type": "technical",
+      "date": "2025-08-07",
+      "active": true,
+      "synced_at": "2025-08-08T18:57:03.306964",
+      "export_timestamp": "2025-08-08T18:57:03.306971",
+      "comment": "Decision made after performance analysis"
+    },
+    {
+      "id": "400f2ab6-ceff-4fd1-8b33-d6cf8dbb91a5",
+      "decision": "I approve technical autonomy for AI.",
+      "type": "strategy",
+      "date": "2025-08-07",
+      "active": true,
+      "synced_at": "2025-08-08T18:57:04.249824",
+      "export_timestamp": "2025-08-08T18:57:04.249830",
+      "comment": "Tags: decision, core"
+    },
+    {
+      "id": "97b0f32c-d1e4-49e5-ada8-7218292580df",
+      "decision": "quicktest_quicktest_20250808_003751",
+      "type": "technical",
+      "date": "2025-08-08",
+      "active": true,
+      "synced_at": "2025-08-08T18:57:04.876178",
+      "export_timestamp": "2025-08-08T18:57:04.876184"
     }
   ],
   "metadata": {
