@@ -5,7 +5,7 @@ Handles database operations with upsert logic and error handling
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Any, Optional
 import hashlib
 import requests
@@ -44,7 +44,7 @@ class SupabaseClient:
             return False
     
     @retry_with_backoff(max_retries=3)
-    def insert_decision(self, category: str, content: str, tags: List[str] = None, 
+    def insert_decision(self, category: str, content: str, tags: Optional[List[str]] = None, 
                        source: str = "system") -> Optional[str]:
         """Insert decision into decision_vault table"""
         data = {
@@ -103,7 +103,7 @@ class SupabaseClient:
             return False
     
     @retry_with_backoff(max_retries=3)  
-    def log_system_event(self, level: str, component: str, message: str, meta: Dict = None) -> bool:
+    def log_system_event(self, level: str, component: str, message: str, meta: Optional[Dict] = None) -> bool:
         """Log system event to system_logs table"""
         data = {
             'ts': datetime.now(timezone.utc).isoformat(),
@@ -152,11 +152,11 @@ class SupabaseClient:
             logger.error(f"Error storing run artifact: {e}")
             return False
     
-    def get_recent_logs(self, hours: int = 24, level: str = None) -> List[Dict]:
+    def get_recent_logs(self, hours: int = 24, level: Optional[str] = None) -> List[Dict]:
         """Get recent system logs"""
         try:
             from_time = (datetime.now(timezone.utc) - 
-                        datetime.timedelta(hours=hours)).isoformat()
+                        timedelta(hours=hours)).isoformat()
             
             query = f"ts=gte.{from_time}&order=ts.desc&limit=1000"
             if level:
