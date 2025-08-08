@@ -1,0 +1,106 @@
+You are an expert project auditor for a Python/Node Replit workspace that integrates Supabase and (optionally) Notion/GitHub.
+
+Task: Produce a chronological technical summary of everything done in this Repl, without modifying files.
+
+
+
+Rules
+
+
+
+Do not create/edit/delete any files or settings.
+Read the repo and give a clear, dated timeline based on file history, comments, and git logs (if available).
+If timestamps aren’t available, infer order from filenames, imports, and references—state your confidence.
+
+
+
+
+Deliverables
+
+
+
+Timeline (chronological)
+Bullet list of steps completed (created/edited/removed files, configured env vars, installed packages, added scripts/cron jobs, test runs).
+For each step: file path, brief purpose, and any related command that was (or should be) run.
+Current Architecture Snapshot
+Files & Roles: List key modules (e.g., memory_bridge.py, decision_vault.py, agents/*.py, database/operations.py, config files) and what each does.
+Env/Secrets used: Detect required env vars (SUPABASE_URL, SUPABASE_KEY or anon key, NOTION_API_KEY, NOTION_DATABASE_ID, GITHUB_TOKEN, etc.). Indicate which are present/missing in the Replit Secrets panel.
+Supabase usage:
+Confirm client library in use (e.g., supabase-py v2 or postgrest), how it’s instantiated, and where.
+List tables referenced (e.g., decision_vault, memory_logs, agent_runs) and expected columns/types.
+Flag mismatches between code expectations and actual schema (if code implies columns that don’t exist).
+
+Notion usage (if any): Where Notion API is called, which database properties are expected (e.g., message:title, date:date, tag:multi_select).
+GitHub/Backup: Any scripts or workflows that push/export to GitHub.
+Automation: Any cron, schedulers, or background loops (e.g., every 6h sync). Point to file/line.
+Health Check & Gaps
+Blocking errors (imports failing, version conflicts, missing env vars).
+Schema gaps (columns/tables that code expects but DB lacks).
+Config gaps (missing secrets, wrong key type—anon vs service role).
+Security risks (use of service role key client-side, secrets printed to logs).
+Performance/robustness (no retries, no logging, no idempotency).
+Mark each item as BLOCKER / WARN / NICE-TO-HAVE.
+Test Plan (runnable now)
+Provide exact shell commands to:
+a) install dependencies,
+b) run a minimal write test to Supabase (insert dummy row),
+c) run a read-back test,
+d) (optional) run Notion sync on a dummy record,
+e) echo success/failure clearly.
+Include small code snippets if a throwaway tests/test_memory_sync.py or scripts/smoke_test.py is needed.
+Fix‑List (Actionable, minimal changes)
+In priority order, numbered steps to reach a clean green state (no blockers).
+For each step, specify: file to touch, exact code block to add/replace, and why.
+Keep changes minimal and safe; note if schema migrations are required.
+Machine‑Readable Report
+Output a compact JSON at the end with keys:
+{
+
+  "timeline": [...],
+
+  "files": {...},
+
+  "env_required": [...],
+
+  "env_missing": [...],
+
+  "supabase": {"tables_used": [...], "schema_gaps": [...]},
+
+  "notion": {"used": true/false, "props_expected": [...]},
+
+  "automation": [...],
+
+  "issues": {"blockers": [...], "warnings": [...], "nice_to_have": [...]},
+
+  "test_plan": {"commands": [...], "files_to_add": [...]},
+
+  "recommended_fixes": [...]
+
+
+}
+
+
+
+
+Print the JSON after the human‑readable summary.
+
+
+
+
+
+Context/Assumptions
+
+
+
+This Repl is part of “Angles AI Universe” backend.
+Core goal: reliable Supabase memory (DecisionVault + logs), optional Notion mirroring, and future GitHub backup.
+If you detect both anon and service role keys, recommend safe usage (anon for client paths; service role only in server‑side trusted contexts).
+
+
+
+
+End with:
+
+
+
+“✅ Audit complete” if done, else “❌ Audit incomplete” with reason.
