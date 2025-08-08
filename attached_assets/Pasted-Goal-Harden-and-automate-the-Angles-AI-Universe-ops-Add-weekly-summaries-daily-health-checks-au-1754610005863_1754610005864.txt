@@ -1,0 +1,72 @@
+Goal: Harden and automate the Angles AI Universe™ ops. Add weekly summaries, daily health checks, automatic alerts, log retention, schema guard, and safe GitHub pushes. Use existing secrets (SUPABASE_URL/KEY, NOTION_TOKEN or NOTION_API_KEY, NOTION_DATABASE_ID, GITHUB_TOKEN, REPO_URL). Keep everything in English.
+
+TASKS
+
+1) Schedules (cron-like, Replit background):
+   - Daily 03:00 UTC: run health_check.py. If degraded, run conditional_restore.py.
+   - Daily 02:10 UTC: run run_backup_now.py (only export artifacts, never secrets).
+   - Weekly Sun 02:30 UTC: run generate_weekly_summary.py (see §2) and persist to GitHub + Notion.
+   - Every 60 min: run config_monitor.py (detect changed env/schema; auto-open issue if drift).
+
+2) Weekly Summary Generator:
+   - Build generate_weekly_summary.py that compiles:
+     * Ops events (syncs, backups, restores), success/fail counts, durations.
+     * Supabase stats (rows added/updated in decision_vault and ai_decision_log).
+     * Notion logging metrics (pages created/updated).
+     * GitHub backup/restore activity.
+     * “Top incidents” + “Next actions” checklist.
+   - Write Markdown to logs/summaries/summary_${UTC_TIMESTAMP}.md
+   - Create matching Notion page (Title: “Weekly Summary ${UTC_TIMESTAMP}”, tags: ["summary","ops"])
+   - Optional: insert technical decision into decision_vault describing summary publication.
+
+3) Alerts & Incident Handling:
+   - Implement alerts/notify.py with providers:
+     * GitHub: open/update issue in REPO_URL labeled ops-alert when health is degraded or job fails.
+     * Notion: create a page in NOTION_DATABASE_ID tagged ["alert"] with error context.
+   - Wire alerts into health_check.py, memory_bridge.py, backups, and restore flows.
+   - Add exponential retry/backoff (3 attempts) before alerting.
+
+4) Schema Guard for Supabase:
+   - schema_guard.py: verify required tables/columns/indexes:
+     * decision_vault(id uuid pk, decision text, date date, type text, active boolean, comment text, created_at timestamptz default now(), updated_at timestamptz default now(), synced boolean default false, synced_at timestamptz)
+     * ai_decision_log(id uuid pk, decision_text text, decision_type text default 'general', timestamp timestamptz default now(), confidence numeric, metadata jsonb)
+     * Indexes: idx_decision_date on decision_vault(date), idx_ai_log_timestamp on ai_decision_log(timestamp desc)
+   - If drift/missing objects: auto-generate SQL migration file in migrations/ with timestamp, apply safely, then re-run health check. Log every change.
+
+5) Safe GitHub Ops:
+   - git_helpers.py: standardized commit/push with:
+     * preflight `git fetch --prune`, fast-forward or rebase as default
+     * on conflict: create a branch backup/${UTC_TIMESTAMP}, open PR automatically, then notify via alerts
+     * never commit .env, secrets, tokens (enforce .gitignore rules)
+   - Update all scripts to use git_helpers for writes.
+
+6) Log Retention & Rotation:
+   - Keep active logs (last 30 days) in logs/active/
+   - Auto-archive older logs to logs/archive/YYYY/MM/
+   - Compress archives weekly; never push active raw logs to GitHub (only redacted artifacts).
+
+7) Health Dashboard Fix + Hardening:
+   - Repair the Sync Health Dashboard and make it read from stable JSON snapshots (generated during health_check) to avoid runtime flakiness.
+   - Add green/red status, last run times, last error, next actions.
+   - Persist a human-readable snapshot to logs/status/status_${UTC_TIMESTAMP}.md and update Notion.
+
+8) Docs & Self-test:
+   - Update/produce:
+     * README_AUTOMATION.md (all schedules, how to run locally, troubleshooting)
+     * RUNBOOK.md (incident → steps to recover, links to scripts, common errors)
+   - Add tests/ops_smoke_tests.py to simulate: missing index, Notion outage, Git fast-forward conflict, and verify alerts + recovery.
+
+9) Finalize & Verify:
+   - Run a complete dry run now (no destructive actions) and print a checklist:
+     Health ✓ | Backups ✓ | Weekly Summary ✓ | Alerts ✓ | Schema Guard ✓ | Git Safe Push ✓ | Retention ✓
+   - If all green, enable the schedules and print where to monitor:
+     * tail -f logs/backup_scheduler.log
+     * tail -f logs/health_scheduler.log
+     * tail -f logs/active/system_health.log
+   - Persist a summary of this hardening to:
+     * GitHub: logs/summaries/summary_${UTC_TIMESTAMP}.md
+     * Notion: “Ops Autopilot Enabled ${UTC_TIMESTAMP}”
+
+OUTPUT
+   - Print a compact status table for each component.
+   - If any step fails, open an ops-alert (GitHub issue) and create a Notion alert page with remediation steps.

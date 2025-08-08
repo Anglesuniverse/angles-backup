@@ -1,0 +1,52 @@
+You are my backend copilot for Angles AI Universe™. Add three final components and wire them into our existing memory/backup system.
+
+# 1) Monthly Deep Audit
+- Create scripts:
+  - audit/monthly_audit.py  → runs a full data‑integrity sweep:
+    - Validate Supabase tables (decision_vault, ai_decision_log, agent_activity): row counts, nulls, invalid enums, orphaned refs.
+    - Verify index usage (explain analyze on key queries) and log slow queries > 200ms.
+    - Verify Notion sync consistency: for each decision in Supabase where synced=true, confirm corresponding Notion page exists; reconcile any drift.
+    - Verify GitHub backup state: latest export/commit exists and repo HEAD reachable.
+    - Produce JSON + Markdown report to logs/audit/monthly_audit_{YYYYMM}.json and docs/audit/monthly_audit_{YYYYMM}.md.
+    - If any CRITICAL finding, create a Notion page under “ShoppingFriend database” in a “Audit Reports” view (create if missing) with status=RED.
+  - audit/verify_restore.py → dry‑run restore:
+    - Clone latest angles-backup repo to a temp dir.
+    - Load latest export/decisions_*.json and validate schema vs Supabase (no writes).
+    - Report PASS/FAIL + mismatches to logs/audit/restore_check.log and docs/audit/restore_check.md.
+
+# 2) Auto‑Benchmarking
+- Create perf/perf_benchmark.py that:
+  - Times: Supabase read (latest 50), write (1 test row to a temp table audit_perf), Notion write (to a “Perf Logs” db or fallback to tag “perf”), Git push (noop commit).
+  - Emits CSV to logs/perf/perf_{YYYYMMDD}.csv and rolling summary to docs/perf/summary.md (min/avg/p95).
+  - Never stores secrets or PII.
+
+# 3) Panic Kit (manual, one‑click)
+- scripts/run_audit_now.py → runs monthly_audit + verify_restore + perf_benchmark sequentially. Exit non‑zero on critical.
+- Update run_all.py to include an --audit flag that calls run_audit_now.
+
+# Scheduling & wiring
+- Add cron entries (use the same scheduler mechanism you created):
+  - Monthly deep audit: 1st of each month 03:30 UTC → python audit/monthly_audit.py
+  - Restore dry‑run: Sundays 03:50 UTC → python audit/verify_restore.py
+  - Perf benchmark: Daily 04:10 UTC → python perf/perf_benchmark.py
+- On each run:
+  - Append to logs/active/system_health.log
+  - Export sanitized reports to export/audit/ and export/perf/
+  - Commit & push those exports to GitHub (reuse existing git helper, same ignore rules)
+  - Post a short status line to Notion “Audit Reports” (create db with: Name, Date, Status, Findings, Link)
+
+# Docs & safety
+- Create docs/README_AUDIT.md with:
+  - What each job does, how to run locally, where logs live, how to interpret statuses.
+- Update .gitignore so only sanitized exports and docs are committed (no raw logs).
+- Add unit tests:
+  - tests/test_audit.py (mocks supabase/notion calls)
+  - tests/test_perf.py
+
+# Final validation
+- Run a one‑time audit now and print a 5‑line summary with:
+  - Supabase rows checked, drift count, latest backup commit, restore check PASS/FAIL, p95 latencies.
+- Confirm scheduler entries are registered and visible.
+- If anything is blocked by missing Notion views, create the minimal structures.
+
+Keep code clean, English only, same style as existing modules, and plug‑and‑play with current secrets.
