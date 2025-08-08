@@ -1,45 +1,15 @@
 {
-  "export_timestamp": "2025-08-08T10:54:40.898199",
+  "export_timestamp": "2025-08-08T10:54:50.692040",
   "total_decisions": 7,
   "decisions": [
-    {
-      "id": "8eb1b848-d434-4f41-a3d7-954c1a548cd4",
-      "decision": "Use Python as main backend language",
-      "type": "technical",
-      "date": "2025-08-07",
-      "active": true,
-      "synced_at": "2025-08-08T10:54:33.723275",
-      "export_timestamp": "2025-08-08T10:54:33.723281",
-      "comment": "Decision made after team discussion"
-    },
-    {
-      "id": "9bdb43d6-3112-4b79-a89e-5ab1830220f2",
-      "decision": "Use Python as main backend language",
-      "type": "technical",
-      "date": "2025-08-07",
-      "active": true,
-      "synced_at": "2025-08-08T10:54:34.932804",
-      "export_timestamp": "2025-08-08T10:54:34.932810",
-      "comment": "Decision made after team discussion"
-    },
-    {
-      "id": "3bc0adb1-c3d6-47f6-b6cc-2fbd2f66cdf4",
-      "decision": "Implement Code Review for all pull requests",
-      "type": "process",
-      "date": "2025-08-06",
-      "active": true,
-      "synced_at": "2025-08-08T10:54:36.931327",
-      "export_timestamp": "2025-08-08T10:54:36.931333",
-      "comment": "Improves code quality and knowledge sharing"
-    },
     {
       "id": "8328256c-90ea-4dc3-96b2-a196c68e739a",
       "decision": "Use HTTPS for all communication",
       "type": "security",
       "date": "2025-08-05",
       "active": true,
-      "synced_at": "2025-08-08T10:54:37.658092",
-      "export_timestamp": "2025-08-08T10:54:37.658111",
+      "synced_at": "2025-08-08T10:54:38.263424",
+      "export_timestamp": "2025-08-08T10:54:38.263430",
       "comment": "Security department requirement"
     },
     {
@@ -48,8 +18,8 @@
       "type": "strategy",
       "date": "2025-08-07",
       "active": true,
-      "synced_at": "2025-08-08T10:54:38.756819",
-      "export_timestamp": "2025-08-08T10:54:38.756824",
+      "synced_at": "2025-08-08T10:54:42.489056",
+      "export_timestamp": "2025-08-08T10:54:42.489062",
       "comment": "Tags: decision, core"
     },
     {
@@ -58,8 +28,8 @@
       "type": "technical",
       "date": "2025-08-07",
       "active": true,
-      "synced_at": "2025-08-08T10:54:39.997887",
-      "export_timestamp": "2025-08-08T10:54:39.997894",
+      "synced_at": "2025-08-08T10:54:46.561021",
+      "export_timestamp": "2025-08-08T10:54:46.561028",
       "comment": "Decision made after performance analysis"
     },
     {
@@ -68,8 +38,38 @@
       "type": "technical",
       "date": "2025-08-08",
       "active": true,
-      "synced_at": "2025-08-08T10:54:40.898161",
-      "export_timestamp": "2025-08-08T10:54:40.898167"
+      "synced_at": "2025-08-08T10:54:47.813117",
+      "export_timestamp": "2025-08-08T10:54:47.813123"
+    },
+    {
+      "id": "8eb1b848-d434-4f41-a3d7-954c1a548cd4",
+      "decision": "Use Python as main backend language",
+      "type": "technical",
+      "date": "2025-08-07",
+      "active": true,
+      "synced_at": "2025-08-08T10:54:49.071482",
+      "export_timestamp": "2025-08-08T10:54:49.071487",
+      "comment": "Decision made after team discussion"
+    },
+    {
+      "id": "9bdb43d6-3112-4b79-a89e-5ab1830220f2",
+      "decision": "Use Python as main backend language",
+      "type": "technical",
+      "date": "2025-08-07",
+      "active": true,
+      "synced_at": "2025-08-08T10:54:50.014066",
+      "export_timestamp": "2025-08-08T10:54:50.014071",
+      "comment": "Decision made after team discussion"
+    },
+    {
+      "id": "3bc0adb1-c3d6-47f6-b6cc-2fbd2f66cdf4",
+      "decision": "Implement Code Review for all pull requests",
+      "type": "process",
+      "date": "2025-08-06",
+      "active": true,
+      "synced_at": "2025-08-08T10:54:50.691996",
+      "export_timestamp": "2025-08-08T10:54:50.692001",
+      "comment": "Improves code quality and knowledge sharing"
     }
   ],
   "metadata": {
