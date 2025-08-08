@@ -1,0 +1,57 @@
+[
+  {
+    "timestamp": "2025-08-08T00:35:00.919365+00:00",
+    "title": "\u274c Quick Tests Failed",
+    "message": "Critical quick tests failed!\n\u2022 Tests failed: 3\n\u2022 Duration: 1.8s\n\u2022 Latest failure: file_permissions: Permission issues: memory_bridge.py not executable, github_backup.py not executable, github_restore.py not executable",
+    "severity": "critical",
+    "results": {
+      "github_url": "https://github.com/Anglesuniverse/angles-backup/issues/1",
+      "notion_url": "https://www.notion.so/Quick-Tests-Failed-249ea273e96081dfa531fe3af88bfcb8",
+      "timestamp": "2025-08-08T00:34:59.888306+00:00"
+    }
+  },
+  {
+    "timestamp": "2025-08-08T00:36:47.477276+00:00",
+    "title": "\u274c Quick Tests Failed",
+    "message": "Critical quick tests failed!\n\u2022 Tests failed: 2\n\u2022 Duration: 2.1s\n\u2022 Latest failure: file_permissions: Permission issues: memory_bridge.py not executable",
+    "severity": "critical",
+    "results": {
+      "github_url": "https://github.com/Anglesuniverse/angles-backup/issues/2",
+      "notion_url": "https://www.notion.so/Quick-Tests-Failed-249ea273e96081839292fcb277774320",
+      "timestamp": "2025-08-08T00:36:46.303309+00:00"
+    }
+  },
+  {
+    "timestamp": "2025-08-08T00:37:54.727956+00:00",
+    "title": "\u274c Quick Tests Failed",
+    "message": "Critical quick tests failed!\n\u2022 Tests failed: 2\n\u2022 Duration: 1.8s\n\u2022 Latest failure: file_permissions: Permission issues: quick_test.py not executable",
+    "severity": "critical",
+    "results": {
+      "github_url": "https://github.com/Anglesuniverse/angles-backup/issues/3",
+      "notion_url": "https://www.notion.so/Quick-Tests-Failed-249ea273e9608121932cc66e55959feb",
+      "timestamp": "2025-08-08T00:37:53.297037+00:00"
+    }
+  },
+  {
+    "timestamp": "2025-08-08T00:38:46.184846+00:00",
+    "title": "\u274c Quick Tests Failed",
+    "message": "Critical quick tests failed!\n\u2022 Tests failed: 1\n\u2022 Duration: 1.9s\n\u2022 Latest failure: file_permissions: Permission issues: quick_test.py not executable",
+    "severity": "critical",
+    "results": {
+      "github_url": "https://github.com/Anglesuniverse/angles-backup/issues/4",
+      "notion_url": "https://www.notion.so/Quick-Tests-Failed-249ea273e960815b88a6f797fa4b2d7c",
+      "timestamp": "2025-08-08T00:38:45.211295+00:00"
+    }
+  },
+  {
+    "timestamp": "2025-08-08T00:39:18.706499+00:00",
+    "title": "\u2705 Quick Tests Passed",
+    "message": "All quick tests passed successfully!\n\u2022 Tests passed: 7\n\u2022 Duration: 2.2s",
+    "severity": "info",
+    "results": {
+      "github_url": "https://github.com/Anglesuniverse/angles-backup/issues/5",
+      "notion_url": "https://www.notion.so/Quick-Tests-Passed-249ea273e9608180a452f65d816d948a",
+      "timestamp": "2025-08-08T00:39:15.840877+00:00"
+    }
+  }
+]

@@ -1,14 +1,7 @@
 #!/usr/bin/env python3
 """
-GitHub Restore System for Angles AI Universe™ Memory System
-Restores AI memory system from backups stored in GitHub repo exports/
-
-This module provides comprehensive disaster recovery capabilities:
-- Automatic snapshot detection and selection
-- Safe Supabase upserts with conflict resolution
-- Optional Notion synchronization
-- Comprehensive validation and logging
-- Dry-run mode for safety verification
+Angles AI Universe™ GitHub Restore System
+Intelligent restoration with drift detection and data integrity validation
 
 Author: Angles AI Universe™ Backend Team
 Version: 1.0.0
@@ -17,837 +10,676 @@ Version: 1.0.0
 import os
 import sys
 import json
-import argparse
+import tempfile
+import shutil
 import logging
-from datetime import datetime
+import requests
+import subprocess
+import hashlib
+import zipfile
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple
-from logging.handlers import RotatingFileHandler
+from typing import Dict, List, Any, Optional, Set, Tuple
+import difflib
 
-# Add project root to path for imports
+# Add parent directory to path for imports
 sys.path.append(str(Path(__file__).parent))
 
-from utils.git_helpers import GitHelpers
-from utils.json_sanitizer import JSONSanitizer
-from notion_backup_logger import create_notion_logger
-from restore_sanity_check import RestoreSanityChecker
+try:
+    from git_helpers import GitHelper
+except ImportError:
+    GitHelper = None
 
 try:
-    from supabase import create_client, Client as SupabaseClient
+    from alerts.notify import AlertManager
 except ImportError:
-    SupabaseClient = None
-    create_client = None
-
-try:
-    from notion_client import Client as NotionClient
-except ImportError:
-    NotionClient = None
-
-# Configure logging
-def setup_logging() -> logging.Logger:
-    """Setup rotating log handler for restore operations"""
-    logger = logging.getLogger('github_restore')
-    logger.setLevel(logging.INFO)
-    
-    # Ensure logs directory exists
-    log_dir = Path('logs')
-    log_dir.mkdir(exist_ok=True)
-    
-    # Rotating file handler
-    file_handler = RotatingFileHandler(
-        'logs/restore.log',
-        maxBytes=1024*1024,  # 1MB
-        backupCount=5,
-        encoding='utf-8'
-    )
-    file_handler.setLevel(logging.INFO)
-    
-    # Console handler
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)
-    
-    # Formatter
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    file_handler.setFormatter(formatter)
-    console_handler.setFormatter(formatter)
-    
-    logger.addHandler(file_handler)
-    logger.addHandler(console_handler)
-    
-    return logger
-
-logger = setup_logging()
+    AlertManager = None
 
 class GitHubRestoreSystem:
-    """Main class for GitHub-based disaster recovery"""
+    """Comprehensive GitHub restore system with drift detection"""
     
     def __init__(self):
-        """Initialize the restore system with environment configuration"""
-        logger.info("Initializing GitHub Restore System")
+        """Initialize GitHub restore system"""
+        self.setup_logging()
+        self.load_environment()
+        self.git_helper = GitHelper() if GitHelper else None
+        self.alert_manager = AlertManager() if AlertManager else None
         
-        # Load environment variables
-        self.supabase_url = os.getenv('SUPABASE_URL')
-        self.supabase_key = os.getenv('SUPABASE_KEY')
-        self.notion_token = os.getenv('NOTION_TOKEN')
-        self.notion_database_id = os.getenv('NOTION_DATABASE_ID')
-        self.github_token = os.getenv('GITHUB_TOKEN')
-        self.repo_url = os.getenv('REPO_URL')
-        
-        # Validate required environment variables
-        self._validate_environment()
-        
-        # Initialize clients
-        self.supabase = None
-        self.notion = None
-        self.git_helpers = GitHelpers()
-        self.json_sanitizer = JSONSanitizer()
-        self.notion_logger = create_notion_logger()
-        
-        # Initialize clients
-        self._initialize_clients()
-        
-        logger.info("GitHub Restore System initialized successfully")
-    
-    def _validate_environment(self) -> None:
-        """Validate required environment variables"""
-        required_vars = {
-            'SUPABASE_URL': self.supabase_url,
-            'SUPABASE_KEY': self.supabase_key,
-            'GITHUB_TOKEN': self.github_token,
-            'REPO_URL': self.repo_url
+        # Restore configuration
+        self.config = {
+            'temp_dir_prefix': 'restore_temp_',
+            'backup_dir': 'backups',
+            'export_dir': 'export',
+            'max_drift_threshold': 10,  # Max % difference before alert
+            'critical_drift_threshold': 25,  # % difference for critical alert
+            'dry_run_mode': False,
+            'verify_checksums': True,
+            'compare_with_live': True,
+            'restore_tables': ['decision_vault', 'memory_log', 'agent_activity'],
+            'excluded_restore_paths': [
+                'logs/',
+                '__pycache__/',
+                '.git/',
+                'node_modules/',
+                '*.tmp',
+                '*.temp',
+                '*.log'
+            ]
         }
         
-        missing_vars = [var for var, value in required_vars.items() if not value]
+        # Restore results tracking
+        self.restore_results = {
+            'timestamp': datetime.now(timezone.utc).isoformat(),
+            'restore_id': f"restore_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+            'status': 'unknown',
+            'mode': 'dry_run' if self.config['dry_run_mode'] else 'live',
+            'backup_source': None,
+            'files_restored': 0,
+            'files_skipped': 0,
+            'drift_detected': False,
+            'drift_analysis': {},
+            'checksum_verification': {},
+            'data_comparison': {},
+            'errors': [],
+            'warnings': [],
+            'recommendations': [],
+            'duration_seconds': 0
+        }
         
-        if missing_vars:
-            error_msg = f"Missing required environment variables: {', '.join(missing_vars)}"
-            logger.error(error_msg)
-            raise ValueError(error_msg)
-        
-        # Optional variables
-        if not self.notion_token:
-            logger.info("NOTION_TOKEN not provided - Notion sync will be disabled")
-        if not self.notion_database_id:
-            logger.info("NOTION_DATABASE_ID not provided - Notion sync will be disabled")
+        self.logger.info("🔄 Angles AI Universe™ GitHub Restore System Initialized")
     
-    def _initialize_clients(self) -> None:
-        """Initialize Supabase and Notion clients"""
-        # Initialize Supabase client
+    def setup_logging(self):
+        """Setup logging for restore system"""
+        os.makedirs("logs/restore", exist_ok=True)
+        
+        self.logger = logging.getLogger('github_restore')
+        self.logger.setLevel(logging.INFO)
+        
+        # Remove existing handlers
+        for handler in self.logger.handlers[:]:
+            self.logger.removeHandler(handler)
+        
+        # File handler
+        log_file = "logs/restore/github_restore.log"
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setLevel(logging.INFO)
+        
+        # Console handler
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.INFO)
+        
+        # Formatter
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        file_handler.setFormatter(formatter)
+        console_handler.setFormatter(formatter)
+        
+        # Add handlers
+        self.logger.addHandler(file_handler)
+        self.logger.addHandler(console_handler)
+    
+    def load_environment(self):
+        """Load environment variables"""
+        self.env = {
+            'github_token': os.getenv('GITHUB_TOKEN'),
+            'repo_url': os.getenv('REPO_URL'),
+            'supabase_url': os.getenv('SUPABASE_URL'),
+            'supabase_key': os.getenv('SUPABASE_KEY')
+        }
+        
+        self.logger.info("📋 Environment loaded for GitHub restore")
+    
+    def clone_backup_repository(self, temp_dir: str) -> bool:
+        """Clone backup repository to temporary directory"""
         try:
-            if SupabaseClient is None or create_client is None:
-                logger.error("Supabase client library not available")
-                raise ImportError("supabase library not installed")
+            if not self.env['repo_url']:
+                self.logger.error("❌ REPO_URL not configured")
+                return False
             
-            if not self.supabase_url or not self.supabase_key:
-                raise ValueError("Supabase URL and key are required")
+            self.logger.info(f"📥 Cloning backup repository to {temp_dir}...")
             
-            self.supabase = create_client(self.supabase_url, self.supabase_key)
-            logger.info("✓ Supabase client initialized")
+            # Use git clone
+            cmd = ['git', 'clone', self.env['repo_url'], temp_dir]
+            
+            if self.env['github_token']:
+                # Add authentication
+                auth_url = self.env['repo_url'].replace('https://', f"https://{self.env['github_token']}@")
+                cmd = ['git', 'clone', auth_url, temp_dir]
+            
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+            
+            if result.returncode == 0:
+                self.logger.info("✅ Repository cloned successfully")
+                return True
+            else:
+                self.logger.error(f"❌ Git clone failed: {result.stderr}")
+                self.restore_results['errors'].append(f"Git clone failed: {result.stderr}")
+                return False
+        
         except Exception as e:
-            logger.error(f"Failed to initialize Supabase client: {e}")
-            raise
-        
-        # Initialize Notion client (optional)
-        if self.notion_token and self.notion_database_id:
-            try:
-                if NotionClient is None:
-                    logger.warning("Notion client library not available")
-                else:
-                    self.notion = NotionClient(auth=self.notion_token)
-                    logger.info("✓ Notion client initialized")
-            except Exception as e:
-                logger.warning(f"Failed to initialize Notion client: {e}")
-                self.notion = None
+            self.logger.error(f"❌ Clone operation failed: {e}")
+            self.restore_results['errors'].append(f"Clone operation failed: {e}")
+            return False
     
-    def ensure_git_repository(self) -> Dict[str, Any]:
-        """Ensure git repository is set up and up-to-date"""
-        logger.info("Ensuring git repository is ready")
+    def find_latest_backup(self, repo_dir: str) -> Optional[str]:
+        """Find the latest backup archive in repository"""
+        try:
+            backup_dir = os.path.join(repo_dir, self.config['backup_dir'])
+            
+            if not os.path.exists(backup_dir):
+                self.logger.error(f"❌ Backup directory not found: {backup_dir}")
+                return None
+            
+            # Find all backup files
+            backup_files = []
+            for filename in os.listdir(backup_dir):
+                if filename.endswith('.zip') and filename.startswith('backup_'):
+                    backup_files.append(filename)
+            
+            if not backup_files:
+                self.logger.error("❌ No backup files found")
+                return None
+            
+            # Sort by filename (contains timestamp)
+            backup_files.sort(reverse=True)
+            latest_backup = backup_files[0]
+            
+            self.logger.info(f"📦 Latest backup found: {latest_backup}")
+            return os.path.join(backup_dir, latest_backup)
         
-        # Setup repository
-        setup_result = self.git_helpers.ensure_repository()
-        if not setup_result['success']:
-            return setup_result
-        
-        # Pull latest changes
-        pull_result = self.git_helpers.safe_pull()
-        if not pull_result['success']:
-            logger.warning(f"Pull failed: {pull_result.get('error', 'Unknown error')}")
-            # Continue anyway - we might still have local exports
-        
-        return {"success": True, "message": "Git repository ready"}
+        except Exception as e:
+            self.logger.error(f"❌ Error finding backup: {e}")
+            return None
     
-    def find_snapshot_files(self, target_date: Optional[str] = None, explicit_files: Optional[List[str]] = None) -> Dict[str, Any]:
-        """
-        Find snapshot files to restore from
+    def verify_backup_checksums(self, backup_path: str) -> bool:
+        """Verify backup archive checksums"""
+        if not self.config['verify_checksums']:
+            return True
         
-        Args:
-            target_date: Specific date to restore (YYYY-MM-DD)
-            explicit_files: Explicit list of files to restore
+        try:
+            checksum_file = backup_path + '.checksums'
             
-        Returns:
-            Dictionary with found files and metadata
-        """
-        logger.info("Finding snapshot files")
-        
-        if explicit_files:
-            # Use explicit files
-            found_files = []
-            for file_path in explicit_files:
-                path = Path(file_path)
-                if path.exists():
-                    found_files.append({
-                        "path": str(path),
-                        "type": "explicit",
-                        "date": "unknown"
-                    })
-                else:
-                    logger.warning(f"Explicit file not found: {file_path}")
+            if not os.path.exists(checksum_file):
+                self.logger.warning("⚠️ Checksum file not found, skipping verification")
+                return True
             
-            return {
-                "success": len(found_files) > 0,
-                "files": found_files,
-                "selection_method": "explicit"
-            }
-        
-        # Look in exports directory
-        exports_dir = Path('export')
-        if not exports_dir.exists():
-            return {
-                "success": False,
-                "error": "exports/ directory not found",
-                "files": []
-            }
-        
-        # Find decision vault files
-        vault_pattern = 'decision_vault_*.json' if target_date is None else f'decision_vault_{target_date}.json'
-        vault_files = list(exports_dir.glob(vault_pattern))
-        
-        # Find notion decision files
-        notion_pattern = 'notion_decisions_*.json' if target_date is None else f'notion_decisions_{target_date}.json'
-        notion_files = list(exports_dir.glob(notion_pattern))
-        
-        # Find general decision exports
-        general_pattern = 'decisions_*.json' if target_date is None else f'decisions_{target_date.replace("-", "")}.json'
-        general_files = list(exports_dir.glob(general_pattern))
-        
-        all_files = []
-        
-        # Process found files
-        for file_path in vault_files:
-            date_match = file_path.stem.split('_')[-1]
-            all_files.append({
-                "path": str(file_path),
-                "type": "decision_vault",
-                "date": date_match
-            })
-        
-        for file_path in notion_files:
-            date_match = file_path.stem.split('_')[-1]
-            all_files.append({
-                "path": str(file_path),
-                "type": "notion_decisions",
-                "date": date_match
-            })
-        
-        for file_path in general_files:
-            # Extract date from filename like decisions_20250807.json
-            date_part = file_path.stem.split('_')[-1]
-            if len(date_part) == 8 and date_part.isdigit():
-                formatted_date = f"{date_part[:4]}-{date_part[4:6]}-{date_part[6:8]}"
-            else:
-                formatted_date = date_part
-            all_files.append({
-                "path": str(file_path),
-                "type": "decisions_export", 
-                "date": formatted_date
-            })
-        
-        if target_date is None and all_files:
-            # Auto-select latest files
-            all_files.sort(key=lambda x: x['date'], reverse=True)
-            latest_date = all_files[0]['date']
-            selected_files = [f for f in all_files if f['date'] == latest_date]
-        else:
-            selected_files = all_files
-        
-        return {
-            "success": len(selected_files) > 0,
-            "files": selected_files,
-            "selection_method": "auto" if target_date is None else "date_specific",
-            "target_date": target_date
-        }
-    
-    def load_and_validate_files(self, file_list: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """
-        Load and validate all snapshot files
-        
-        Args:
-            file_list: List of file dictionaries from find_snapshot_files
+            self.logger.info("🔍 Verifying backup checksums...")
             
-        Returns:
-            Dictionary with loaded and validated data
-        """
-        logger.info(f"Loading and validating {len(file_list)} files")
-        
-        all_records = []
-        file_results = []
-        total_errors = 0
-        
-        for file_info in file_list:
-            logger.info(f"Processing file: {file_info['path']}")
+            with open(checksum_file, 'r') as f:
+                stored_checksums = json.load(f)
             
-            validation_result = self.json_sanitizer.validate_json_file(file_info['path'])
-            
-            if validation_result['success']:
-                records = validation_result['records']
-                all_records.extend(records)
+            # Extract backup to temp dir for verification
+            with tempfile.TemporaryDirectory() as verify_dir:
+                with zipfile.ZipFile(backup_path, 'r') as zipf:
+                    zipf.extractall(verify_dir)
                 
-                file_results.append({
-                    "file_path": file_info['path'],
-                    "file_type": file_info['type'],
-                    "file_date": file_info['date'],
-                    "total_records": validation_result['total_records'],
-                    "valid_records": validation_result['valid_records'],
-                    "invalid_records": validation_result['invalid_records'],
-                    "success": True
-                })
+                verified = 0
+                failed = 0
                 
-                total_errors += validation_result['invalid_records']
-                
-                logger.info(f"✓ Loaded {validation_result['valid_records']} valid records from {file_info['path']}")
-                
-                if validation_result['invalid_records'] > 0:
-                    logger.warning(f"⚠ Skipped {validation_result['invalid_records']} invalid records")
-            else:
-                logger.error(f"✗ Failed to load {file_info['path']}: {validation_result['error']}")
-                file_results.append({
-                    "file_path": file_info['path'],
-                    "file_type": file_info['type'],
-                    "file_date": file_info['date'],
-                    "success": False,
-                    "error": validation_result['error']
-                })
-        
-        # Deduplicate records by ID
-        unique_records = {}
-        for record in all_records:
-            record_id = record.get('id') or self.json_sanitizer.create_deterministic_id(record)
-            if record_id not in unique_records:
-                unique_records[record_id] = self.json_sanitizer.normalize_record(record)
-        
-        logger.info(f"Total unique records after deduplication: {len(unique_records)}")
-        
-        return {
-            "success": len(unique_records) > 0,
-            "records": list(unique_records.values()),
-            "total_records": len(all_records),
-            "unique_records": len(unique_records),
-            "duplicates_removed": len(all_records) - len(unique_records),
-            "file_results": file_results,
-            "total_errors": total_errors
-        }
-    
-    def restore_to_supabase(self, records: List[Dict[str, Any]], dry_run: bool = False, force: bool = False) -> Dict[str, Any]:
-        """
-        Restore records to Supabase decision_vault table
-        
-        Args:
-            records: List of normalized records to restore
-            dry_run: If True, only simulate the restore
-            force: If True, overwrite newer records
-            
-        Returns:
-            Dictionary with restore results
-        """
-        logger.info(f"{'Simulating' if dry_run else 'Performing'} Supabase restore of {len(records)} records")
-        
-        if dry_run:
-            # Dry run - just log what would be done
-            sample_records = records[:3]
-            logger.info("DRY RUN - Would restore the following sample records:")
-            for i, record in enumerate(sample_records):
-                logger.info(f"  {i+1}. ID: {record.get('id', 'N/A')}, Decision: {record.get('decision', 'N/A')[:50]}...")
-            
-            return {
-                "success": True,
-                "dry_run": True,
-                "total_records": len(records),
-                "would_insert": len(records),
-                "would_update": 0,
-                "would_skip": 0
-            }
-        
-        # Actual restore
-        inserted = 0
-        updated = 0
-        skipped = 0
-        failed = 0
-        
-        for record in records:
-            try:
-                record_id = record['id']
-                
-                # Check if record exists
-                if not self.supabase:
-                    raise ValueError("Supabase client not initialized")
-                existing = self.supabase.table('decision_vault').select('*').eq('id', record_id).execute()
-                
-                if existing.data:
-                    # Record exists - check if we should update
-                    existing_record = existing.data[0]
+                for file_path, expected_checksum in stored_checksums.items():
+                    extracted_file = os.path.join(verify_dir, file_path)
                     
-                    # Compare updated_at timestamps if both exist
-                    if not force and 'updated_at' in existing_record and 'updated_at' in record:
-                        try:
-                            existing_ts = datetime.fromisoformat(existing_record['updated_at'].replace('Z', '+00:00'))
-                            record_ts = datetime.fromisoformat(record['updated_at'].replace('Z', '+00:00'))
-                            
-                            if existing_ts > record_ts:
-                                logger.debug(f"Skipping older record: {record_id}")
-                                skipped += 1
-                                continue
-                        except ValueError:
-                            logger.warning(f"Could not compare timestamps for record: {record_id}")
-                    
-                    # Update existing record
-                    if not self.supabase:
-                        raise ValueError("Supabase client not initialized")
-                    update_result = self.supabase.table('decision_vault').update(record).eq('id', record_id).execute()
-                    if update_result.data:
-                        updated += 1
-                        logger.debug(f"Updated record: {record_id}")
-                    else:
-                        failed += 1
-                        logger.error(f"Failed to update record: {record_id}")
-                else:
-                    # Insert new record
-                    if not self.supabase:
-                        raise ValueError("Supabase client not initialized")
-                    insert_result = self.supabase.table('decision_vault').insert(record).execute()
-                    if insert_result.data:
-                        inserted += 1
-                        logger.debug(f"Inserted record: {record_id}")
-                    else:
-                        failed += 1
-                        logger.error(f"Failed to insert record: {record_id}")
+                    if os.path.exists(extracted_file):
+                        actual_checksum = self.calculate_checksum(extracted_file)
                         
-            except Exception as e:
-                failed += 1
-                logger.error(f"Error processing record {record.get('id', 'unknown')}: {e}")
-        
-        success = failed == 0
-        
-        logger.info(f"Supabase restore completed: {inserted} inserted, {updated} updated, {skipped} skipped, {failed} failed")
-        
-        return {
-            "success": success,
-            "dry_run": False,
-            "total_records": len(records),
-            "inserted": inserted,
-            "updated": updated,
-            "skipped": skipped,
-            "failed": failed
-        }
-    
-    def restore_to_notion(self, records: List[Dict[str, Any]], dry_run: bool = False) -> Dict[str, Any]:
-        """
-        Restore records to Notion database (optional)
-        
-        Args:
-            records: List of normalized records to restore
-            dry_run: If True, only simulate the restore
+                        if actual_checksum == expected_checksum:
+                            verified += 1
+                        else:
+                            failed += 1
+                            self.logger.error(f"❌ Checksum mismatch: {file_path}")
+                            self.restore_results['errors'].append(f"Checksum mismatch: {file_path}")
+                    else:
+                        failed += 1
+                        self.logger.error(f"❌ Missing file in backup: {file_path}")
             
-        Returns:
-            Dictionary with restore results
-        """
-        if not self.notion or not self.notion_database_id:
-            return {
-                "success": True,
-                "skipped": True,
-                "reason": "Notion not configured"
+            self.restore_results['checksum_verification'] = {
+                'verified': verified,
+                'failed': failed,
+                'success_rate': (verified / (verified + failed)) * 100 if (verified + failed) > 0 else 0
             }
-        
-        logger.info(f"{'Simulating' if dry_run else 'Performing'} Notion restore of {len(records)} records")
-        
-        if dry_run:
-            return {
-                "success": True,
-                "dry_run": True,
-                "total_records": len(records),
-                "would_create": len(records)
-            }
-        
-        # Actual Notion restore
-        created = 0
-        skipped = 0
-        failed = 0
-        
-        # Get existing pages to avoid duplicates
-        try:
-            if not self.notion:
-                raise ValueError("Notion client not initialized")
-            query_result = self.notion.databases.query(database_id=self.notion_database_id)
-            existing_pages = query_result.get('results', []) if isinstance(query_result, dict) else []
-            existing_decisions = set()
             
-            for page in existing_pages:
-                props = page.get('properties', {})
-                title_prop = props.get('Name', {}) or props.get('Title', {})
-                date_prop = props.get('Date', {})
-                
-                if title_prop.get('title') and date_prop.get('date'):
-                    title_text = title_prop['title'][0]['text']['content'] if title_prop['title'] else ''
-                    date_value = date_prop['date']['start'] if date_prop['date'] else ''
-                    existing_decisions.add((title_text, date_value))
-            
-        except Exception as e:
-            logger.warning(f"Could not fetch existing Notion pages: {e}")
-            existing_decisions = set()
-        
-        for record in records:
-            try:
-                decision_text = record.get('decision', '')
-                decision_date = record.get('date', '')
-                
-                # Check for duplicates
-                if (decision_text, decision_date) in existing_decisions:
-                    logger.debug(f"Skipping duplicate Notion page: {decision_text[:50]}...")
-                    skipped += 1
-                    continue
-                
-                # Create Notion page
-                page_data = {
-                    "parent": {"database_id": self.notion_database_id},
-                    "properties": {
-                        "Name": {
-                            "title": [{"text": {"content": decision_text}}]
-                        },
-                        "Message": {
-                            "rich_text": [{"text": {"content": record.get('comment', '')}}]
-                        },
-                        "Date": {
-                            "date": {"start": decision_date}
-                        },
-                        "Tag": {
-                            "multi_select": [{"name": record.get('type', 'unknown')}]
-                        }
-                    }
-                }
-                
-                result = self.notion.pages.create(**page_data)
-                if result:
-                    created += 1
-                    logger.debug(f"Created Notion page: {decision_text[:50]}...")
-                else:
-                    failed += 1
-                    
-            except Exception as e:
-                failed += 1
-                logger.error(f"Error creating Notion page for record {record.get('id', 'unknown')}: {e}")
-        
-        logger.info(f"Notion restore completed: {created} created, {skipped} skipped, {failed} failed")
-        
-        return {
-            "success": failed == 0,
-            "dry_run": False,
-            "total_records": len(records),
-            "created": created,
-            "skipped": skipped,
-            "failed": failed
-        }
-    
-    def run_restore(self, target_date: Optional[str] = None, explicit_files: Optional[List[str]] = None, 
-                   dry_run: bool = False, force: bool = False, with_notion: bool = False) -> Dict[str, Any]:
-        """
-        Run complete restore operation
-        
-        Args:
-            target_date: Specific date to restore (YYYY-MM-DD)
-            explicit_files: Explicit list of files to restore
-            dry_run: If True, only simulate the restore
-            force: If True, overwrite newer records
-            with_notion: If True, also restore to Notion
-            
-        Returns:
-            Dictionary with complete restore results
-        """
-        start_time = datetime.now()
-        logger.info(f"Starting {'DRY RUN' if dry_run else 'LIVE'} restore operation")
-        
-        try:
-            # Step 1: Ensure git repository
-            git_result = self.ensure_git_repository()
-            if not git_result['success']:
-                return {
-                    "success": False,
-                    "error": f"Git setup failed: {git_result.get('error', 'Unknown error')}",
-                    "duration": (datetime.now() - start_time).total_seconds()
-                }
-            
-            # Step 2: Find snapshot files
-            files_result = self.find_snapshot_files(target_date, explicit_files)
-            if not files_result['success']:
-                return {
-                    "success": False,
-                    "error": f"No snapshot files found: {files_result.get('error', 'No files match criteria')}",
-                    "duration": (datetime.now() - start_time).total_seconds()
-                }
-            
-            # Step 2.5: Run pre-restore sanity check
-            if not dry_run:  # Skip sanity check for dry runs to allow inspection
-                logger.info("🔍 Running pre-restore sanity check...")
-                
-                restore_file_paths = [file_info['path'] for file_info in files_result['files']]
-                sanity_checker = RestoreSanityChecker()
-                sanity_results = sanity_checker.run_restore_sanity_checks(restore_file_paths)
-                
-                if not sanity_results['overall_passed']:
-                    duration = (datetime.now() - start_time).total_seconds()
-                    error_msg = f"Restore sanity check failed: {sanity_results['total_errors_found']} errors found"
-                    
-                    # Log failure to Notion
-                    self.notion_logger.log_restore_sanity_check(
-                        success=False,
-                        files_checked=sanity_results['total_files_checked'],
-                        restore_files_count=len(restore_file_paths),
-                        errors_found=sanity_results['total_errors_found'],
-                        warnings_found=sanity_results['total_warnings_found'],
-                        duration=duration,
-                        error=error_msg,
-                        details="Restore aborted due to failed sanity check"
-                    )
-                    
-                    return {
-                        "success": False,
-                        "error": error_msg,
-                        "sanity_check_failed": True,
-                        "sanity_results": sanity_results,
-                        "duration": duration
-                    }
-                
-                logger.info(f"✅ Restore sanity check passed: {sanity_results['passed_checks']}/{sanity_results['total_checks']} checks")
-                
-                # Log success to Notion
-                self.notion_logger.log_restore_sanity_check(
-                    success=True,
-                    files_checked=sanity_results['total_files_checked'],
-                    restore_files_count=len(restore_file_paths),
-                    errors_found=sanity_results['total_errors_found'],
-                    warnings_found=sanity_results['total_warnings_found'],
-                    details=f"Restore sanity check passed: {sanity_results['passed_checks']}/{sanity_results['total_checks']} checks"
-                )
+            if failed == 0:
+                self.logger.info(f"✅ All {verified} checksums verified successfully")
+                return True
             else:
-                logger.info("ℹ️ Skipping sanity check for dry run")
-            
-            # Step 3: Load and validate data
-            data_result = self.load_and_validate_files(files_result['files'])
-            if not data_result['success']:
-                return {
-                    "success": False,
-                    "error": "Failed to load valid data from snapshot files",
-                    "duration": (datetime.now() - start_time).total_seconds()
-                }
-            
-            # Step 4: Restore to Supabase
-            supabase_result = self.restore_to_supabase(data_result['records'], dry_run, force)
-            
-            # Step 5: Restore to Notion (optional)
-            notion_result = None
-            if with_notion:
-                notion_result = self.restore_to_notion(data_result['records'], dry_run)
-            
-            # Calculate final results
-            duration = (datetime.now() - start_time).total_seconds()
-            
-            overall_success = supabase_result['success'] and (notion_result is None or notion_result['success'])
-            
-            result = {
-                "success": overall_success,
-                "dry_run": dry_run,
-                "duration": duration,
-                "files_processed": len(files_result['files']),
-                "records_loaded": data_result['unique_records'],
-                "supabase_result": supabase_result,
-                "notion_result": notion_result,
-                "snapshot_info": {
-                    "selection_method": files_result['selection_method'],
-                    "target_date": files_result.get('target_date'),
-                    "files": [f['path'] for f in files_result['files']]
-                }
-            }
-            
-            # Generate source commit link if possible
-            source_commit_link = None
-            try:
-                import subprocess
-                hash_result = subprocess.run(['git', 'rev-parse', 'HEAD'], capture_output=True, text=True)
-                if hash_result.returncode == 0:
-                    commit_hash = hash_result.stdout.strip()
-                    repo_url = self.git_helpers.repo_url
-                    if repo_url and 'github.com' in repo_url:
-                        repo_url = repo_url.replace('.git', '')
-                        if '@' in repo_url:
-                            repo_url = 'https://github.com/' + repo_url.split('@github.com/')[-1]
-                        source_commit_link = f"{repo_url}/commit/{commit_hash}"
-            except Exception:
-                pass
-            
-            # Log to Notion (only for non-dry-run operations)
-            if not dry_run:
-                restore_details = f"Files: {len(files_result['files'])}, Records: {data_result['unique_records']}"
-                if supabase_result.get('inserted'):
-                    restore_details += f", Inserted: {supabase_result['inserted']}"
-                if supabase_result.get('updated'):
-                    restore_details += f", Updated: {supabase_result['updated']}"
-                
-                self.notion_logger.log_restore(
-                    success=overall_success,
-                    items_processed=data_result['unique_records'],
-                    source_commit_link=source_commit_link,
-                    duration=duration,
-                    error=None if overall_success else "Restore operation had failures",
-                    details=restore_details
-                )
-            
-            logger.info(f"Restore operation completed in {duration:.2f} seconds")
-            return result
-            
+                self.logger.error(f"❌ {failed} checksum verification failures out of {verified + failed}")
+                return False
+        
         except Exception as e:
-            duration = (datetime.now() - start_time).total_seconds()
-            logger.error(f"Restore operation failed: {e}")
+            self.logger.error(f"❌ Checksum verification failed: {e}")
+            self.restore_results['errors'].append(f"Checksum verification failed: {e}")
+            return False
+    
+    def calculate_checksum(self, file_path: str) -> str:
+        """Calculate file checksum"""
+        hash_func = hashlib.sha256()
+        
+        try:
+            with open(file_path, 'rb') as f:
+                for chunk in iter(lambda: f.read(4096), b""):
+                    hash_func.update(chunk)
+            return hash_func.hexdigest()
+        except Exception:
+            return ""
+    
+    def analyze_data_drift(self, backup_data: Dict[str, List], live_data: Dict[str, List]) -> Dict[str, Any]:
+        """Analyze drift between backup and live data"""
+        drift_analysis = {
+            'total_drift_score': 0,
+            'tables': {},
+            'critical_issues': [],
+            'recommendations': []
+        }
+        
+        total_tables = 0
+        total_drift = 0
+        
+        for table_name in self.config['restore_tables']:
+            backup_records = backup_data.get(table_name, [])
+            live_records = live_data.get(table_name, [])
             
-            # Log failure to Notion (only for non-dry-run operations)
-            if not dry_run:
-                self.notion_logger.log_restore(
-                    success=False,
-                    items_processed=0,
-                    duration=duration,
-                    error=str(e),
-                    details="Restore operation failed with exception"
+            table_analysis = self.analyze_table_drift(table_name, backup_records, live_records)
+            drift_analysis['tables'][table_name] = table_analysis
+            
+            total_tables += 1
+            total_drift += table_analysis['drift_percentage']
+            
+            # Check for critical drift
+            if table_analysis['drift_percentage'] > self.config['critical_drift_threshold']:
+                drift_analysis['critical_issues'].append(
+                    f"{table_name}: {table_analysis['drift_percentage']:.1f}% drift (critical threshold: {self.config['critical_drift_threshold']}%)"
                 )
-            
-            return {
-                "success": False,
-                "error": str(e),
-                "duration": duration
-            }
-
-def print_results(result: Dict[str, Any]) -> None:
-    """Print formatted restore results to console"""
-    print()
-    print("=" * 60)
-    print("ANGLES AI UNIVERSE™ DISASTER RECOVERY")
-    print("=" * 60)
-    
-    if result['success']:
-        print("✅ RESTORE SUCCESSFUL")
-    else:
-        print("❌ RESTORE FAILED")
-        print(f"Error: {result.get('error', 'Unknown error')}")
-        print("=" * 60)
-        return
-    
-    # Basic info
-    print(f"Duration: {result['duration']:.2f} seconds")
-    print(f"Mode: {'DRY RUN' if result.get('dry_run') else 'LIVE RESTORE'}")
-    print()
-    
-    # Snapshot info
-    snapshot = result.get('snapshot_info', {})
-    print("📂 SNAPSHOT INFORMATION:")
-    print(f"Selection: {snapshot.get('selection_method', 'unknown')}")
-    if snapshot.get('target_date'):
-        print(f"Target Date: {snapshot['target_date']}")
-    print(f"Files Processed: {result.get('files_processed', 0)}")
-    for file_path in snapshot.get('files', []):
-        print(f"  - {file_path}")
-    print()
-    
-    # Supabase results
-    supabase = result.get('supabase_result', {})
-    print("🗃️  SUPABASE RESULTS:")
-    print(f"Records Loaded: {result.get('records_loaded', 0)}")
-    
-    if result.get('dry_run'):
-        print(f"Would Insert: {supabase.get('would_insert', 0)}")
-        print(f"Would Update: {supabase.get('would_update', 0)}")
-        print(f"Would Skip: {supabase.get('would_skip', 0)}")
-    else:
-        print(f"Inserted: {supabase.get('inserted', 0)}")
-        print(f"Updated: {supabase.get('updated', 0)}")
-        print(f"Skipped: {supabase.get('skipped', 0)}")
-        print(f"Failed: {supabase.get('failed', 0)}")
-    print()
-    
-    # Notion results (if applicable)
-    notion = result.get('notion_result')
-    if notion and not notion.get('skipped'):
-        print("📝 NOTION RESULTS:")
-        if result.get('dry_run'):
-            print(f"Would Create: {notion.get('would_create', 0)}")
+        
+        # Calculate overall drift score
+        drift_analysis['total_drift_score'] = total_drift / total_tables if total_tables > 0 else 0
+        
+        # Generate recommendations
+        if drift_analysis['total_drift_score'] > self.config['critical_drift_threshold']:
+            drift_analysis['recommendations'].append("CRITICAL: Consider full system restore due to high data drift")
+        elif drift_analysis['total_drift_score'] > self.config['max_drift_threshold']:
+            drift_analysis['recommendations'].append("WARNING: Investigate data inconsistencies before restore")
         else:
-            print(f"Created: {notion.get('created', 0)}")
-            print(f"Skipped: {notion.get('skipped', 0)}")
-            print(f"Failed: {notion.get('failed', 0)}")
-        print()
+            drift_analysis['recommendations'].append("Data drift within acceptable limits")
+        
+        return drift_analysis
     
-    print("=" * 60)
+    def analyze_table_drift(self, table_name: str, backup_records: List[Dict], live_records: List[Dict]) -> Dict[str, Any]:
+        """Analyze drift for a specific table"""
+        analysis = {
+            'backup_count': len(backup_records),
+            'live_count': len(live_records),
+            'missing_in_live': 0,
+            'missing_in_backup': 0,
+            'modified_records': 0,
+            'drift_percentage': 0,
+            'sample_differences': []
+        }
+        
+        # Create ID-based lookups
+        backup_by_id = {str(record.get('id', '')): record for record in backup_records}
+        live_by_id = {str(record.get('id', '')): record for record in live_records}
+        
+        # Check missing records
+        backup_ids = set(backup_by_id.keys())
+        live_ids = set(live_by_id.keys())
+        
+        analysis['missing_in_live'] = len(backup_ids - live_ids)
+        analysis['missing_in_backup'] = len(live_ids - backup_ids)
+        
+        # Check modified records
+        common_ids = backup_ids & live_ids
+        for record_id in list(common_ids)[:10]:  # Sample first 10
+            backup_record = backup_by_id[record_id]
+            live_record = live_by_id[record_id]
+            
+            # Compare key fields (excluding timestamps)
+            backup_content = {k: v for k, v in backup_record.items() if k not in ['created_at', 'updated_at']}
+            live_content = {k: v for k, v in live_record.items() if k not in ['created_at', 'updated_at']}
+            
+            if backup_content != live_content:
+                analysis['modified_records'] += 1
+                
+                # Store sample difference
+                if len(analysis['sample_differences']) < 3:
+                    analysis['sample_differences'].append({
+                        'id': record_id,
+                        'backup': backup_content,
+                        'live': live_content
+                    })
+        
+        # Calculate drift percentage
+        total_changes = analysis['missing_in_live'] + analysis['missing_in_backup'] + analysis['modified_records']
+        total_records = max(analysis['backup_count'], analysis['live_count'])
+        
+        if total_records > 0:
+            analysis['drift_percentage'] = (total_changes / total_records) * 100
+        
+        return analysis
+    
+    def fetch_live_data(self) -> Dict[str, List]:
+        """Fetch current live data from Supabase"""
+        live_data = {}
+        
+        if not self.env['supabase_url'] or not self.env['supabase_key']:
+            self.logger.warning("⚠️ Supabase credentials not available")
+            return live_data
+        
+        try:
+            headers = {
+                'apikey': self.env['supabase_key'],
+                'Authorization': f"Bearer {self.env['supabase_key']}",
+                'Content-Type': 'application/json'
+            }
+            
+            for table in self.config['restore_tables']:
+                try:
+                    url = f"{self.env['supabase_url']}/rest/v1/{table}"
+                    params = {'select': '*', 'order': 'created_at.desc'}
+                    
+                    response = requests.get(url, headers=headers, params=params, timeout=30)
+                    
+                    if response.status_code == 200:
+                        live_data[table] = response.json()
+                        self.logger.info(f"📊 Fetched {len(live_data[table])} live records from {table}")
+                    else:
+                        self.logger.error(f"❌ Failed to fetch live data from {table}: HTTP {response.status_code}")
+                        live_data[table] = []
+                
+                except Exception as e:
+                    self.logger.error(f"❌ Error fetching live data from {table}: {e}")
+                    live_data[table] = []
+        
+        except Exception as e:
+            self.logger.error(f"❌ Live data fetch failed: {e}")
+        
+        return live_data
+    
+    def load_backup_data(self, extracted_dir: str) -> Dict[str, List]:
+        """Load data from backup exports"""
+        backup_data = {}
+        export_dir = os.path.join(extracted_dir, self.config['export_dir'])
+        
+        if not os.path.exists(export_dir):
+            self.logger.warning("⚠️ Export directory not found in backup")
+            return backup_data
+        
+        try:
+            for filename in os.listdir(export_dir):
+                if filename.endswith('.json'):
+                    # Extract table name from filename
+                    table_name = filename.split('_')[0]
+                    
+                    if table_name in self.config['restore_tables']:
+                        file_path = os.path.join(export_dir, filename)
+                        
+                        with open(file_path, 'r') as f:
+                            data = json.load(f)
+                            backup_data[table_name] = data
+                            self.logger.info(f"📥 Loaded {len(data)} backup records from {table_name}")
+        
+        except Exception as e:
+            self.logger.error(f"❌ Error loading backup data: {e}")
+        
+        return backup_data
+    
+    def should_exclude_path(self, path: str) -> bool:
+        """Check if path should be excluded from restore"""
+        for pattern in self.config['excluded_restore_paths']:
+            if pattern in path or path.endswith(pattern.replace('*', '')):
+                return True
+        return False
+    
+    def restore_files(self, extracted_dir: str, target_dir: str = '.') -> bool:
+        """Restore files from extracted backup"""
+        if self.config['dry_run_mode']:
+            self.logger.info("🔍 DRY RUN: Simulating file restore...")
+            return True
+        
+        try:
+            restored_count = 0
+            skipped_count = 0
+            
+            for root, dirs, files in os.walk(extracted_dir):
+                # Skip excluded directories
+                dirs[:] = [d for d in dirs if not self.should_exclude_path(os.path.join(root, d))]
+                
+                for file in files:
+                    source_path = os.path.join(root, file)
+                    relative_path = os.path.relpath(source_path, extracted_dir)
+                    target_path = os.path.join(target_dir, relative_path)
+                    
+                    if self.should_exclude_path(relative_path):
+                        skipped_count += 1
+                        continue
+                    
+                    try:
+                        # Create target directory if needed
+                        os.makedirs(os.path.dirname(target_path), exist_ok=True)
+                        
+                        # Copy file
+                        shutil.copy2(source_path, target_path)
+                        restored_count += 1
+                        
+                        if restored_count % 100 == 0:
+                            self.logger.info(f"📁 Restored {restored_count} files...")
+                    
+                    except Exception as e:
+                        self.logger.error(f"❌ Failed to restore {relative_path}: {e}")
+                        self.restore_results['errors'].append(f"Failed to restore {relative_path}")
+            
+            self.restore_results['files_restored'] = restored_count
+            self.restore_results['files_skipped'] = skipped_count
+            
+            self.logger.info(f"✅ Restored {restored_count} files, skipped {skipped_count}")
+            return True
+        
+        except Exception as e:
+            self.logger.error(f"❌ File restore failed: {e}")
+            self.restore_results['errors'].append(f"File restore failed: {e}")
+            return False
+    
+    def run_restore_verification(self, backup_source: Optional[str] = None) -> Dict[str, Any]:
+        """Run complete restore verification process"""
+        self.logger.info("🔄 Starting GitHub restore verification...")
+        self.logger.info("=" * 60)
+        
+        if self.config['dry_run_mode']:
+            self.logger.info("🔍 RUNNING IN DRY-RUN MODE - No actual changes will be made")
+        
+        start_time = datetime.now()
+        
+        try:
+            with tempfile.TemporaryDirectory(prefix=self.config['temp_dir_prefix']) as temp_dir:
+                repo_dir = os.path.join(temp_dir, 'repo')
+                
+                # Step 1: Clone backup repository
+                self.logger.info("📥 Step 1: Cloning backup repository...")
+                if not self.clone_backup_repository(repo_dir):
+                    self.restore_results['status'] = 'failed'
+                    return self.restore_results
+                
+                # Step 2: Find latest backup
+                self.logger.info("🔍 Step 2: Finding latest backup...")
+                backup_path = backup_source or self.find_latest_backup(repo_dir)
+                
+                if not backup_path:
+                    self.restore_results['status'] = 'failed'
+                    self.restore_results['errors'].append("No backup found")
+                    return self.restore_results
+                
+                self.restore_results['backup_source'] = os.path.basename(backup_path)
+                
+                # Step 3: Verify backup checksums
+                self.logger.info("🔍 Step 3: Verifying backup integrity...")
+                if not self.verify_backup_checksums(backup_path):
+                    self.restore_results['warnings'].append("Backup integrity verification failed")
+                
+                # Step 4: Extract backup
+                self.logger.info("📦 Step 4: Extracting backup archive...")
+                extract_dir = os.path.join(temp_dir, 'extracted')
+                
+                with zipfile.ZipFile(backup_path, 'r') as zipf:
+                    zipf.extractall(extract_dir)
+                
+                # Step 5: Compare with live data (drift detection)
+                if self.config['compare_with_live']:
+                    self.logger.info("📊 Step 5: Analyzing data drift...")
+                    
+                    backup_data = self.load_backup_data(extract_dir)
+                    live_data = self.fetch_live_data()
+                    
+                    drift_analysis = self.analyze_data_drift(backup_data, live_data)
+                    self.restore_results['drift_analysis'] = drift_analysis
+                    
+                    if drift_analysis['total_drift_score'] > self.config['max_drift_threshold']:
+                        self.restore_results['drift_detected'] = True
+                        self.logger.warning(f"⚠️ Significant data drift detected: {drift_analysis['total_drift_score']:.1f}%")
+                    else:
+                        self.logger.info(f"✅ Data drift within acceptable limits: {drift_analysis['total_drift_score']:.1f}%")
+                    
+                    self.restore_results['recommendations'].extend(drift_analysis['recommendations'])
+                
+                # Step 6: Restore files
+                self.logger.info("📁 Step 6: Restoring files...")
+                if not self.restore_files(extract_dir):
+                    self.restore_results['status'] = 'partial'
+                else:
+                    self.restore_results['status'] = 'success'
+            
+            # Calculate duration
+            duration = datetime.now() - start_time
+            self.restore_results['duration_seconds'] = duration.total_seconds()
+            
+            # Send alerts if needed
+            self.send_restore_alert()
+            
+            # Final summary
+            self.logger.info("\n" + "=" * 60)
+            self.logger.info("🏁 RESTORE VERIFICATION COMPLETE")
+            self.logger.info("=" * 60)
+            self.logger.info(f"📊 SUMMARY:")
+            self.logger.info(f"   Status: {self.restore_results['status'].upper()}")
+            self.logger.info(f"   Mode: {self.restore_results['mode'].upper()}")
+            self.logger.info(f"   Backup source: {self.restore_results['backup_source']}")
+            self.logger.info(f"   Files restored: {self.restore_results['files_restored']}")
+            self.logger.info(f"   Files skipped: {self.restore_results['files_skipped']}")
+            self.logger.info(f"   Drift detected: {'YES' if self.restore_results['drift_detected'] else 'NO'}")
+            
+            if self.restore_results.get('drift_analysis'):
+                drift_score = self.restore_results['drift_analysis']['total_drift_score']
+                self.logger.info(f"   Data drift score: {drift_score:.1f}%")
+            
+            self.logger.info(f"   Errors: {len(self.restore_results['errors'])}")
+            self.logger.info(f"   Duration: {self.restore_results['duration_seconds']:.1f} seconds")
+            
+            if self.restore_results['errors']:
+                self.logger.error("❌ ERRORS ENCOUNTERED:")
+                for error in self.restore_results['errors']:
+                    self.logger.error(f"   • {error}")
+            
+            if self.restore_results['recommendations']:
+                self.logger.info("💡 RECOMMENDATIONS:")
+                for rec in self.restore_results['recommendations']:
+                    self.logger.info(f"   • {rec}")
+            
+            self.logger.info("=" * 60)
+            
+            return self.restore_results
+        
+        except Exception as e:
+            self.restore_results['status'] = 'failed'
+            self.restore_results['errors'].append(f"Restore verification failed: {e}")
+            self.logger.error(f"💥 Restore verification failed: {e}")
+            return self.restore_results
+    
+    def send_restore_alert(self):
+        """Send alert notification about restore status"""
+        if not self.alert_manager:
+            return
+        
+        try:
+            status = self.restore_results['status']
+            drift_detected = self.restore_results['drift_detected']
+            files_restored = self.restore_results['files_restored']
+            
+            if status == 'success' and not drift_detected:
+                title = "✅ Restore Verification Successful"
+                message = f"Restore verification completed successfully!\n"
+                message += f"• Files verified: {files_restored}\n"
+                message += f"• Data drift: Within acceptable limits"
+                severity = "info"
+            elif status == 'success' and drift_detected:
+                title = "⚠️ Restore Verification - Drift Detected"
+                drift_score = self.restore_results['drift_analysis']['total_drift_score']
+                message = f"Restore verification completed with drift warning!\n"
+                message += f"• Files verified: {files_restored}\n"
+                message += f"• Data drift: {drift_score:.1f}% (threshold: {self.config['max_drift_threshold']}%)"
+                severity = "warning"
+            else:
+                title = "❌ Restore Verification Failed"
+                errors = len(self.restore_results['errors'])
+                message = f"Restore verification failed!\n"
+                message += f"• Errors encountered: {errors}\n"
+                if self.restore_results['errors']:
+                    message += f"• Latest error: {self.restore_results['errors'][-1]}"
+                severity = "critical"
+            
+            self.alert_manager.send_alert(
+                title=title,
+                message=message,
+                severity=severity,
+                tags=['restore', 'github', 'verification', 'drift-detection']
+            )
+            
+            self.logger.info("📢 Restore alert sent")
+        
+        except Exception as e:
+            self.logger.error(f"❌ Failed to send restore alert: {e}")
 
 def main():
-    """Main entry point for GitHub restore system"""
-    parser = argparse.ArgumentParser(
-        description="Restore Angles AI Universe™ memory system from GitHub backups",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  python github_restore.py --dry-run                    # Simulate latest restore
-  python github_restore.py --at 2025-08-07             # Restore specific date
-  python github_restore.py --with-notion               # Include Notion sync
-  python github_restore.py --file exports/backup.json  # Restore specific file
-        """
-    )
+    """Main entry point for restore system"""
+    import argparse
     
-    parser.add_argument('--at', type=str, metavar='YYYY-MM-DD',
-                       help='Restore from specific date (YYYY-MM-DD)')
-    parser.add_argument('--file', type=str, action='append', metavar='PATH',
-                       help='Restore from explicit file(s) (can be used multiple times)')
-    parser.add_argument('--dry-run', action='store_true',
-                       help='Show what would be restored without making changes')
-    parser.add_argument('--force', action='store_true',
-                       help='Overwrite newer records in database')
-    parser.add_argument('--with-notion', action='store_true',
-                       help='Also restore to Notion database')
+    parser = argparse.ArgumentParser(description='GitHub Restore System')
+    parser.add_argument('--run', action='store_true', help='Run restore verification')
+    parser.add_argument('--dry-run', action='store_true', help='Run in dry-run mode (no actual restore)')
+    parser.add_argument('--backup-file', type=str, help='Specific backup file to restore from')
+    parser.add_argument('--no-drift-check', action='store_true', help='Skip data drift analysis')
+    parser.add_argument('--no-checksum-verify', action='store_true', help='Skip checksum verification')
+    parser.add_argument('--drift-threshold', type=float, default=10, help='Max drift threshold percentage')
     
     args = parser.parse_args()
     
     try:
-        # Initialize restore system
         restore_system = GitHubRestoreSystem()
         
-        # Run restore
-        result = restore_system.run_restore(
-            target_date=args.at,
-            explicit_files=args.file,
-            dry_run=args.dry_run,
-            force=args.force,
-            with_notion=args.with_notion
-        )
+        # Override configuration based on args
+        if args.dry_run:
+            restore_system.config['dry_run_mode'] = True
+        if args.no_drift_check:
+            restore_system.config['compare_with_live'] = False
+        if args.no_checksum_verify:
+            restore_system.config['verify_checksums'] = False
+        if args.drift_threshold:
+            restore_system.config['max_drift_threshold'] = args.drift_threshold
         
-        # Print results
-        print_results(result)
-        
-        # Exit with appropriate code
-        sys.exit(0 if result['success'] else 1)
+        if args.run or not any(vars(args).values()):
+            results = restore_system.run_restore_verification(args.backup_file)
+            
+            # Exit codes based on results
+            if results['status'] == 'success':
+                if results['drift_detected']:
+                    sys.exit(1)  # Warning: drift detected
+                else:
+                    sys.exit(0)  # Success
+            else:
+                sys.exit(2)  # Error
         
     except KeyboardInterrupt:
-        logger.info("Restore interrupted by user")
-        print("\nRestore interrupted by user")
+        print("\n🛑 Restore verification interrupted by user")
         sys.exit(130)
-        
     except Exception as e:
-        logger.error(f"Restore system failed: {e}")
-        print(f"FATAL ERROR: {e}")
-        sys.exit(1)
+        print(f"💥 Restore system failure: {e}")
+        sys.exit(255)
 
 if __name__ == "__main__":
     main()

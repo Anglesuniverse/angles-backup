@@ -23,7 +23,7 @@ class MemoryBridge:
         
         # Supabase configuration (required)
         self.supabase_url = os.getenv('SUPABASE_URL')
-        self.supabase_key = os.getenv('SUPABASE_ANON_KEY')
+        self.supabase_key = os.getenv('SUPABASE_KEY')
         
         # Notion configuration (optional)
         self.notion_key = os.getenv('NOTION_API_KEY')
@@ -31,7 +31,7 @@ class MemoryBridge:
         
         # Validation
         if not self.supabase_url or not self.supabase_key:
-            raise ValueError("Missing required SUPABASE_URL or SUPABASE_ANON_KEY environment variables")
+            raise ValueError("Missing required SUPABASE_URL or SUPABASE_KEY environment variables")
         
         # Notion availability
         self.notion_enabled = bool(self.notion_key and self.notion_db_id)
