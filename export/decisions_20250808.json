@@ -1,15 +1,25 @@
 {
-  "export_timestamp": "2025-08-08T15:15:09.320488",
+  "export_timestamp": "2025-08-08T15:15:17.166850",
   "total_decisions": 7,
   "decisions": [
+    {
+      "id": "400f2ab6-ceff-4fd1-8b33-d6cf8dbb91a5",
+      "decision": "I approve technical autonomy for AI.",
+      "type": "strategy",
+      "date": "2025-08-07",
+      "active": true,
+      "synced_at": "2025-08-08T15:15:05.057636",
+      "export_timestamp": "2025-08-08T15:15:05.057643",
+      "comment": "Tags: decision, core"
+    },
     {
       "id": "3bc0adb1-c3d6-47f6-b6cc-2fbd2f66cdf4",
       "decision": "Implement Code Review for all pull requests",
       "type": "process",
       "date": "2025-08-06",
       "active": true,
-      "synced_at": "2025-08-08T15:14:57.363217",
-      "export_timestamp": "2025-08-08T15:14:57.363223",
+      "synced_at": "2025-08-08T15:15:06.440340",
+      "export_timestamp": "2025-08-08T15:15:06.440345",
       "comment": "Improves code quality and knowledge sharing"
     },
     {
@@ -18,8 +28,8 @@
       "type": "technical",
       "date": "2025-08-07",
       "active": true,
-      "synced_at": "2025-08-08T15:14:58.108952",
-      "export_timestamp": "2025-08-08T15:14:58.108958",
+      "synced_at": "2025-08-08T15:15:09.277175",
+      "export_timestamp": "2025-08-08T15:15:09.277180",
       "comment": "Decision made after performance analysis"
     },
     {
@@ -28,8 +38,8 @@
       "type": "technical",
       "date": "2025-08-08",
       "active": true,
-      "synced_at": "2025-08-08T15:14:59.081427",
-      "export_timestamp": "2025-08-08T15:14:59.081432"
+      "synced_at": "2025-08-08T15:15:10.471859",
+      "export_timestamp": "2025-08-08T15:15:10.471866"
     },
     {
       "id": "8328256c-90ea-4dc3-96b2-a196c68e739a",
@@ -37,8 +47,8 @@
       "type": "security",
       "date": "2025-08-05",
       "active": true,
-      "synced_at": "2025-08-08T15:15:00.113840",
-      "export_timestamp": "2025-08-08T15:15:00.113846",
+      "synced_at": "2025-08-08T15:15:11.252189",
+      "export_timestamp": "2025-08-08T15:15:11.252194",
       "comment": "Security department requirement"
     },
     {
@@ -47,8 +57,8 @@
       "type": "technical",
       "date": "2025-08-07",
       "active": true,
-      "synced_at": "2025-08-08T15:15:01.016590",
-      "export_timestamp": "2025-08-08T15:15:01.016595",
+      "synced_at": "2025-08-08T15:15:16.197057",
+      "export_timestamp": "2025-08-08T15:15:16.197063",
       "comment": "Decision made after team discussion"
     },
     {
@@ -57,19 +67,9 @@
       "type": "technical",
       "date": "2025-08-07",
       "active": true,
-      "synced_at": "2025-08-08T15:15:02.302755",
-      "export_timestamp": "2025-08-08T15:15:02.302761",
+      "synced_at": "2025-08-08T15:15:17.166806",
+      "export_timestamp": "2025-08-08T15:15:17.166813",
       "comment": "Decision made after team discussion"
-    },
-    {
-      "id": "400f2ab6-ceff-4fd1-8b33-d6cf8dbb91a5",
-      "decision": "I approve technical autonomy for AI.",
-      "type": "strategy",
-      "date": "2025-08-07",
-      "active": true,
-      "synced_at": "2025-08-08T15:15:09.320449",
-      "export_timestamp": "2025-08-08T15:15:09.320454",
-      "comment": "Tags: decision, core"
     }
   ],
   "metadata": {
