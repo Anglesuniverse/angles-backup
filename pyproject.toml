@@ -5,6 +5,7 @@ description = "Add your description here"
 requires-python = ">=3.11"
 dependencies = [
     "cryptography>=45.0.6",
+    "fastapi>=0.116.1",
     "notion-client>=2.4.0",
     "openai>=1.99.3",
     "psutil>=7.0.0",
@@ -15,4 +16,5 @@ dependencies = [
     "schedule>=1.2.2",
     "supabase>=2.17.0",
     "tenacity>=9.1.2",
+    "uvicorn>=0.35.0",
 ]

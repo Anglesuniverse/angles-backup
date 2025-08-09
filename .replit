@@ -14,10 +14,6 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Memory System Scheduler"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Daily Backup at 02:00 UTC"
 
 [[workflows.workflow.tasks]]
@@ -50,18 +46,7 @@ args = "Angles AI Universe Scheduler"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Self-Healing Backend"
-
-[[workflows.workflow]]
-name = "Memory System Scheduler"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python run_all.py"
-
-[workflows.workflow.metadata]
-outputType = "console"
+args = "FastAPI Server"
 
 [[workflows.workflow]]
 name = "Daily Backup at 02:00 UTC"
@@ -150,16 +135,18 @@ args = "python -m angles.cron_runner"
 outputType = "console"
 
 [[workflows.workflow]]
-name = "Self-Healing Backend"
+name = "FastAPI Server"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python run_self_healing.py"
-
-[workflows.workflow.metadata]
-outputType = "console"
+args = "cd api && uvicorn main:app --host 0.0.0.0 --port 8000"
+waitForPort = 8000
 
 [[ports]]
 localPort = 5000
 externalPort = 80
+
+[[ports]]
+localPort = 8000
+externalPort = 8000

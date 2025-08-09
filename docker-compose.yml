@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: angles_postgres
+    environment:
+      POSTGRES_USER: angles
+      POSTGRES_PASSWORD: anglespass
+      POSTGRES_DB: anglesdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    container_name: angles_redis
+    ports:
+      - "6379:6379"
+
+  api:
+    build: ./api
+    container_name: angles_api
+    environment:
+      DATABASE_URL: postgresql://angles:anglespass@postgres:5432/anglesdb
+      REDIS_URL: redis://redis:6379
+      NOTION_API_KEY: ${NOTION_API_KEY}
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "8000:8000"
+
+  worker:
+    build: ./api
+    container_name: angles_worker
+    command: rq worker --url redis://redis:6379
+    depends_on:
+      - redis
+      - api
+
+volumes:
+  pgdata:

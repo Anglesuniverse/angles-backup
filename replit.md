@@ -10,6 +10,15 @@ Preferred communication style: Simple, everyday language.
 
 ## System Architecture
 
+### Dual Backend Design (Updated August 2025)
+The system now operates as a dual backend architecture:
+- **Main Python Backend**: Original GPT output processor with memory sync, backups, and automation
+- **FastAPI REST API**: Modern API layer running on port 8000 with:
+  - Knowledge vault system for document ingestion and search
+  - AI-powered decision management with recommendations
+  - Integration with existing Supabase database
+  - Automatic OpenAPI documentation
+
 ### Processing Pipeline
 The system employs a multi-stage pipeline for GPT output processing:
 - **Parsing**: Handles JSON, structured, and unstructured content.
@@ -22,6 +31,7 @@ A three-tier database abstraction is implemented:
 - **SupabaseClient**: Low-level CRUD operations.
 - **DatabaseOperations**: High-level, domain-specific operations (conversations, memories, tasks).
 - **Schema Validation**: Pydantic-based validation for data consistency.
+- **FastAPI Tables**: `vault`, `fastapi_decisions`, `api_logs` for new API features
 
 ### Memory Management System
 An intelligent classification system routes data to appropriate tables (conversations, memories, tasks) based on weighted scoring, keyword matching, and structural patterns. It supports configurable retention policies.
@@ -44,7 +54,10 @@ The system includes:
 - Operational metrics and reporting, alerts, database schema verification, safe Git operations, log management, and a hardened health dashboard with JSON snapshots.
 
 ### UI/UX Decisions
-The system primarily focuses on backend processing and API integrations. Any user interaction is typically through CLI tools or direct database/Notion interfaces.
+The system provides multiple interfaces:
+- **Backend Processing**: Original CLI tools and direct database/Notion interfaces
+- **REST API**: Modern FastAPI with automatic Swagger/OpenAPI documentation at `/docs`
+- **Health Dashboard**: Web dashboard on port 5000 for system monitoring
 
 ## External Dependencies
 
