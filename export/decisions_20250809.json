@@ -1,34 +1,15 @@
 {
-  "export_timestamp": "2025-08-09T07:37:03.114053",
+  "export_timestamp": "2025-08-09T07:37:06.056231",
   "total_decisions": 7,
   "decisions": [
-    {
-      "id": "400f2ab6-ceff-4fd1-8b33-d6cf8dbb91a5",
-      "decision": "I approve technical autonomy for AI.",
-      "type": "strategy",
-      "date": "2025-08-07",
-      "active": true,
-      "synced_at": "2025-08-09T07:36:53.022791",
-      "export_timestamp": "2025-08-09T07:36:53.022797",
-      "comment": "Tags: decision, core"
-    },
-    {
-      "id": "97b0f32c-d1e4-49e5-ada8-7218292580df",
-      "decision": "quicktest_quicktest_20250808_003751",
-      "type": "technical",
-      "date": "2025-08-08",
-      "active": true,
-      "synced_at": "2025-08-09T07:36:57.268093",
-      "export_timestamp": "2025-08-09T07:36:57.268099"
-    },
     {
       "id": "8328256c-90ea-4dc3-96b2-a196c68e739a",
       "decision": "Use HTTPS for all communication",
       "type": "security",
       "date": "2025-08-05",
       "active": true,
-      "synced_at": "2025-08-09T07:36:58.496288",
-      "export_timestamp": "2025-08-09T07:36:58.496296",
+      "synced_at": "2025-08-09T07:36:59.030701",
+      "export_timestamp": "2025-08-09T07:36:59.030707",
       "comment": "Security department requirement"
     },
     {
@@ -37,8 +18,8 @@
       "type": "technical",
       "date": "2025-08-07",
       "active": true,
-      "synced_at": "2025-08-09T07:36:59.725622",
-      "export_timestamp": "2025-08-09T07:36:59.725628",
+      "synced_at": "2025-08-09T07:36:59.929704",
+      "export_timestamp": "2025-08-09T07:36:59.929711",
       "comment": "Decision made after team discussion"
     },
     {
@@ -47,8 +28,8 @@
       "type": "technical",
       "date": "2025-08-07",
       "active": true,
-      "synced_at": "2025-08-09T07:37:00.975251",
-      "export_timestamp": "2025-08-09T07:37:00.975256",
+      "synced_at": "2025-08-09T07:37:01.131321",
+      "export_timestamp": "2025-08-09T07:37:01.131328",
       "comment": "Decision made after team discussion"
     },
     {
@@ -57,8 +38,8 @@
       "type": "process",
       "date": "2025-08-06",
       "active": true,
-      "synced_at": "2025-08-09T07:37:01.781665",
-      "export_timestamp": "2025-08-09T07:37:01.781672",
+      "synced_at": "2025-08-09T07:37:02.660706",
+      "export_timestamp": "2025-08-09T07:37:02.660714",
       "comment": "Improves code quality and knowledge sharing"
     },
     {
@@ -67,9 +48,28 @@
       "type": "technical",
       "date": "2025-08-07",
       "active": true,
-      "synced_at": "2025-08-09T07:37:03.114013",
-      "export_timestamp": "2025-08-09T07:37:03.114018",
+      "synced_at": "2025-08-09T07:37:03.753188",
+      "export_timestamp": "2025-08-09T07:37:03.753196",
       "comment": "Decision made after performance analysis"
+    },
+    {
+      "id": "400f2ab6-ceff-4fd1-8b33-d6cf8dbb91a5",
+      "decision": "I approve technical autonomy for AI.",
+      "type": "strategy",
+      "date": "2025-08-07",
+      "active": true,
+      "synced_at": "2025-08-09T07:37:04.422749",
+      "export_timestamp": "2025-08-09T07:37:04.422756",
+      "comment": "Tags: decision, core"
+    },
+    {
+      "id": "97b0f32c-d1e4-49e5-ada8-7218292580df",
+      "decision": "quicktest_quicktest_20250808_003751",
+      "type": "technical",
+      "date": "2025-08-08",
+      "active": true,
+      "synced_at": "2025-08-09T07:37:06.056193",
+      "export_timestamp": "2025-08-09T07:37:06.056200"
     }
   ],
   "metadata": {
