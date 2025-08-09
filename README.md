@@ -1,224 +1,298 @@
-# Angles AI Universe™ Backend System
+# Angles OS™ Bootstrap
 
-A comprehensive backend system for automated GPT assistant output processing, decision management, and memory synchronization with unified Supabase, Notion, and OpenAI integration.
+A production-ready FastAPI backend with PostgreSQL, Redis, TokenVault memory system, AI-powered decision management, and automated agents.
 
-## Overview
+## 🚀 Quick Start
 
-This system provides:
-- **Memory Sync Agent**: Automated repository scanning and database synchronization
-- **Historical Sweep**: AI-powered repository analysis and decision categorization  
-- **Backend Monitor**: Health checks and system monitoring
-- **Auto-sync**: File change detection and incremental updates
-- **Backup & Restore**: Automated backups with GitHub integration
-- **Cron Runner**: Scheduled task management and automation
+### Option 1: Replit (Recommended)
+1. All dependencies are pre-installed
+2. Secrets are managed automatically via Replit Secrets
+3. Run: `bash run_local.sh`
 
-## Environment Variables
+### Option 2: Local Development
+1. Install dependencies: `pip install -r requirements.txt`
+2. Set up environment variables (see `.env.example`)
+3. Run: `bash run_local.sh`
 
-Configure these environment variables in Replit Secrets:
-
-### Required
-- `SUPABASE_URL` - Your Supabase project URL
-- `SUPABASE_KEY` - Your Supabase anon/service role key
-
-### Optional (graceful degradation if missing)
-- `NOTION_API_KEY` - Notion integration token  
-- `NOTION_DATABASE_ID` - Target Notion database ID
-- `GITHUB_TOKEN` - GitHub personal access token
-- `GITHUB_REPO` - GitHub repository URL for backups
-- `OPENAI_API_KEY` - OpenAI API key for AI analysis
-- `OPENAI_MODEL` - OpenAI model to use (default: gpt-4o)
-
-## Quick Start
-
-### 1. Database Setup
-
-Run the database migration to create required tables:
-
+### Option 3: Docker Compose
 ```bash
-python -m angles.run_migration
+docker-compose up -d
 ```
 
-### 2. Initial Memory Sync
+## 🏗️ Architecture
 
-Scan and sync your repository files:
+### Core Components
+- **FastAPI Application**: Modern async REST API
+- **TokenVault**: Persistent memory storage with semantic search
+- **Decision System**: AI-powered decision tracking and recommendations  
+- **Agent System**: Automated background agents (memory sync, strategy, verification)
+- **External Connectors**: Supabase, Notion, OpenAI integration
 
-```bash
-python -m angles.memory_sync_agent
-```
+### Database Schema
+- `vault_chunks`: Knowledge storage with full-text search
+- `decisions`: Decision tracking with status workflow
+- `agent_logs`: Agent activity monitoring
 
-### 3. Health Check
+## 📡 API Endpoints
 
-Verify system status:
+### Health & Status
+- `GET /health` - System health check
+- `GET /health/ping` - Simple ping/pong
+- `GET /health/ready` - Kubernetes readiness probe
+- `GET /ui/summary` - Dashboard data
 
-```bash
-python -m angles.backend_monitor
-```
+### TokenVault
+- `POST /vault/ingest` - Add knowledge chunks
+- `POST /vault/query` - Search knowledge base
+- `GET /vault/source/{source}` - Get chunks by source
+- `GET /vault/stats` - Vault statistics
 
-### 4. Historical Analysis
+### Decision Management
+- `POST /decisions` - Create decision
+- `GET /decisions` - List decisions (with optional status filter)
+- `GET /decisions/{id}` - Get specific decision
+- `POST /decisions/{id}/recommend` - Generate AI recommendation
+- `POST /decisions/{id}/approve` - Approve decision
+- `POST /decisions/{id}/decline` - Decline decision
 
-Generate AI-powered repository analysis:
+### Agent Management
+- `GET /agents/status` - Get all agent status
+- `POST /agents/{name}/run` - Manually trigger agent
 
-```bash
-python -m angles.historical_sweep
-```
-
-### 5. Start Scheduler
-
-Begin automated operations:
-
-```bash
-python -m angles.cron_runner
-```
-
-## Components
+## 🤖 Automated Agents
 
 ### Memory Sync Agent
-- Scans repository files (excludes .git, __pycache__, etc.)
-- Computes SHA256 checksums for change detection
-- Stores file snapshots in Supabase
-- Logs all changes to system_logs table
-- Writes summary to Notion (if configured)
+- **Schedule**: Every 6 hours
+- **Function**: Monitors file changes, ingests to vault, syncs to external services
+- **Triggers**: File modifications, new content detection
 
-### Auto-sync  
-- File watcher with polling-based change detection
-- Debounced updates to avoid spam
-- Incremental sync of modified files
-- Can run continuously or single-scan mode
+### Strategy Agent  
+- **Schedule**: Every hour
+- **Function**: Reviews open decisions, generates recommendations for stale items
+- **Logic**: AI-powered recommendations with fallback heuristics
 
-### Historical Sweep
-- Creates categorized decision placeholders
-- Processes documentation files into decision entries
-- AI-powered repository structure analysis
-- Generates prioritized fix lists using OpenAI
-- Stores artifacts and creates Notion summaries
+### Verifier Agent
+- **Schedule**: Daily at 02:00 UTC  
+- **Function**: System integrity checks, API health validation, data consistency
+- **Alerts**: Logs warnings and errors for critical issues
 
-### Backend Monitor
-- Database connectivity checks
-- Memory sync activity monitoring  
-- System resource usage (CPU, memory, disk)
-- OpenAI API connectivity testing
-- Integration status reporting
-- Health recommendations
+## 🔧 Configuration
 
-### Backup & Restore
-- Creates compressed database exports
-- Includes configuration files and metadata
-- Pushes backups to GitHub (if configured)
-- Local backup retention management
-- Restoration utilities
-
-### Cron Runner
-- **Memory Sync**: Every 6 hours
-- **Historical Sweep**: Sundays at 02:00 UTC
-- **Backup**: Daily at 03:00 UTC  
-- **Health Monitor**: Every hour
-- Graceful shutdown handling
-- Job execution logging
-
-## Database Schema
-
-### Tables Created
-- `decision_vault` - Categorized decisions and content
-- `system_logs` - Application logs and events
-- `file_snapshots` - Repository file versions
-- `run_artifacts` - Generated reports and analysis
-
-### Indexes
-- Optimized for timestamp-based queries
-- Category and status filtering
-- Path-based file lookups
-
-## Usage Examples
-
-### Run Individual Components
-
+### Environment Variables (Replit Secrets)
 ```bash
-# Memory sync with options
-python -m angles.memory_sync_agent
+# Database
+POSTGRES_URL=postgresql://user:pass@host:5432/db
 
-# Auto-sync (continuous watching)
-python -m angles.autosync --continuous --interval 30
+# Cache/Queue  
+REDIS_URL=redis://host:6379
 
-# Create backup
-python -m angles.restore --backup
+# External Services
+SUPABASE_URL=https://project.supabase.co
+SUPABASE_ANON_KEY=eyJ...
+SUPABASE_SERVICE_KEY=eyJ... 
+NOTION_API_KEY=secret_...
+OPENAI_API_KEY=sk-...
+GITHUB_TOKEN=ghp_...
 
-# Run specific scheduled job
-python -m angles.cron_runner --run-now memory_sync
-
-# Health check with details
-python -m angles.backend_monitor
+# Application
+LOG_LEVEL=INFO
+ENV=production
 ```
 
-### Configuration Check
+## 🔌 External Integrations
 
+### Supabase
+- **Client Mode**: User operations with anon key
+- **Server Mode**: Admin operations with service key
+- **Auto-sync**: Vault chunks and decisions
+
+### Notion  
+- **Page Creation**: Structured data export
+- **Database Mapping**: Configurable field mapping
+- **Batch Operations**: Efficient bulk sync
+
+### OpenAI (GPT-5 Ready)
+- **Decision Recommendations**: AI-powered analysis
+- **Content Summarization**: Intelligent chunk processing
+- **Fallback System**: Rule-based alternatives
+
+## 🏃‍♂️ Background Jobs
+
+### RQ Worker System
+- **Queue**: Redis-backed job processing
+- **Jobs**: RSS ingestion, daily backups, artifact summarization
+- **Monitoring**: Agent logs and status tracking
+
+### Available Jobs
+- `ingest_rss(url, source)` - RSS feed processing
+- `daily_backup()` - System backup operations  
+- `summarize_artifact(path, type)` - File summarization
+
+## 🧪 Testing
+
+### Automated Tests
 ```bash
-python -c "from angles.config import print_config_status; print_config_status()"
+# Run all tests
+python -m pytest tests/ -v
+
+# Individual test suites  
+python tests/test_health.py
+python tests/test_vault.py
+python tests/test_decisions.py
 ```
 
-## Troubleshooting
-
-### Missing Environment Variables
-Check configuration status:
+### Manual API Testing
 ```bash
-python -m angles.backend_monitor
+# Health check
+curl http://localhost:8000/health
+
+# Ingest knowledge
+curl -X POST http://localhost:8000/vault/ingest \
+  -H "Content-Type: application/json" \
+  -d '{"source": "test", "chunk": "Sample content"}'
+
+# Create decision
+curl -X POST http://localhost:8000/decisions \
+  -H "Content-Type: application/json" \
+  -d '{"topic": "Test decision", "options": [{"option": "A", "pros": ["Fast"], "cons": ["Limited"]}]}'
 ```
 
-### Database Connection Issues
-Test migration with dry-run:
+## 🔍 Monitoring & Debugging
+
+### Health Dashboard
+- System metrics and resource usage
+- Service connectivity status
+- Recent activity logs
+- Agent execution history
+
+### Log Files
+- `app.log` - Application logs with rotation
+- `logs/agent_*.log` - Agent-specific logs
+- `run_review.json` - Post-deployment analysis
+
+### Post-Run Review
 ```bash
-python -m angles.run_migration --dry-run
+python post_run_review.py
+```
+Automatically detects and fixes common deployment issues:
+- Database connectivity
+- Missing environment variables  
+- Import errors
+- API endpoint failures
+
+## 🚢 Production Deployment
+
+### Replit Deployment
+1. Configure secrets in Replit Secrets manager
+2. Run health checks: `python post_run_review.py`
+3. Deploy using Replit's built-in deployment
+
+### Manual Deployment
+1. Set production environment variables
+2. Run migrations: `python scripts/run_migration.py`
+3. Start with gunicorn: `gunicorn api.main:app -w 4 -k uvicorn.workers.UvicornWorker`
+4. Configure reverse proxy (nginx)
+5. Set up monitoring and logging
+
+### Docker Deployment
+```bash
+# Build and deploy
+docker-compose up -d
+
+# Scale workers
+docker-compose scale worker=3
+
+# View logs
+docker-compose logs -f api
 ```
 
-### Memory Sync Problems
-Check recent logs in the system_logs table and verify file permissions.
+## 📊 System Requirements
 
-### Notion Integration Issues
-- Verify NOTION_API_KEY and NOTION_DATABASE_ID
-- Ensure Notion integration has database access
-- Check database schema supports required fields
+### Minimum
+- Python 3.8+
+- PostgreSQL 12+
+- Redis 6+
+- 512MB RAM
+- 1GB disk space
 
-### GitHub Backup Failures
-- Verify GITHUB_TOKEN and GITHUB_REPO
-- Ensure token has repository write permissions
-- Check local git configuration
+### Recommended
+- Python 3.11+
+- PostgreSQL 15+
+- Redis 7+
+- 2GB RAM
+- 5GB disk space
+- Load balancer for production
 
-## Security Notes
+## 🔒 Security
 
-- All secrets are managed via environment variables
-- Database operations use parameterized queries
-- GitHub backups exclude sensitive information
-- Logs sanitize secrets and API keys
-- File scanning respects .gitignore patterns
+### Environment Isolation
+- Secrets managed via Replit Secrets (not .env files)
+- Database access controls with service/client key separation
+- API rate limiting and input validation
 
-## Development
+### External Service Security
+- OAuth flows for third-party integrations
+- Encrypted data transmission (HTTPS only)
+- Audit logging for sensitive operations
 
-### Adding New Components
-1. Create module in `/angles/` directory
-2. Add health check to `backend_monitor.py`
-3. Include in `cron_runner.py` if scheduled
-4. Add tests and update documentation
+## 🆘 Troubleshooting
 
-### Extending Database Schema
-1. Update `run_migration.py` with new tables/indexes
-2. Add corresponding methods to `supabase_client.py`
-3. Test with dry-run before deployment
+### Common Issues
 
-## Performance
+**Database Connection Failed**
+```bash
+# Check PostgreSQL status
+python scripts/run_migration.py
 
-- File scanning uses efficient path filtering
-- Database operations include retry logic
-- Batch processing for large datasets
-- Connection pooling and timeouts
-- Resource monitoring and alerts
+# Verify connection string
+echo $POSTGRES_URL
+```
 
-## Support
+**Agent Not Running**
+```bash
+# Check agent status
+curl http://localhost:8000/agents/status
 
-For issues:
-1. Check system logs in database
-2. Run health monitor for diagnostics
-3. Verify environment configuration
-4. Review component-specific logs
+# Manually trigger agent
+curl -X POST http://localhost:8000/agents/verifier/run
+```
+
+**Import Errors**
+```bash
+# Install missing dependencies
+pip install -r requirements.txt
+
+# Check Python path
+python -c "import sys; print(sys.path)"
+```
+
+### Getting Help
+1. Check `app.log` for detailed error messages
+2. Run `python post_run_review.py` for automated diagnostics  
+3. Review agent logs in `/logs/` directory
+4. Verify environment variables are properly set
+
+## 📚 API Documentation
+
+Once running, visit:
+- **Interactive API Docs**: http://localhost:8000/docs
+- **ReDoc**: http://localhost:8000/redoc
+- **OpenAPI JSON**: http://localhost:8000/openapi.json
+
+## 🎯 Production Checklist
+
+- [ ] All environment variables configured
+- [ ] Database migrations completed
+- [ ] External services connected and tested
+- [ ] All tests passing
+- [ ] Health checks returning green
+- [ ] Monitoring and alerting configured
+- [ ] Backup procedures established
+- [ ] Load balancing configured (if needed)
+- [ ] SSL certificates installed
+- [ ] Security scanning completed
 
 ---
 
-**Angles AI Universe™** - Intelligent backend automation for modern development workflows.
+**Angles OS™** - Production-ready AI platform engineering solution
+Built with FastAPI, PostgreSQL, Redis, and intelligent automation.
