@@ -1,0 +1,514 @@
+You are Replit AI acting as a senior platform engineer. Implement the full “Angles OS™ bootstrap” in one pass — build, test, document, and self‑verify. Do not ask follow‑ups; if something is ambiguous, choose the safest, conventional option and proceed.
+
+
+
+
+
+GOAL
+
+
+
+
+
+Set up a production‑ready FastAPI backend with PostgreSQL + Redis, a TokenVault™ for persistent memory, Decisions endpoints, basic Agents, Notion/Supabase connectors (placeholders wired to env secrets), workers, scheduled jobs, logging, and end‑to‑end tests. Add a post‑run review that parses logs and auto‑fixes common issues. Keep everything GPT‑5‑ready (no 4.x naming). Use Replit Secrets (not .env) at runtime, but include a .env.example for reference.
+
+
+
+
+
+ENV / SECRETS (read via os.getenv at runtime)
+
+
+
+
+
+SUPABASE_URL
+SUPABASE_ANON_KEY        (use anon for client ops)
+SUPABASE_SERVICE_KEY     (only for server jobs marked “server_only”)
+NOTION_API_KEY
+OPENAI_API_KEY
+GITHUB_TOKEN
+POSTGRES_URL             (we’ll also provide docker-compose)
+REDIS_URL
+
+
+
+
+
+
+CREATE FILES & STRUCTURE
+
+
+
+.
+├── README.md
+├── docker-compose.yml
+├── .env.example
+├── requirements.txt
+├── run_local.sh
+├── post_run_review.py
+├── scripts/
+│   ├── run_migration.py
+│   └── seed_sample_data.py
+├── api/
+│   ├── __init__.py
+│   ├── main.py
+│   ├── config.py
+│   ├── deps.py
+│   ├── routes/
+│   │   ├── health.py
+│   │   ├── ui.py
+│   │   ├── vault.py
+│   │   └── decisions.py
+│   ├── services/
+│   │   ├── token_vault.py
+│   │   ├── decisions.py
+│   │   ├── notion_connector.py
+│   │   ├── supabase_connector.py
+│   │   └── openai_client.py
+│   ├── agents/
+│   │   ├── __init__.py
+│   │   ├── memory_sync_agent.py
+│   │   ├── strategy_agent.py
+│   │   └── verifier_agent.py
+│   ├── workers/
+│   │   ├── worker.py
+│   │   └── jobs.py
+│   └── utils/
+│       ├── logging.py
+│       └── time.py
+├── db/
+│   └── init/
+│       └── 001_schema.sql
+└── tests/
+    ├── test_health.py
+    ├── test_vault.py
+    └── test_decisions.py
+
+
+
+IMPLEMENTATION DETAILS
+
+
+
+
+
+
+
+requirements.txt
+
+
+Include:
+
+fastapi
+uvicorn[standard]
+psycopg2-binary
+sqlalchemy
+alembic
+redis
+rq
+httpx
+pydantic
+python-dotenv
+supabase
+notion-client
+openai
+tenacity
+loguru
+schedule
+psutil
+cryptography
+pytest
+requests
+
+
+
+docker-compose.yml
+
+
+
+
+
+Create services for:
+
+
+
+postgres (expose 5432, healthcheck)
+redis (expose 6379)
+api (uvicorn on 8000; depends_on postgres, redis; env from .env.example for local dev)
+worker (RQ worker pointing to Redis)
+Comment that Replit may not run docker; keep compose for local/remote server parity.
+
+
+
+
+
+
+.env.example
+
+
+
+
+
+Provide keys with placeholders and notes that Replit uses Secrets manager at runtime.
+
+
+
+
+
+api/config.py
+
+
+
+
+
+Read env via os.getenv.
+Build a Config class with all keys above.
+Derive default fallbacks if missing (for local dev).
+Expose settings = Config().
+
+
+
+
+
+
+db/init/001_schema.sql
+
+
+
+
+
+Create minimal tables:
+
+
+
+vault_chunks(id uuid pk, source text, chunk text, summary text, links jsonb, created_at timestamptz default now())
+decisions(id uuid pk, topic text, options jsonb, chosen text, rationale text, status text, created_at timestamptz default now(), updated_at timestamptz)
+agent_logs(id uuid pk, agent text, level text, message text, meta jsonb, created_at timestamptz default now())
+
+
+
+
+
+
+scripts/run_migration.py
+
+
+
+
+
+Connect using POSTGRES_URL, run the SQL in db/init/001_schema.sql idempotently.
+
+
+
+
+
+
+api/services/token_vault.py
+
+
+
+
+
+Class TokenVault with ingest(source, chunk, summary=None, links=None) → insert into vault_chunks.
+naive_search(query, top_k=5) → very simple ILIKE match on chunk/summary ordered by created_at desc (note: later we’ll add embeddings).
+
+
+
+
+
+
+api/services/decisions.py
+
+
+
+
+
+CRUD for decisions and helpers:
+create_decision(topic, options:list[dict])
+list_decisions(status=None)
+get_decision(id)
+recommend(id) → returns a mock recommendation (placeholder) using OPENAI if available; otherwise rule‑based.
+approve(id) / decline(id) → set status and rationale timestamp.
+
+
+
+
+
+
+
+api/services/notion_connector.py
+
+
+
+
+
+Minimal client wired with NOTION_API_KEY; expose stubs:
+create_page(database_id, properties) (try/except; log errors)
+leave TODOs for mapping our fields → Notion DB.
+
+
+
+
+
+
+
+api/services/supabase_connector.py
+
+
+
+
+
+Initialize supabase with URL + ANON key for read/write client ops.
+Add server_only path with SERVICE_KEY gated by an argument server_only=True to avoid accidental use.
+
+
+
+
+
+
+api/services/openai_client.py
+
+
+
+
+
+Wrapper that, if OPENAI_API_KEY present, can call GPT‑5 endpoints (name the model "gpt-5" as placeholder).
+Provide summarize(text) and decide(topic, options) helper functions; if no key, fall back to local rule‑based stubs.
+
+
+
+
+
+
+api/routes/health.py
+
+
+
+
+
+GET /health returns {status:"ok", services:{db, redis}, version}.
+Ping DB and Redis.
+
+
+
+
+
+
+api/routes/ui.py
+
+
+
+
+
+GET /ui/summary returns recent counts (vault_chunks, decisions by status) and last 5 items.
+
+
+
+
+
+
+api/routes/vault.py
+
+
+
+
+
+POST /vault/ingest (source, chunk, summary?, links?) → TokenVault.ingest
+POST /vault/query (query, top_k?) → TokenVault.naive_search
+
+
+
+
+
+
+api/routes/decisions.py
+
+
+
+
+
+POST /decisions (topic, options) → create
+GET /decisions (?status=) → list
+GET /decisions/{id} → get
+POST /decisions/{id}/recommend → recommend
+POST /decisions/{id}/approve → approve
+POST /decisions/{id}/decline → decline
+
+
+
+
+
+
+api/agents/memory_sync_agent.py
+
+
+
+
+
+Polls filesystem changes (limited on Replit — use mtime) and upserts file snapshots into vault_chunks (source=“replit_file:”) with small summaries (use openai_client if available).
+Can also sync selected artifacts to Supabase/Notion via connectors (safe try/except, log on failure).
+
+
+
+
+
+
+api/agents/strategy_agent.py
+
+
+
+
+
+Periodic scan of decisions with status='open', calls recommend if no recommendation within X hours, writes agent log.
+
+
+
+
+
+
+api/agents/verifier_agent.py
+
+
+
+
+
+Verifies critical invariants (tables exist, health endpoint returns OK, Redis reachable); writes agent logs and raises warnings in agent_logs.
+
+
+
+
+
+
+api/workers/worker.py + jobs.py
+
+
+
+
+
+RQ worker that supports jobs: ingest_rss, daily_backup, summarize_artifact.
+Each job logs success/failure to agent_logs.
+
+
+
+
+
+
+api/utils/logging.py
+
+
+
+
+
+Configure loguru logger, rotating file app.log, console pretty output.
+
+
+
+
+
+
+api/main.py
+
+
+
+
+
+Create FastAPI app, include routers, startup events:
+schedule MemorySyncAgent every 6h
+schedule StrategyAgent hourly
+schedule VerifierAgent daily
+
+Expose root “Angles OS ready” message.
+
+
+
+
+
+
+tests/
+
+
+
+
+
+test_health.py: hit /health, assert status==ok.
+test_vault.py: ingest sample, query, assert returns.
+test_decisions.py: create → recommend → approve → list approved.
+
+
+
+
+
+
+post_run_review.py (Auto Review + Auto Fix)
+
+
+
+
+
+Parse app.log + pytest output.
+Detect common issues (missing table, bad env, import error).
+For each known pattern, print suggested fix and, when safe, apply small code edits (e.g., add missing import, correct env fetch).
+Re‑run quick smoke tests (pytest -q) and write run_review.txt summary.
+
+
+
+
+
+
+run_local.sh
+
+
+
+
+
+Install deps, run migration, start uvicorn on 0.0.0.0:8000, run tests, then python post_run_review.py.
+Use pip install -r requirements.txt and pytest -q.
+
+
+
+
+
+
+ACTIONS TO PERFORM NOW
+
+
+
+
+
+Generate all files above with correct code.
+Respect Replit Secrets at runtime (do not commit real keys). Still create .env.example.
+Add a Makefile (optional) with init, run, test, review targets.
+Run:
+python scripts/run_migration.py
+pytest -q
+python post_run_review.py
+
+Print final status block:
+✅ Angles OS bootstrap complete
+
+• API on /health and /ui/summary
+
+• TokenVault operational
+
+• Decisions endpoints operational
+
+• Agents scheduled (memory_sync, strategy, verifier)
+
+• Workers ready (RQ)
+
+• Tests: <passed/failed count>
+
+• Review summary: run_review.txt
+
+
+Next: Wire Notion DB IDs, enable OpenAI GPT‑5 key, and point Framer to /ui/summary
+
+
+
+If any step fails, fix automatically when safe; otherwise summarize the exact file/line and proposed patch in run_review.txt and apply a minimal PR in‑place.
+
+
+
+End of prompt.
+
