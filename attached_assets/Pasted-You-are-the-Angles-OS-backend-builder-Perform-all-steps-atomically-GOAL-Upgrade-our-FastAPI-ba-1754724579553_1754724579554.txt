@@ -1,0 +1,280 @@
+You are the Angles OS backend builder. Perform all steps atomically.
+
+GOAL
+Upgrade our FastAPI backend to include a Decisions module and a minimal TokenVault, with SQL schema, routes, and a clean run flow under Docker. No questions—just build and run. Keep everything in English.
+
+STRUCTURE
+Create/ensure files with exact content:
+
+1) docker-compose.yml (update, keep services consistent)
+-------------------------------------------------------
+version: "3.9"
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: angles_postgres
+    environment:
+      POSTGRES_USER: angles
+      POSTGRES_PASSWORD: anglespass
+      POSTGRES_DB: anglesdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    container_name: angles_redis
+    ports:
+      - "6379:6379"
+
+  api:
+    build: ./api
+    container_name: angles_api
+    environment:
+      DATABASE_URL: postgresql://angles:anglespass@postgres:5432/anglesdb
+      REDIS_URL: redis://redis:6379
+      NOTION_API_KEY: ${NOTION_API_KEY}
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "8000:8000"
+
+  worker:
+    build: ./api
+    container_name: angles_worker
+    command: rq worker --url redis://redis:6379
+    depends_on:
+      - redis
+      - api
+
+volumes:
+  pgdata:
+
+2) api/Dockerfile
+-----------------
+FROM python:3.11
+WORKDIR /app
+COPY . .
+RUN pip install --no-cache-dir fastapi uvicorn psycopg2-binary pydantic rq
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+3) api/db.py
+-------------
+import os, psycopg2
+DB_URL = os.getenv("DATABASE_URL")
+def get_conn():
+    return psycopg2.connect(DB_URL)
+
+4) db/init/001_schema.sql
+-------------------------
+CREATE EXTENSION IF NOT EXISTS vector;
+
+CREATE TABLE IF NOT EXISTS vault (
+  id SERIAL PRIMARY KEY,
+  source TEXT,
+  chunk TEXT,
+  summary TEXT,
+  links TEXT[],
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS decisions (
+  id SERIAL PRIMARY KEY,
+  topic TEXT NOT NULL,
+  options JSONB NOT NULL,        -- [{option, pros, cons}]
+  chosen TEXT,                   -- chosen option label
+  rationale TEXT,                -- why chosen
+  status TEXT DEFAULT 'open',    -- open|approved|declined
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS logs (
+  id SERIAL PRIMARY KEY,
+  scope TEXT,                    -- "vault" | "decisions" | etc
+  level TEXT,                    -- info|warn|error
+  message TEXT,
+  meta JSONB,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+5) api/models.py
+----------------
+from pydantic import BaseModel
+from typing import List, Optional
+
+class VaultIngest(BaseModel):
+    source: str
+    chunk: str
+    summary: str
+    links: List[str] = []
+
+class VaultQuery(BaseModel):
+    query: str
+    top_k: int = 5
+
+class DecisionOption(BaseModel):
+    option: str
+    pros: List[str] = []
+    cons: List[str] = []
+
+class DecisionCreate(BaseModel):
+    topic: str
+    options: List[DecisionOption]
+
+class DecisionRecommend(BaseModel):
+    rationale: Optional[str] = None
+
+class DecisionStatusUpdate(BaseModel):
+    status: str   # 'approved' or 'declined'
+
+6) api/main.py
+---------------
+from fastapi import FastAPI, HTTPException
+from typing import List
+import json, os
+from datetime import datetime
+from db import get_conn
+from models import (
+    VaultIngest, VaultQuery,
+    DecisionCreate, DecisionRecommend, DecisionStatusUpdate
+)
+
+app = FastAPI(title="Angles OS API")
+
+@app.get("/health")
+def health():
+    return {"status": "OK"}
+
+# --- Vault ---
+@app.post("/vault/ingest")
+def vault_ingest(data: VaultIngest):
+    conn = get_conn(); cur = conn.cursor()
+    cur.execute(
+        "INSERT INTO vault (source, chunk, summary, links) VALUES (%s,%s,%s,%s)",
+        (data.source, data.chunk, data.summary, data.links)
+    )
+    conn.commit(); cur.close(); conn.close()
+    return {"status": "ingested"}
+
+@app.post("/vault/query")
+def vault_query(data: VaultQuery):
+    # Placeholder: naive fetch (upgrade to pgvector later)
+    conn = get_conn(); cur = conn.cursor()
+    cur.execute("SELECT source, summary FROM vault ORDER BY created_at DESC LIMIT %s", (data.top_k,))
+    rows = cur.fetchall()
+    cur.close(); conn.close()
+    return {"results": [{"source": r[0], "summary": r[1]} for r in rows]}
+
+# --- Decisions ---
+@app.post("/decisions")
+def create_decision(payload: DecisionCreate):
+    conn = get_conn(); cur = conn.cursor()
+    cur.execute(
+        "INSERT INTO decisions (topic, options, status) VALUES (%s,%s,'open') RETURNING id",
+        (payload.topic, json.dumps([o.dict() for o in payload.options]))
+    )
+    new_id = cur.fetchone()[0]
+    conn.commit(); cur.close(); conn.close()
+    return {"id": new_id, "status": "open"}
+
+@app.get("/decisions")
+def list_decisions(status: str = "open"):
+    conn = get_conn(); cur = conn.cursor()
+    cur.execute("SELECT id, topic, options, status, created_at FROM decisions WHERE status=%s ORDER BY created_at DESC", (status,))
+    rows = cur.fetchall()
+    cur.close(); conn.close()
+    return [{
+        "id": r[0], "topic": r[1], "options": r[2],
+        "status": r[3], "created_at": r[4].isoformat()
+    } for r in rows]
+
+@app.get("/decisions/{did}")
+def get_decision(did: int):
+    conn = get_conn(); cur = conn.cursor()
+    cur.execute("SELECT id, topic, options, chosen, rationale, status, created_at, updated_at FROM decisions WHERE id=%s", (did,))
+    r = cur.fetchone()
+    cur.close(); conn.close()
+    if not r: raise HTTPException(404, "Not found")
+    return {
+        "id": r[0], "topic": r[1], "options": r[2], "chosen": r[3],
+        "rationale": r[4], "status": r[5],
+        "created_at": r[6].isoformat(), "updated_at": r[7].isoformat()
+    }
+
+@app.post("/decisions/{did}/recommend")
+def recommend_decision(did: int, payload: DecisionRecommend):
+    # Minimal recommender: pick option with shortest cons / longest pros as heuristic
+    conn = get_conn(); cur = conn.cursor()
+    cur.execute("SELECT options FROM decisions WHERE id=%s", (did,))
+    row = cur.fetchone()
+    if not row:
+        cur.close(); conn.close()
+        raise HTTPException(404, "Not found")
+    options = row[0]
+    best = None
+    best_score = -1e9
+    for opt in options:
+        score = len(opt.get("pros", [])) - len(opt.get("cons", []))
+        if score > best_score:
+            best_score = score; best = opt["option"]
+    rationale = payload.rationale or f"Chosen by heuristic: pros - cons = {best_score}"
+    cur.execute(
+        "UPDATE decisions SET chosen=%s, rationale=%s, updated_at=%s WHERE id=%s",
+        (best, rationale, datetime.utcnow(), did)
+    )
+    conn.commit(); cur.close(); conn.close()
+    return {"id": did, "chosen": best, "rationale": rationale}
+
+@app.post("/decisions/{did}/approve")
+def approve_decision(did: int):
+    conn = get_conn(); cur = conn.cursor()
+    cur.execute("UPDATE decisions SET status='approved', updated_at=%s WHERE id=%s", (datetime.utcnow(), did))
+    conn.commit(); cur.close(); conn.close()
+    return {"id": did, "status": "approved"}
+
+@app.post("/decisions/{did}/decline")
+def decline_decision(did: int, payload: DecisionStatusUpdate):
+    if payload.status not in ("declined",):
+        raise HTTPException(400, "Use status='declined'")
+    conn = get_conn(); cur = conn.cursor()
+    cur.execute("UPDATE decisions SET status='declined', updated_at=%s WHERE id=%s", (datetime.utcnow(), did))
+    conn.commit(); cur.close(); conn.close()
+    return {"id": did, "status": "declined"}
+
+7) api/__init__.py
+------------------
+# empty file to make 'api' a package
+
+8) RUN MIGRATIONS + BUILD + SMOKE TEST
+- Create db if not exists and run SQL:
+  -> ensure docker is available; then:
+     - echo 'Applying schema…'
+     - docker compose down || true
+     - docker compose up -d postgres
+     - sleep 3
+     - docker exec -i angles_postgres psql -U angles -d anglesdb < db/init/001_schema.sql
+- Build API and run:
+     - docker compose up -d --build api
+- Health check:
+     - curl -s http://localhost:8000/health || echo "Health failed"
+
+9) QUICK DECISION TESTS
+- Create:
+  curl -s -X POST http://localhost:8000/decisions -H "Content-Type: application/json" -d '{"topic":"Choose vector backend","options":[{"option":"pgvector","pros":["native","fast"],"cons":["indexing setup"]},{"option":"FAISS","pros":["popular"],"cons":["extra service"]}]}'
+- List:
+  curl -s "http://localhost:8000/decisions?status=open"
+- Recommend:
+  curl -s -X POST "http://localhost:8000/decisions/1/recommend" -H "Content-Type: application/json" -d '{"rationale":"Pick the most balanced pros/cons"}'
+- Approve:
+  curl -s -X POST "http://localhost:8000/decisions/1/approve"
+
+OUTPUT
+After completion, print a concise summary of:
+- Files created/updated
+- Containers running
+- Health/decisions test responses
+- Any follow-ups you recommend
